@@ -7,8 +7,8 @@ export default function VoiceSettings() {
 
   const [joinMuted, setJoinMuted] = useState(preferences?.joinMuted ?? false);
   const [joinDeafened, setJoinDeafened] = useState(preferences?.joinDeafened ?? false);
-  const [cameraQuality, setCameraQuality] = useState(preferences?.cameraQuality ?? 'AUTO');
-  const [screenShareQuality, setScreenShareQuality] = useState(preferences?.screenShareQuality ?? 'AUTO');
+  const [cameraQuality, setCameraQuality] = useState<"AUTO" | "P720" | "P1080">(preferences?.cameraQuality ?? 'AUTO');
+  const [screenShareQuality, setScreenShareQuality] = useState<"AUTO" | "P720_30" | "P1080_30" | "P1080_60" | "MAX">(preferences?.screenShareQuality ?? 'AUTO');
 
   // Sync state if store updates
   useEffect(() => {
@@ -33,13 +33,13 @@ export default function VoiceSettings() {
   };
 
   const handleCameraQualityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newValue = e.target.value;
+    const newValue = e.target.value as "AUTO" | "P720" | "P1080";
     setCameraQuality(newValue);
     updatePreferences({ cameraQuality: newValue });
   };
 
   const handleScreenShareQualityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newValue = e.target.value;
+    const newValue = e.target.value as "AUTO" | "P720_30" | "P1080_30" | "P1080_60" | "MAX";
     setScreenShareQuality(newValue);
     updatePreferences({ screenShareQuality: newValue });
   };

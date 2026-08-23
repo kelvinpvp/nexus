@@ -11,6 +11,8 @@ export interface UserPreferences {
   desktopNotifications: boolean;
   friendRequestPolicy: string;
   allowServerDMs: boolean;
+  cameraQuality?: 'AUTO' | 'P720' | 'P1080';
+  screenShareQuality?: 'AUTO' | 'P720_30' | 'P1080_30' | 'P1080_60' | 'MAX';
 }
 
 interface SettingsState {

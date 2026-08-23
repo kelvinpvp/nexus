@@ -148,7 +148,7 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
   useEffect(() => {
     if (screenShareTracks.length > 0) {
       const latestTrack = screenShareTracks[screenShareTracks.length - 1];
-      const trackId = latestTrack.track?.sid || latestTrack.participant.sid;
+      const trackId = latestTrack.publication?.trackSid || latestTrack.participant.sid;
       if (trackId && !autoFocusedTrackIds.has(trackId)) {
         setFocusedTrack(latestTrack);
         setAutoFocusedTrackIds(prev => new Set(prev).add(trackId));
