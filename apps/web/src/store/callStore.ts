@@ -70,6 +70,22 @@ export const useCallStore = create<CallStore>((set, get) => ({
       });
       set({ activeCall: call, isCallModalOpen: true });
     } catch (error: any) {
+      // If there's a stuck call, force-end it and retry once
+      if (error?.call?.id) {
+        try {
+          await apiFetch(`/api/calls/${error.call.id}/end`, { method: 'POST' });
+          // Retry
+          const retryCall = await apiFetch('/api/calls', {
+            method: 'POST',
+            body: JSON.stringify({ conversationId, type }),
+          });
+          set({ activeCall: retryCall, isCallModalOpen: true });
+          return;
+        } catch (retryError: any) {
+          console.error('Failed to recover from stuck call:', retryError);
+          throw retryError;
+        }
+      }
       console.error('Failed to initiate call:', error);
       throw error;
     }

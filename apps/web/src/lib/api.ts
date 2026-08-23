@@ -17,7 +17,12 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => null);
-    throw new Error(errorData?.error || 'API Request failed');
+    const err: any = new Error(errorData?.error || 'API Request failed');
+    // Attach all fields from the error body so callers can inspect them
+    if (errorData) {
+      Object.assign(err, errorData);
+    }
+    throw err;
   }
 
   return res.json();
