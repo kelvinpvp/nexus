@@ -6,6 +6,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useFriendStore } from '@/store/friendStore';
 import { useDMStore } from '@/store/dmStore';
 import { useCallStore } from '@/store/callStore';
+import { useAppStore } from '@/store/appStore';
 
 export interface User {
   id: string;

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { apiFetch } from '@/lib/api';
+import { socket } from '@/lib/socket';
 
 export interface Channel {
   id: string;
@@ -59,6 +60,8 @@ interface AppState {
   setVoiceStates: (states: VoiceState[]) => void;
   isSettingsModalOpen: boolean;
   setSettingsModalOpen: (isOpen: boolean) => void;
+  setupSocketListeners: () => void;
+  cleanupSocketListeners: () => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -121,5 +124,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   addServer: (server: Server) => {
     set((state) => ({ servers: [...state.servers, server] }));
     get().setActiveServer(server.id);
+  },
+
+  setupSocketListeners: () => {
+    socket.on('voice_states_update', (states: VoiceState[]) => {
+      set({ voiceStates: states });
+    });
+  },
+
+  cleanupSocketListeners: () => {
+    socket.off('voice_states_update');
   }
 }));
