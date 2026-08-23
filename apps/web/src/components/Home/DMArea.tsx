@@ -11,6 +11,7 @@ export default function DMArea() {
   const { initiateCall } = useCallStore();
   const [content, setContent] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isCalling, setIsCalling] = useState<'VOICE' | 'VIDEO' | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const conversation = conversations.find(c => c.id === activeConversationId);
@@ -57,18 +58,36 @@ export default function DMArea() {
         
         <div className="flex items-center space-x-4 text-[#B5BAC1]">
           <button 
-            onClick={() => activeConversationId && initiateCall(activeConversationId, 'VOICE')}
-            className="hover:text-[#DBDEE1] transition-colors" 
+            onClick={async () => {
+              if (!activeConversationId || isCalling) return;
+              setIsCalling('VOICE');
+              try { await initiateCall(activeConversationId, 'VOICE'); }
+              catch (e) { console.error(e); }
+              finally { setIsCalling(null); }
+            }}
+            disabled={!!isCalling}
+            className={`transition-colors ${isCalling ? 'text-[#949BA4] cursor-not-allowed' : 'hover:text-[#DBDEE1]'}`}
             title="Iniciar Chamada de Voz"
           >
-            <Phone size={24} />
+            {isCalling === 'VOICE' 
+              ? <div className="w-6 h-6 border-2 border-[#B5BAC1] border-t-transparent rounded-full animate-spin" />
+              : <Phone size={24} />}
           </button>
           <button 
-            onClick={() => activeConversationId && initiateCall(activeConversationId, 'VIDEO')}
-            className="hover:text-[#DBDEE1] transition-colors" 
+            onClick={async () => {
+              if (!activeConversationId || isCalling) return;
+              setIsCalling('VIDEO');
+              try { await initiateCall(activeConversationId, 'VIDEO'); }
+              catch (e) { console.error(e); }
+              finally { setIsCalling(null); }
+            }}
+            disabled={!!isCalling}
+            className={`transition-colors ${isCalling ? 'text-[#949BA4] cursor-not-allowed' : 'hover:text-[#DBDEE1]'}`}
             title="Iniciar Chamada de Vídeo"
           >
-            <Video size={24} />
+            {isCalling === 'VIDEO'
+              ? <div className="w-6 h-6 border-2 border-[#B5BAC1] border-t-transparent rounded-full animate-spin" />
+              : <Video size={24} />}
           </button>
         </div>
       </div>
