@@ -13,6 +13,7 @@ export default function CreateGroupDMModal({ isOpen, onClose }: CreateGroupDMMod
   const { createGroupDM } = useDMStore();
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [name, setName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -21,11 +22,17 @@ export default function CreateGroupDMModal({ isOpen, onClose }: CreateGroupDMMod
       fetchFriends();
       setSelectedUserIds(new Set());
       setName('');
+      setSearchQuery('');
       setError('');
     }
   }, [isOpen, fetchFriends]);
 
   if (!isOpen) return null;
+
+  const filteredFriends = friends.filter(f => 
+    (f.displayName || f.username).toLowerCase().includes(searchQuery.toLowerCase()) ||
+    f.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const toggleUser = (userId: string) => {
     const newSet = new Set(selectedUserIds);
@@ -75,6 +82,18 @@ export default function CreateGroupDMModal({ isOpen, onClose }: CreateGroupDMMod
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 max-h-[60vh]">
           <div className="px-4 py-4 space-y-4">
             <div>
+              <label className="text-xs font-bold text-[#B5BAC1] uppercase mb-1 block">Pesquisar ou Começar uma Conversa</label>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Digite o nome de usuário do amigo..."
+                className="w-full bg-[#1E1F22] text-[#DBDEE1] rounded-[3px] p-2.5 focus:outline-none focus:ring-1 focus:ring-[#00A8FC] mb-3 text-sm"
+                autoFocus
+              />
+            </div>
+
+            <div>
               <label className="text-xs font-bold text-[#B5BAC1] uppercase mb-1 block">Nome do Grupo (Opcional)</label>
               <input
                 type="text"
@@ -93,13 +112,13 @@ export default function CreateGroupDMModal({ isOpen, onClose }: CreateGroupDMMod
 
             {error && <p className="text-[#F23F42] text-xs font-medium">{error}</p>}
 
-            <div className="overflow-y-auto custom-scrollbar flex-1 -mx-2 px-2 max-h-[250px] space-y-1">
-              {friends.length === 0 ? (
+            <div className="overflow-y-auto custom-scrollbar flex-1 -mx-2 px-2 max-h-[200px] space-y-1">
+              {filteredFriends.length === 0 ? (
                 <div className="text-center text-[#949BA4] py-4 text-sm">
-                  Você não tem amigos adicionados ainda.
+                  {friends.length === 0 ? 'Você não tem amigos adicionados ainda.' : 'Nenhum amigo encontrado.'}
                 </div>
               ) : (
-                friends.map((friend) => {
+                filteredFriends.map((friend) => {
                   const isSelected = selectedUserIds.has(friend.id);
                   return (
                     <div 

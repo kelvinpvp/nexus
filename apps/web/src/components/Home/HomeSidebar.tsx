@@ -12,7 +12,10 @@ export default function HomeSidebar() {
     <div className="w-[240px] bg-[#2B2D31] flex flex-col flex-shrink-0 h-full select-none">
       {/* Search Header */}
       <header className="h-12 border-b border-[#1F2023] flex items-center px-2.5 shadow-sm">
-        <button className="w-full bg-[#1E1F22] text-[#949BA4] text-sm text-left px-2 py-1.5 rounded transition-colors hover:bg-[#1E1F22]/80">
+        <button 
+          onClick={() => setCreateGroupModalOpen(true)}
+          className="w-full bg-[#1E1F22] text-[#949BA4] text-sm text-left px-2 py-1.5 rounded transition-colors hover:bg-[#1E1F22]/80 hover:text-[#DBDEE1]"
+        >
           Encontre ou comece uma conversa
         </button>
       </header>

@@ -135,7 +135,7 @@ export default function DMArea() {
         </div>
 
         {/* Active Call Banner */}
-        {activeConversationId && activeGroupCalls[activeConversationId] && (
+        {activeConversationId && activeGroupCalls[activeConversationId] && activeGroupCalls[activeConversationId].participantCount > 0 && (
           <div className="flex items-center bg-[#23A559]/20 border border-[#23A559]/50 px-3 py-1 rounded-full text-xs text-[#23A559] font-bold space-x-2">
             <span className="w-2 h-2 rounded-full bg-[#23A559] animate-pulse" />
             <span>
