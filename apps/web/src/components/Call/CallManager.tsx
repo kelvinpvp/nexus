@@ -103,7 +103,7 @@ export default function CallManager() {
           onDisconnected={() => {
             endCall(activeCall.id);
           }}
-          style={{ display: 'none' }}
+          style={{ display: 'contents' }}
         >
           <DiscordCallWrapper 
             isModalOpen={isCallModalOpen} 
