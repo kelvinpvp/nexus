@@ -50,10 +50,18 @@ export default function UserPanel() {
         </div>
         
         <div className="flex text-[#B5BAC1]">
-          <button className="w-8 h-8 flex items-center justify-center hover:bg-[#3F4147] rounded hover:text-[#DBDEE1] transition-colors" title="Configurações de Áudio">
+          <button 
+            onClick={() => setSettingsModalOpen(true)} 
+            className="w-8 h-8 flex items-center justify-center hover:bg-[#3F4147] rounded hover:text-[#DBDEE1] transition-colors" 
+            title="Mudar para Mudo (Voz)"
+          >
             <Mic size={20} />
           </button>
-          <button className="w-8 h-8 flex items-center justify-center hover:bg-[#3F4147] rounded hover:text-[#DBDEE1] transition-colors" title="Configurações">
+          <button 
+            onClick={() => setSettingsModalOpen(true)} 
+            className="w-8 h-8 flex items-center justify-center hover:bg-[#3F4147] rounded hover:text-[#DBDEE1] transition-colors" 
+            title="Ensurdecer (Áudio)"
+          >
             <Headphones size={20} />
           </button>
           <button 
