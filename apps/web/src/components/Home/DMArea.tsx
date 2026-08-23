@@ -266,6 +266,29 @@ export default function DMArea() {
                             <div className="mt-1 max-w-sm rounded-lg overflow-hidden border border-[#1E1F22]">
                               <img src={msg.content} alt="GIF/Imagem" className="w-full max-h-72 object-contain bg-black/20" />
                             </div>
+                          ) : msg.content.includes('/invite/') ? (
+                            <div>
+                              <span>{msg.content}</span>
+                              <div className="mt-2 p-3 bg-[#2B2D31] border border-[#1E1F22] rounded-lg max-w-sm flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-10 h-10 rounded-xl bg-[#5865F2] flex items-center justify-center text-white font-bold">
+                                    🚀
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-[#949BA4] uppercase">CONVITE PARA SERVIDOR</p>
+                                    <p className="text-sm font-semibold text-white">Clique para entrar no Servidor</p>
+                                  </div>
+                                </div>
+                                <a 
+                                  href={msg.content.match(/https?:\/\/[^\s]+/)?.[0] || '#'} 
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="bg-[#23A559] hover:bg-[#1A7C43] text-white text-xs font-bold px-3 py-1.5 rounded transition-colors"
+                                >
+                                  Entrar
+                                </a>
+                              </div>
+                            </div>
                           ) : (
                             msg.content
                           )}

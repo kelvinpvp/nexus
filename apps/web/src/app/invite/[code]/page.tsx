@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { Users } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 
-export default function InvitePage({ params }: { params: { code: string } }) {
+export default function InvitePage({ params }: { params: Promise<{ code: string }> }) {
+  const resolvedParams = use(params);
+  const code = resolvedParams.code;
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const { fetchServers } = useAppStore();
@@ -20,13 +22,13 @@ export default function InvitePage({ params }: { params: { code: string } }) {
   useEffect(() => {
     // If not authenticated, redirect to login with callback
     if (!authLoading && !user) {
-      router.push(`/login?callbackUrl=/invite/${params.code}`);
+      router.push(`/login?callbackUrl=/invite/${code}`);
       return;
     }
 
     if (!authLoading && user) {
       // Fetch invite info
-      apiFetch(`/api/invites/${params.code}`)
+      apiFetch(`/api/invites/${code}`)
         .then(data => {
           setInvite(data);
           setIsLoading(false);
@@ -36,13 +38,13 @@ export default function InvitePage({ params }: { params: { code: string } }) {
           setIsLoading(false);
         });
     }
-  }, [user, authLoading, params.code, router]);
+  }, [user, authLoading, code, router]);
 
   const handleJoin = async () => {
     setIsJoining(true);
     setError('');
     try {
-      const result = await apiFetch(`/api/invites/${params.code}/join`, { method: 'POST' });
+      const result = await apiFetch(`/api/invites/${code}/join`, { method: 'POST' });
       await fetchServers(); // Refresh server list
       router.push('/');
     } catch (err: any) {
