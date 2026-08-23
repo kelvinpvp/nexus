@@ -75,16 +75,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   setSettingsModalOpen: (isOpen) => set({ isSettingsModalOpen: isOpen }),
   setVoiceStates: (states) => set({ voiceStates: states }),
 
-  fetchServers: async () => {
+  fetchServers: async (force = false) => {
+    if (!force && get().servers.length > 0) return;
     set({ isLoadingServers: true });
     try {
       const servers = await apiFetch('/api/servers');
       set({ servers, isLoadingServers: false });
-      
-      // Auto select first server if none selected
-      if (servers.length > 0 && !get().activeServerId) {
-        get().setActiveServer(servers[0].id);
-      }
     } catch (error) {
       console.error('Failed to fetch servers', error);
       set({ isLoadingServers: false });
