@@ -262,6 +262,9 @@ app.get('/api/auth/me', { preHandler: [authenticate] }, async (request, reply) =
       email: user.email,
       displayName: user.displayName,
       avatarUrl: user.avatarUrl,
+      bannerUrl: user.bannerUrl,
+      bio: user.bio,
+      customStatus: user.customStatus,
       status: user.status,
     }
   });
