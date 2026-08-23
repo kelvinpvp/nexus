@@ -5,6 +5,7 @@ import { socket } from '@/lib/socket';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useFriendStore } from '@/store/friendStore';
 import { useDMStore } from '@/store/dmStore';
+import { useCallStore } from '@/store/callStore';
 
 export interface User {
   id: string;
@@ -43,18 +44,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
-        if (!socket.connected) socket.connect();
+        
+        const appStore = useAppStore.getState();
+        const callStore = useCallStore.getState();
+        const friendStore = useFriendStore.getState();
+        const dmStore = useDMStore.getState();
+        
+        socket.connect();
+        
         useSettingsStore.getState().fetchPreferences();
         
-        const friendStore = useFriendStore.getState();
         friendStore.setupSocketListeners();
         friendStore.fetchFriends();
         friendStore.fetchRequests();
         friendStore.fetchBlocks();
 
-        const dmStore = useDMStore.getState();
         dmStore.setupSocketListeners();
         dmStore.fetchConversations();
+        
+        appStore.setupSocketListeners();
+        callStore.setupSocketListeners();
       } else {
         setUser(null);
         if (socket.connected) socket.disconnect();
@@ -89,14 +98,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = (newUser: User) => {
     setUser(newUser);
+    
+    const appStore = useAppStore.getState();
+    const callStore = useCallStore.getState();
+    const friendStore = useFriendStore.getState();
+    const dmStore = useDMStore.getState();
+    
     if (!socket.connected) socket.connect();
+    
     useSettingsStore.getState().fetchPreferences();
     
-    const friendStore = useFriendStore.getState();
     friendStore.setupSocketListeners();
     friendStore.fetchFriends();
     friendStore.fetchRequests();
     friendStore.fetchBlocks();
+    
+    dmStore.setupSocketListeners();
+    dmStore.fetchConversations();
+    
+    appStore.setupSocketListeners();
+    callStore.setupSocketListeners();
     
     router.push('/app');
   };
@@ -115,6 +136,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (socket.connected) socket.disconnect();
       useSettingsStore.setState({ preferences: null });
       useFriendStore.getState().cleanupSocketListeners();
+      useDMStore.getState().cleanupSocketListeners();
+      useAppStore.getState().cleanupSocketListeners();
+      useCallStore.getState().cleanupSocketListeners();
       router.push('/login');
     } catch (error) {
       console.error('Logout error', error);

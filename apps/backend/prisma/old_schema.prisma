@@ -47,7 +47,6 @@ model User {
   // DMs
   conversationParticipations ConversationParticipant[]
   directMessages             DirectMessage[]
-  callsInitiated             CallSession[]
 }
 
 enum ScreenShareQuality {
@@ -239,7 +238,6 @@ model Conversation {
   
   participants ConversationParticipant[]
   messages     DirectMessage[]
-  calls        CallSession[]
 }
 
 model ConversationParticipant {
@@ -253,19 +251,9 @@ model ConversationParticipant {
   @@unique([userId, conversationId])
 }
 
-enum MessageType {
-  TEXT
-  GIF
-  IMAGE
-  FILE
-  SYSTEM
-}
-
 model DirectMessage {
   id             String       @id @default(cuid())
   content        String
-  type           MessageType  @default(TEXT)
-  metadata       Json?
   isEdited       Boolean      @default(false)
   
   authorId       String
@@ -276,33 +264,4 @@ model DirectMessage {
   
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
-}
-
-enum CallType {
-  VOICE
-  VIDEO
-}
-
-enum CallStatus {
-  RINGING
-  ACTIVE
-  DECLINED
-  MISSED
-  ENDED
-}
-
-model CallSession {
-  id             String       @id @default(cuid())
-  conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  
-  initiatorId    String
-  initiator      User         @relation(fields: [initiatorId], references: [id], onDelete: Cascade)
-  
-  type           CallType     @default(VOICE)
-  status         CallStatus   @default(RINGING)
-  
-  createdAt      DateTime     @default(now())
-  acceptedAt     DateTime?
-  endedAt        DateTime?
 }

@@ -9,6 +9,7 @@ import ChatArea from '@/components/Chat/ChatArea';
 import HomeSidebar from '@/components/Home/HomeSidebar';
 import HomeArea from '@/components/Home/HomeArea';
 import DMArea from '@/components/Home/DMArea';
+import CallManager from '@/components/Call/CallManager';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function App() {
@@ -42,6 +43,9 @@ export default function App() {
       ) : (
         <ChatArea />
       )}
+
+      {/* Global Call Manager for DMs */}
+      <CallManager />
     </div>
   );
 }

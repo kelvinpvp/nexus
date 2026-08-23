@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
 import { apiFetch } from '@/lib/api';
 import VoiceRoom from '../Voice/VoiceRoom';
+import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
 
 interface Message {
   id: string;
@@ -22,6 +23,7 @@ export default function ChatArea() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -164,9 +166,6 @@ export default function ChatArea() {
       {/* Input */}
       <div className="px-4 pb-6 pt-1 flex-shrink-0">
         <form onSubmit={handleSendMessage} className="bg-[#383A40] rounded-lg flex items-center px-4 py-2.5">
-          <button type="button" className="text-[#B5BAC1] hover:text-[#DBDEE1] transition-colors mr-3">
-            <PlusCircle size={22} />
-          </button>
           <input
             type="text"
             value={inputValue}
@@ -174,10 +173,27 @@ export default function ChatArea() {
             placeholder={`Conversar em #${activeChannel.name}`}
             className="bg-transparent border-none outline-none text-[#DBDEE1] flex-1 text-[15px] placeholder-[#80848E]"
           />
-          <div className="flex items-center space-x-3 ml-3">
-            <button type="button" className="text-[#B5BAC1] hover:text-[#DBDEE1] transition-colors">
+          <div className="flex items-center space-x-3 ml-3 relative">
+            <button 
+              type="button" 
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="text-[#B5BAC1] hover:text-[#DBDEE1] transition-colors"
+            >
               <Smile size={22} />
             </button>
+            
+            {showEmojiPicker && (
+              <div className="absolute bottom-12 right-0 z-50">
+                <EmojiPicker
+                  theme={Theme.DARK}
+                  onEmojiClick={(emoji: EmojiClickData) => {
+                    setInputValue(prev => prev + emoji.emoji);
+                    setShowEmojiPicker(false);
+                  }}
+                />
+              </div>
+            )}
+            
             <button 
               type="submit" 
               disabled={!inputValue.trim()}

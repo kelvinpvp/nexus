@@ -33,6 +33,8 @@ import friendRoutes from './routes/friends';
 import blockRoutes from './routes/blocks';
 import dmRoutes from './routes/dms';
 
+import callRoutes from './routes/calls';
+
 app.register(async (fastify) => {
   fastify.addHook('preHandler', authenticate);
   serverRoutes(fastify, prisma);
@@ -69,6 +71,11 @@ app.register(async (fastify) => {
   fastify.addHook('preHandler', authenticate);
   dmRoutes(fastify, prisma, () => ioServer);
 }, { prefix: '/api/dms' });
+
+app.register(async (fastify) => {
+  fastify.addHook('preHandler', authenticate);
+  callRoutes(fastify, prisma, () => ioServer);
+}, { prefix: '/api/calls' });
 
 // Setup Plugins
 app.register(multipart, {

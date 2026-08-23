@@ -1,12 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { useDMStore } from '@/store/dmStore';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCallStore } from '@/store/callStore';
 import { Phone, Video, Hash, PlusCircle, Smile, Image as ImageIcon, Send } from 'lucide-react';
+import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
 
 export default function DMArea() {
-  const { user } = useAuth();
   const { activeConversationId, conversations, messages, sendMessage, isLoadingMessages } = useDMStore();
+  const { user } = useAuth();
+  const { initiateCall } = useCallStore();
   const [content, setContent] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const conversation = conversations.find(c => c.id === activeConversationId);
@@ -52,10 +56,18 @@ export default function DMArea() {
         </div>
         
         <div className="flex items-center space-x-4 text-[#B5BAC1]">
-          <button className="hover:text-[#DBDEE1] transition-colors" title="Iniciar Chamada de Voz">
+          <button 
+            onClick={() => activeConversationId && initiateCall(activeConversationId, 'VOICE')}
+            className="hover:text-[#DBDEE1] transition-colors" 
+            title="Iniciar Chamada de Voz"
+          >
             <Phone size={24} />
           </button>
-          <button className="hover:text-[#DBDEE1] transition-colors" title="Iniciar Chamada de Vídeo">
+          <button 
+            onClick={() => activeConversationId && initiateCall(activeConversationId, 'VIDEO')}
+            className="hover:text-[#DBDEE1] transition-colors" 
+            title="Iniciar Chamada de Vídeo"
+          >
             <Video size={24} />
           </button>
         </div>
@@ -127,9 +139,6 @@ export default function DMArea() {
       <div className="px-4 pb-6 pt-2 shrink-0">
         <form onSubmit={handleSend} className="bg-[#383A40] rounded-lg flex flex-col px-4 py-2.5">
           <div className="flex items-start">
-            <button type="button" className="text-[#B5BAC1] hover:text-[#DBDEE1] p-1 -ml-1 mt-0.5 shrink-0 transition-colors">
-              <PlusCircle size={24} />
-            </button>
             <textarea 
               value={content}
               onChange={e => setContent(e.target.value)}
@@ -143,13 +152,26 @@ export default function DMArea() {
               className="bg-transparent text-[#DBDEE1] placeholder-[#949BA4] focus:outline-none flex-1 resize-none overflow-y-auto max-h-[50vh] min-h-[44px] px-3 py-1.5 custom-scrollbar text-[15px]"
               rows={1}
             />
-            <div className="flex items-center space-x-2 shrink-0 ml-2">
-              <button type="button" className="text-[#B5BAC1] hover:text-[#DBDEE1] p-1 transition-colors">
-                <ImageIcon size={24} />
-              </button>
-              <button type="button" className="text-[#B5BAC1] hover:text-[#DBDEE1] p-1 transition-colors">
+            <div className="flex items-center space-x-2 shrink-0 ml-2 relative">
+              <button 
+                type="button" 
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="text-[#B5BAC1] hover:text-[#DBDEE1] p-1 transition-colors"
+              >
                 <Smile size={24} />
               </button>
+              
+              {showEmojiPicker && (
+                <div className="absolute bottom-12 right-0 z-50">
+                  <EmojiPicker
+                    theme={Theme.DARK}
+                    onEmojiClick={(emoji: EmojiClickData) => {
+                      setContent(prev => prev + emoji.emoji);
+                      setShowEmojiPicker(false);
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </form>

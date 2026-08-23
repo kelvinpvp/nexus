@@ -24,7 +24,7 @@ export default function HomeArea() {
     unblockUser
   } = useFriendStore();
 
-  const onlineFriends = friends.filter(f => f.status === 'online' || f.status === 'idle' || f.status === 'dnd');
+  const onlineFriends = friends.filter(f => f.status.toLowerCase() === 'online' || f.status.toLowerCase() === 'idle' || f.status.toLowerCase() === 'dnd');
   const pendingCount = sentRequests.length + receivedRequests.length;
 
   const handleAddFriend = async (e: FormEvent) => {
@@ -122,12 +122,14 @@ export default function HomeArea() {
                     Online — {onlineFriends.length}
                   </div>
                   <div className="flex flex-col space-y-0.5">
-                    {onlineFriends.map(friend => (
+                    {onlineFriends.map(friend => {
+                      const fStatus = friend.status.toLowerCase();
+                      return (
                       <div key={friend.id} className="flex items-center justify-between p-2 hover:bg-[#35373C] rounded-lg cursor-pointer group border-t border-[#3F4147] first:border-t-0">
                         <div className="flex items-center space-x-3">
                           <div className="relative w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold shrink-0">
                             {friend.avatarUrl ? <img src={friend.avatarUrl} alt="" className="w-full h-full rounded-full object-cover"/> : friend.username.charAt(0).toUpperCase()}
-                            <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#313338] group-hover:border-[#35373C] ${friend.status === 'online' ? 'bg-[#23A559]' : friend.status === 'idle' ? 'bg-[#F0B232]' : 'bg-[#F23F43]'}`}></div>
+                            <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#313338] group-hover:border-[#35373C] ${fStatus === 'online' ? 'bg-[#23A559]' : fStatus === 'idle' ? 'bg-[#F0B232]' : 'bg-[#F23F43]'}`}></div>
                           </div>
                           <div>
                             <div className="font-bold text-white text-[15px]">{friend.username}</div>
@@ -150,7 +152,8 @@ export default function HomeArea() {
                           </button>
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </>
               )}
@@ -163,16 +166,18 @@ export default function HomeArea() {
                 Todos os Amigos — {friends.length}
               </div>
               <div className="flex flex-col space-y-0.5">
-                {friends.map(friend => (
+                {friends.map(friend => {
+                  const fStatus = friend.status.toLowerCase();
+                  return (
                   <div key={friend.id} className="flex items-center justify-between p-2 hover:bg-[#35373C] rounded-lg cursor-pointer group border-t border-[#3F4147] first:border-t-0">
                     <div className="flex items-center space-x-3">
                       <div className="relative w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold shrink-0">
                         {friend.avatarUrl ? <img src={friend.avatarUrl} alt="" className="w-full h-full rounded-full object-cover"/> : friend.username.charAt(0).toUpperCase()}
-                        <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#313338] group-hover:border-[#35373C] ${friend.status === 'online' ? 'bg-[#23A559]' : friend.status === 'idle' ? 'bg-[#F0B232]' : friend.status === 'dnd' ? 'bg-[#F23F43]' : 'bg-[#80848E]'}`}></div>
+                        <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#313338] group-hover:border-[#35373C] ${fStatus === 'online' ? 'bg-[#23A559]' : fStatus === 'idle' ? 'bg-[#F0B232]' : fStatus === 'dnd' ? 'bg-[#F23F43]' : 'bg-[#80848E]'}`}></div>
                       </div>
                       <div>
                         <div className="font-bold text-white text-[15px]">{friend.username}</div>
-                        <div className="text-[13px] text-[#949BA4]">{friend.status === 'offline' ? 'Offline' : 'Online'}</div>
+                        <div className="text-[13px] text-[#949BA4]">{fStatus === 'offline' ? 'Offline' : 'Online'}</div>
                       </div>
                     </div>
                         <div className="flex items-center space-x-2">
@@ -191,7 +196,8 @@ export default function HomeArea() {
                           </button>
                         </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}
