@@ -5,6 +5,7 @@ import { useCallStore } from '@/store/callStore';
 import { Phone, Video, Hash, Users, Smile, LogOut, UserPlus } from 'lucide-react';
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
 import ProfilePopout from '../Profile/ProfilePopout';
+import GiphyPicker from '../Chat/GiphyPicker';
 
 export default function DMArea() {
   const { activeConversationId, conversations, messages, sendMessage, isLoadingMessages, leaveGroup } = useDMStore();
