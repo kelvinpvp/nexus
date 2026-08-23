@@ -10,7 +10,7 @@ import GiphyPicker from '../Chat/GiphyPicker';
 export default function DMArea() {
   const { activeConversationId, conversations, messages, sendMessage, isLoadingMessages, leaveGroup } = useDMStore();
   const { user } = useAuth();
-  const { initiateCall } = useCallStore();
+  const { initiateCall, checkActiveCall, activeGroupCalls, joinActiveCall, activeCall } = useCallStore();
   const [content, setContent] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
@@ -18,6 +18,12 @@ export default function DMArea() {
   const [isLeaving, setIsLeaving] = useState(false);
   const [selectedUserPopout, setSelectedUserPopout] = useState<{ userId: string; top: number; left: number } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (activeConversationId) {
+      checkActiveCall(activeConversationId);
+    }
+  }, [activeConversationId, checkActiveCall]);
 
   const handleUserClick = (e: React.MouseEvent, authorId: string) => {
     e.stopPropagation();
@@ -127,6 +133,22 @@ export default function DMArea() {
           <span className="font-bold text-[15px] truncate max-w-[400px]">{displayName}</span>
           {statusContent}
         </div>
+
+        {/* Active Call Banner */}
+        {activeConversationId && activeGroupCalls[activeConversationId] && (
+          <div className="flex items-center bg-[#23A559]/20 border border-[#23A559]/50 px-3 py-1 rounded-full text-xs text-[#23A559] font-bold space-x-2">
+            <span className="w-2 h-2 rounded-full bg-[#23A559] animate-pulse" />
+            <span>Chamada em andamento — {activeGroupCalls[activeConversationId].participantCount} participantes</span>
+            {activeCall?.conversationId !== activeConversationId && (
+              <button
+                onClick={() => joinActiveCall(activeGroupCalls[activeConversationId].call)}
+                className="bg-[#23A559] hover:bg-[#1F924E] text-white px-2.5 py-0.5 rounded text-xs font-bold transition-colors ml-2"
+              >
+                Entrar
+              </button>
+            )}
+          </div>
+        )}
         
         <div className="flex items-center space-x-4 text-[#B5BAC1]">
           {isGroup && (
@@ -143,6 +165,10 @@ export default function DMArea() {
           <button 
             onClick={async () => {
               if (!activeConversationId || isCalling) return;
+              if (activeGroupCalls[activeConversationId]) {
+                await joinActiveCall(activeGroupCalls[activeConversationId].call);
+                return;
+              }
               setIsCalling('VOICE');
               try { await initiateCall(activeConversationId, 'VOICE'); }
               catch (e) { console.error(e); }
@@ -150,7 +176,7 @@ export default function DMArea() {
             }}
             disabled={!!isCalling}
             className={`transition-colors ${isCalling ? 'text-[#949BA4] cursor-not-allowed' : 'hover:text-[#DBDEE1]'}`}
-            title="Iniciar Chamada de Voz"
+            title={activeConversationId && activeGroupCalls[activeConversationId] ? "Entrar na Chamada Existente" : "Iniciar Chamada de Voz"}
           >
             {isCalling === 'VOICE' 
               ? <div className="w-6 h-6 border-2 border-[#B5BAC1] border-t-transparent rounded-full animate-spin" />
@@ -159,6 +185,10 @@ export default function DMArea() {
           <button 
             onClick={async () => {
               if (!activeConversationId || isCalling) return;
+              if (activeGroupCalls[activeConversationId]) {
+                await joinActiveCall(activeGroupCalls[activeConversationId].call);
+                return;
+              }
               setIsCalling('VIDEO');
               try { await initiateCall(activeConversationId, 'VIDEO'); }
               catch (e) { console.error(e); }
@@ -166,7 +196,7 @@ export default function DMArea() {
             }}
             disabled={!!isCalling}
             className={`transition-colors ${isCalling ? 'text-[#949BA4] cursor-not-allowed' : 'hover:text-[#DBDEE1]'}`}
-            title="Iniciar Chamada de Vídeo"
+            title={activeConversationId && activeGroupCalls[activeConversationId] ? "Entrar na Chamada Existente" : "Iniciar Chamada de Vídeo"}
           >
             {isCalling === 'VIDEO'
               ? <div className="w-6 h-6 border-2 border-[#B5BAC1] border-t-transparent rounded-full animate-spin" />

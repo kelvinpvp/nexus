@@ -25,7 +25,8 @@ export default function CallManager() {
     roomName,
     acceptCall, 
     declineCall, 
-    endCall,
+    leaveCall,
+    endCallForEveryone,
     setCallModalOpen
   } = useCallStore();
 
@@ -100,7 +101,7 @@ export default function CallManager() {
               {activeCall.type === 'VIDEO' ? '📹 Vídeo' : '📞 Voz'}
             </p>
             <button 
-              onClick={() => { playSound('leave'); endCall(activeCall.id); }}
+              onClick={() => { playSound('leave'); leaveCall(activeCall.id); }}
               className="w-full bg-[#DA373C] hover:bg-[#A12828] text-white py-2 rounded transition-colors flex items-center justify-center font-medium"
             >
               <PhoneOff size={18} className="mr-2" /> Cancelar
@@ -124,14 +125,15 @@ export default function CallManager() {
           }}
           onDisconnected={() => {
             playSound('leave');
-            endCall(activeCall.id);
+            leaveCall(activeCall.id);
           }}
           style={{ display: 'contents' }}
         >
           <DiscordCallWrapper 
             isModalOpen={isCallModalOpen} 
             setModalOpen={setCallModalOpen} 
-            endCall={() => endCall(activeCall.id)}
+            leaveCall={() => leaveCall(activeCall.id)}
+            endCallForEveryone={() => endCallForEveryone(activeCall.id)}
             activeCall={activeCall}
           />
           <RoomAudioRenderer />
@@ -144,11 +146,12 @@ export default function CallManager() {
 interface DiscordCallWrapperProps {
   isModalOpen: boolean;
   setModalOpen: (open: boolean) => void;
-  endCall: () => void;
+  leaveCall: () => void;
+  endCallForEveryone: () => void;
   activeCall: any;
 }
 
-function DiscordCallWrapper({ isModalOpen, setModalOpen, endCall, activeCall }: DiscordCallWrapperProps) {
+function DiscordCallWrapper({ isModalOpen, setModalOpen, leaveCall, endCallForEveryone, activeCall }: DiscordCallWrapperProps) {
   const connectionState = useConnectionState();
 
   if (!isModalOpen) {
@@ -171,10 +174,10 @@ function DiscordCallWrapper({ isModalOpen, setModalOpen, endCall, activeCall }: 
           onClick={(e) => {
             e.stopPropagation();
             playSound('leave');
-            endCall();
+            leaveCall();
           }}
           className="bg-[#DA373C] hover:bg-[#A12828] text-white p-2 rounded-full transition-colors ml-1"
-          title="Desconectar"
+          title="Sair da Chamada"
         >
           <PhoneOff size={14} />
         </button>
@@ -211,7 +214,11 @@ function DiscordCallWrapper({ isModalOpen, setModalOpen, endCall, activeCall }: 
               <p className="text-lg font-medium text-[#949BA4]">Conectando à chamada...</p>
             </div>
           )}
-          <DiscordCallLayout endCall={endCall} isVideoCall={activeCall.type === 'VIDEO'} />
+          <DiscordCallLayout 
+            leaveCall={leaveCall} 
+            endCallForEveryone={endCallForEveryone}
+            isVideoCall={activeCall.type === 'VIDEO'} 
+          />
         </div>
       </div>
     </div>
@@ -219,11 +226,12 @@ function DiscordCallWrapper({ isModalOpen, setModalOpen, endCall, activeCall }: 
 }
 
 interface DiscordCallLayoutProps {
-  endCall: () => void;
+  leaveCall: () => void;
+  endCallForEveryone: () => void;
   isVideoCall: boolean;
 }
 
-function DiscordCallLayout({ endCall, isVideoCall }: DiscordCallLayoutProps) {
+function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: DiscordCallLayoutProps) {
   const { toggle: toggleMic, enabled: isMicEnabled } = useTrackToggle({
     source: Track.Source.Microphone,
   });
@@ -352,11 +360,24 @@ function DiscordCallLayout({ endCall, isVideoCall }: DiscordCallLayoutProps) {
           </button>
 
           <button 
-            onClick={() => { playSound('leave'); endCall(); }}
+            onClick={() => { playSound('leave'); leaveCall(); }}
             className="p-3.5 rounded-full bg-[#DA373C] hover:bg-[#A12828] text-white transition-all duration-200 shadow-lg transform hover:scale-105 active:scale-95"
-            title="Desconectar"
+            title="Sair da Chamada"
           >
             <PhoneOff size={20} />
+          </button>
+
+          <button 
+            onClick={() => {
+              if (confirm('Tem certeza que deseja encerrar a chamada para todos os participantes?')) {
+                playSound('leave');
+                endCallForEveryone();
+              }
+            }}
+            className="px-3 py-1.5 text-xs font-semibold bg-[#2B2D31] hover:bg-[#DA373C] text-[#949BA4] hover:text-white rounded-lg transition-colors border border-[#3F4147]"
+            title="Encerrar Chamada para Todos (Apenas Autorizado)"
+          >
+            Encerrar p/ Todos
           </button>
         </div>
       </div>
