@@ -7,7 +7,8 @@ import {
   useTracks, 
   VideoTrack,
   useConnectionState,
-  useLocalParticipant
+  useLocalParticipant,
+  useTrackToggle
 } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import { useState } from 'react';
@@ -199,9 +200,17 @@ interface DiscordCallLayoutProps {
 }
 
 function DiscordCallLayout({ endCall, isVideoCall }: DiscordCallLayoutProps) {
-  const [isMuted, setIsMuted] = useState(false);
-  const [isCamEnabled, setIsCamEnabled] = useState(isVideoCall);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const { toggle: toggleMic, enabled: isMicEnabled } = useTrackToggle({
+    source: Track.Source.Microphone,
+  });
+
+  const { toggle: toggleCam, enabled: isCamEnabled } = useTrackToggle({
+    source: Track.Source.Camera,
+  });
+
+  const { toggle: toggleScreen, enabled: isScreenEnabled } = useTrackToggle({
+    source: Track.Source.ScreenShare,
+  });
 
   const tracks = useTracks(
     [
@@ -211,18 +220,8 @@ function DiscordCallLayout({ endCall, isVideoCall }: DiscordCallLayoutProps) {
     { onlySubscribed: false }
   );
 
-  const connectionState = useConnectionState();
-
   return (
     <div className="flex flex-col h-full justify-between p-4 relative">
-      
-      {connectionState !== 'connected' && (
-        <div className="absolute inset-0 z-50 bg-[#111214]/90 flex flex-col items-center justify-center text-white">
-          <div className="w-12 h-12 border-4 border-[#5865F2] border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-lg font-medium text-[#949BA4]">Conectando à chamada...</p>
-        </div>
-      )}
-
       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center justify-center p-2 overflow-y-auto max-h-[calc(100%-80px)]">
         {tracks.length === 0 ? (
           <div className="col-span-full flex flex-col items-center justify-center text-[#949BA4] h-64">
@@ -243,7 +242,9 @@ function DiscordCallLayout({ endCall, isVideoCall }: DiscordCallLayoutProps) {
                 className="relative bg-[#2B2D31] rounded-xl overflow-hidden aspect-video shadow-md border-2 border-transparent hover:border-[#5865F2]/50 transition-all flex items-center justify-center group"
               >
                 {trackRef.source === Track.Source.Camera && hasVideo ? (
-                  <VideoTrack trackRef={trackRef} className="w-full h-full object-cover" />
+                  <VideoTrack trackRef={trackRef as any} className="w-full h-full object-cover" />
+                ) : trackRef.source === Track.Source.ScreenShare ? (
+                  <VideoTrack trackRef={trackRef as any} className="w-full h-full object-contain bg-black" />
                 ) : (
                   <div className="flex flex-col items-center justify-center">
                     <div className="w-24 h-24 rounded-full bg-[#5865F2] flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-transparent group-hover:ring-[#5865F2]/40 transition-all">
@@ -255,6 +256,9 @@ function DiscordCallLayout({ endCall, isVideoCall }: DiscordCallLayoutProps) {
                 <div className="absolute bottom-3 left-3 bg-[#111214]/60 backdrop-blur-md px-3 py-1.5 rounded-md text-white text-xs font-semibold flex items-center">
                   <span className="max-w-[120px] truncate">{displayName}</span>
                   {isLocal && <span className="ml-1.5 text-[10px] text-[#949BA4]">(Você)</span>}
+                  {trackRef.source === Track.Source.ScreenShare && (
+                    <span className="ml-2 bg-[#5865F2] text-white text-[9px] px-1 rounded">TELA</span>
+                  )}
                 </div>
               </div>
             );
@@ -262,32 +266,37 @@ function DiscordCallLayout({ endCall, isVideoCall }: DiscordCallLayoutProps) {
         )}
       </div>
 
+      {/* Control Bar (Discord Style) */}
       <div className="h-20 shrink-0 flex items-center justify-center">
         <div className="bg-[#1E1F22] px-6 py-3 rounded-full flex items-center space-x-4 border border-[#2B2D31] shadow-2xl">
+          {/* Mute Button */}
           <button 
-            onClick={() => setIsMuted(!isMuted)}
-            className={`p-3.5 rounded-full transition-all duration-200 ${isMuted ? 'bg-[#DA373C] text-white hover:bg-[#A12828]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
-            title={isMuted ? "Desativar Mudo" : "Ativar Mudo"}
+            onClick={() => toggleMic()}
+            className={`p-3.5 rounded-full transition-all duration-200 ${!isMicEnabled ? 'bg-[#DA373C] text-white hover:bg-[#A12828]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
+            title={!isMicEnabled ? "Ativar Microfone" : "Mudar para Mudo"}
           >
-            {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
+            {!isMicEnabled ? <MicOff size={20} /> : <Mic size={20} />}
           </button>
 
+          {/* Camera Button */}
           <button 
-            onClick={() => setIsCamEnabled(!isCamEnabled)}
+            onClick={() => toggleCam()}
             className={`p-3.5 rounded-full transition-all duration-200 ${!isCamEnabled ? 'bg-[#DA373C] text-white hover:bg-[#A12828]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
             title={isCamEnabled ? "Desativar Câmera" : "Ativar Câmera"}
           >
             {isCamEnabled ? <Video size={20} /> : <VideoOff size={20} />}
           </button>
 
+          {/* Screen Share Button */}
           <button 
-            onClick={() => setIsScreenSharing(!isScreenSharing)}
-            className={`p-3.5 rounded-full transition-all duration-200 ${isScreenSharing ? 'bg-[#23A559] text-white hover:bg-[#1A7C43]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
-            title="Compartilhar Tela"
+            onClick={() => toggleScreen()}
+            className={`p-3.5 rounded-full transition-all duration-200 ${isScreenEnabled ? 'bg-[#23A559] text-white hover:bg-[#1A7C43]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
+            title={isScreenEnabled ? "Parar Compartilhamento" : "Compartilhar Tela"}
           >
-            {isScreenSharing ? <MonitorOff size={20} /> : <Monitor size={20} />}
+            {isScreenEnabled ? <MonitorOff size={20} /> : <Monitor size={20} />}
           </button>
 
+          {/* Red End Call Button */}
           <button 
             onClick={endCall}
             className="p-3.5 rounded-full bg-[#DA373C] hover:bg-[#A12828] text-white transition-all duration-200 shadow-lg transform hover:scale-105 active:scale-95"
