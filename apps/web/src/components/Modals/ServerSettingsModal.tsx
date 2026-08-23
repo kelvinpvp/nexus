@@ -7,6 +7,38 @@ interface ServerSettingsModalProps {
   onClose: () => void;
 }
 
+const PERMISSIONS = {
+  ADMINISTRATOR: 1n << 3n,
+  MANAGE_SERVER: 1n << 5n,
+  MANAGE_ROLES: 1n << 28n,
+  MANAGE_CHANNELS: 1n << 4n,
+  KICK_MEMBERS: 1n << 1n,
+  BAN_MEMBERS: 1n << 2n,
+  VIEW_CHANNEL: 1n << 10n,
+  SEND_MESSAGES: 1n << 11n,
+  CONNECT: 1n << 20n,
+  SPEAK: 1n << 21n,
+  MUTE_MEMBERS: 1n << 22n,
+  DEAFEN_MEMBERS: 1n << 23n,
+  MOVE_MEMBERS: 1n << 24n,
+};
+
+const PERM_LABELS = [
+  { key: 'ADMINISTRATOR', label: 'Administrador (Todas as permissões)' },
+  { key: 'VIEW_CHANNEL', label: 'Ver Canais' },
+  { key: 'MANAGE_CHANNELS', label: 'Gerenciar Canais' },
+  { key: 'MANAGE_ROLES', label: 'Gerenciar Cargos' },
+  { key: 'MANAGE_SERVER', label: 'Gerenciar Servidor' },
+  { key: 'KICK_MEMBERS', label: 'Expulsar Membros' },
+  { key: 'BAN_MEMBERS', label: 'Banir Membros' },
+  { key: 'SEND_MESSAGES', label: 'Enviar Mensagens' },
+  { key: 'CONNECT', label: 'Conectar (Voz)' },
+  { key: 'SPEAK', label: 'Falar (Voz)' },
+  { key: 'MUTE_MEMBERS', label: 'Silenciar Membros (Voz)' },
+  { key: 'DEAFEN_MEMBERS', label: 'Ensurdecer Membros (Voz)' },
+  { key: 'MOVE_MEMBERS', label: 'Mover Membros (Voz)' },
+];
+
 export default function ServerSettingsModal({ onClose }: ServerSettingsModalProps) {
   const { servers, activeServerId, fetchServerDetails } = useAppStore();
   const [activeTab, setActiveTab] = useState<'overview' | 'roles' | 'members' | 'bans' | 'audit'>('overview');
@@ -21,7 +53,7 @@ export default function ServerSettingsModal({ onClose }: ServerSettingsModalProp
   // Role edit form
   const [roleName, setRoleName] = useState('');
   const [roleColor, setRoleColor] = useState('#99AAB5');
-  const [rolePerms, setRolePerms] = useState('0');
+  const [rolePerms, setRolePerms] = useState<bigint>(0n);
 
   // Audit Logs & Bans
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
@@ -61,7 +93,7 @@ export default function ServerSettingsModal({ onClose }: ServerSettingsModalProp
       setSelectedRole(newRole);
       setRoleName(newRole.name);
       setRoleColor(newRole.color);
-      setRolePerms(newRole.permissions);
+      setRolePerms(BigInt(newRole.permissions || '0'));
       if (activeServerId) fetchServerDetails(activeServerId);
     } catch (err: any) {
       alert(err.message || 'Erro ao criar cargo');
@@ -76,7 +108,7 @@ export default function ServerSettingsModal({ onClose }: ServerSettingsModalProp
         body: JSON.stringify({
           name: roleName,
           color: roleColor,
-          permissions: rolePerms
+          permissions: rolePerms.toString()
         })
       });
       setRoles(prev => prev.map(r => r.id === updated.id ? updated : r));
@@ -97,6 +129,35 @@ export default function ServerSettingsModal({ onClose }: ServerSettingsModalProp
       if (activeServerId) fetchServerDetails(activeServerId);
     } catch (err: any) {
       alert(err.message || 'Erro ao excluir cargo');
+    }
+  };
+
+  const handleTogglePerm = (permValue: bigint) => {
+    if ((rolePerms & permValue) === permValue) {
+      setRolePerms(rolePerms & ~permValue); // Remove
+    } else {
+      setRolePerms(rolePerms | permValue); // Add
+    }
+  };
+
+  const handleAssignRole = async (memberId: string, roleId: string) => {
+    try {
+      const member = server.members.find(m => m.id === memberId);
+      if (!member) return;
+      const currentRoleIds = member.roles?.map(r => r.roleId) || [];
+      const isAdding = !currentRoleIds.includes(roleId);
+      
+      let newRoleIds = [...currentRoleIds];
+      if (isAdding) newRoleIds.push(roleId);
+      else newRoleIds = newRoleIds.filter(id => id !== roleId);
+
+      await apiFetch(`/api/servers/${server.id}/members/${memberId}/roles`, {
+        method: 'POST',
+        body: JSON.stringify({ roleIds: newRoleIds })
+      });
+      if (activeServerId) fetchServerDetails(activeServerId);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao modificar cargos do membro');
     }
   };
 
@@ -209,7 +270,7 @@ export default function ServerSettingsModal({ onClose }: ServerSettingsModalProp
 
               <div className="flex space-x-6">
                 {/* Role List */}
-                <div className="w-48 bg-[#2B2D31] p-2 rounded-lg space-y-1 shrink-0">
+                <div className="w-48 bg-[#2B2D31] p-2 rounded-lg space-y-1 shrink-0 h-fit">
                   {roles.map(r => (
                     <div
                       key={r.id}
@@ -217,7 +278,7 @@ export default function ServerSettingsModal({ onClose }: ServerSettingsModalProp
                         setSelectedRole(r);
                         setRoleName(r.name);
                         setRoleColor(r.color);
-                        setRolePerms(r.permissions);
+                        setRolePerms(BigInt(r.permissions || '0'));
                       }}
                       className={`flex items-center justify-between px-3 py-2 rounded cursor-pointer transition-colors ${
                         selectedRole?.id === r.id ? 'bg-[#404249] text-white' : 'text-[#B5BAC1] hover:bg-[#35373C]'
@@ -266,6 +327,27 @@ export default function ServerSettingsModal({ onClose }: ServerSettingsModalProp
                       />
                     </div>
 
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-[#949BA4] mb-4">Permissões</label>
+                      <div className="space-y-3">
+                        {PERM_LABELS.map(perm => {
+                          const permValue = PERMISSIONS[perm.key as keyof typeof PERMISSIONS];
+                          const hasPerm = (rolePerms & permValue) === permValue;
+                          return (
+                            <div key={perm.key} className="flex items-center justify-between bg-[#1E1F22] p-3 rounded">
+                              <span className="text-sm font-medium">{perm.label}</span>
+                              <button
+                                onClick={() => handleTogglePerm(permValue)}
+                                className={`w-10 h-6 rounded-full relative transition-colors ${hasPerm ? 'bg-[#23A559]' : 'bg-[#80848E]'}`}
+                              >
+                                <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform ${hasPerm ? 'translate-x-5' : 'translate-x-1'}`} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     <div className="pt-4 border-t border-[#3F4147] flex justify-end">
                       <button
                         onClick={handleSaveRole}
@@ -289,36 +371,75 @@ export default function ServerSettingsModal({ onClose }: ServerSettingsModalProp
             <div>
               <h2 className="text-xl font-bold mb-6">Membros do Servidor ({server.members.length})</h2>
               <div className="space-y-2">
-                {server.members.map(m => (
-                  <div key={m.id} className="flex items-center justify-between bg-[#2B2D31] p-3 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold">
-                        {m.user.avatarUrl ? <img src={m.user.avatarUrl} alt="" className="w-full h-full rounded-full object-cover"/> : m.user.username.charAt(0).toUpperCase()}
+                {server.members.map(m => {
+                  const memberRoleIds = m.roles?.map(r => r.roleId) || [];
+                  return (
+                    <div key={m.id} className="flex items-center justify-between bg-[#2B2D31] p-3 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold shrink-0">
+                          {m.user.avatarUrl ? <img src={m.user.avatarUrl} alt="" className="w-full h-full rounded-full object-cover"/> : m.user.username.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="font-bold text-white text-sm">{m.user.username}</div>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {roles.filter(r => memberRoleIds.includes(r.id)).map(r => (
+                              <div key={r.id} className="text-[10px] font-medium px-1.5 py-0.5 rounded border border-[#3F4147] flex items-center space-x-1">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: r.color }} />
+                                <span>{r.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-bold text-white text-sm">{m.user.username}</div>
-                        <div className="text-xs text-[#949BA4]">{m.role === 'OWNER' ? 'Proprietário' : m.role}</div>
-                      </div>
-                    </div>
 
-                    {m.user.id !== server.ownerId && (
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => handleKickMember(m.id, m.user.username)}
-                          className="bg-[#F23F43]/20 hover:bg-[#F23F43] text-[#F23F43] hover:text-white px-3 py-1.5 rounded text-xs font-semibold transition-colors"
-                        >
-                          Expulsar
-                        </button>
-                        <button
-                          onClick={() => handleBanMember(m.id, m.user.username)}
-                          className="bg-[#F23F43] hover:bg-[#DA373C] text-white px-3 py-1.5 rounded text-xs font-semibold transition-colors"
-                        >
-                          Banir
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      {m.user.id !== server.ownerId && (
+                        <div className="flex items-center space-x-4">
+                          {/* Role Dropdown */}
+                          <div className="relative group">
+                            <button className="text-xs font-semibold text-[#B5BAC1] hover:text-white transition-colors flex items-center space-x-1">
+                              <Plus size={14} />
+                              <span>Cargos</span>
+                            </button>
+                            <div className="absolute right-0 top-full mt-1 w-48 bg-[#111214] border border-[#1F2023] rounded-lg shadow-2xl p-1.5 space-y-0.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                              <div className="text-[10px] font-bold text-[#949BA4] uppercase px-2 mb-1">Cargos do Servidor</div>
+                              {roles.filter(r => !r.isDefault).map(r => {
+                                const hasRole = memberRoleIds.includes(r.id);
+                                return (
+                                  <button
+                                    key={r.id}
+                                    onClick={() => handleAssignRole(m.id, r.id)}
+                                    className="w-full flex items-center justify-between px-2 py-1.5 rounded text-sm text-[#DBDEE1] hover:bg-[#35373C] transition-colors"
+                                  >
+                                    <div className="flex items-center space-x-2">
+                                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: r.color }} />
+                                      <span>{r.name}</span>
+                                    </div>
+                                    {hasRole && <Check size={14} className="text-[#23A559]" />}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="h-4 w-px bg-[#3F4147]" />
+
+                          <button
+                            onClick={() => handleKickMember(m.id, m.user.username)}
+                            className="text-[#F23F43] hover:text-[#F23F43] text-xs font-semibold transition-colors"
+                          >
+                            Expulsar
+                          </button>
+                          <button
+                            onClick={() => handleBanMember(m.id, m.user.username)}
+                            className="bg-[#F23F43] hover:bg-[#DA373C] text-white px-3 py-1.5 rounded text-xs font-semibold transition-colors"
+                          >
+                            Banir
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
