@@ -203,8 +203,12 @@ export default async function callRoutes(fastify: FastifyInstance, prisma: Prism
     // Check remaining real participants in LiveKit
     const remainingCount = await getLiveKitRoomParticipants(roomName);
 
-    if (call.conversation.type === 'DIRECT') {
-      // In 1v1 DM, if one leaves, the call ends immediately
+    if (call.conversation.type === 'DIRECT' || remainingCount <= 0) {
+      // If 1v1 DM or LAST participant in Group DM leaves, end the CallSession immediately
+      if (emptyRoomGraceTimers[id]) {
+        clearTimeout(emptyRoomGraceTimers[id]);
+        delete emptyRoomGraceTimers[id];
+      }
       const endedCall = await prisma.callSession.update({
         where: { id },
         data: { status: 'ENDED', endedAt: new Date() }
@@ -212,30 +216,7 @@ export default async function callRoutes(fastify: FastifyInstance, prisma: Prism
       for (const p of call.conversation.participants) {
         io.to(`user_${p.userId}`).emit('dm:call:ended', endedCall);
       }
-      return reply.send({ success: true, callStatus: 'ENDED' });
-    }
-
-    // In GROUP DM: If room becomes empty, start durable 45-second Grace Period
-    if (remainingCount <= 0 && call.status === 'ACTIVE') {
-      if (!emptyRoomGraceTimers[id]) {
-        console.log(`[CALL GRACE] Starting 45s empty room grace period for call ${id}`);
-        emptyRoomGraceTimers[id] = setTimeout(async () => {
-          delete emptyRoomGraceTimers[id];
-
-          // Double check LiveKit to ensure no one rejoined
-          const recheckCount = await getLiveKitRoomParticipants(roomName);
-          if (recheckCount === 0) {
-            console.log(`[CALL GRACE] Grace period expired. Ending call ${id}`);
-            const endedCall = await prisma.callSession.update({
-              where: { id },
-              data: { status: 'ENDED', endedAt: new Date() }
-            });
-            for (const p of call.conversation.participants) {
-              io.to(`user_${p.userId}`).emit('dm:call:ended', endedCall);
-            }
-          }
-        }, 45000);
-      }
+      return reply.send({ success: true, callStatus: 'ENDED', remainingParticipants: 0 });
     }
 
     return reply.send({ success: true, callStatus: call.status, remainingParticipants: remainingCount });
