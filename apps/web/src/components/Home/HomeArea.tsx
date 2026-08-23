@@ -188,10 +188,22 @@ export default function HomeArea() {
                               } catch(e) {}
                             }}
                             className="w-9 h-9 rounded-full bg-[#2B2D31] flex items-center justify-center text-[#B5BAC1] hover:text-[#DBDEE1] transition-colors"
+                            title="Enviar Mensagem"
                           >
                             <MessageSquare size={20} />
                           </button>
-                          <button onClick={() => removeFriend(friend.id)} className="w-9 h-9 rounded-full bg-[#2B2D31] flex items-center justify-center text-[#B5BAC1] hover:text-[#F23F43] transition-colors">
+                          <button 
+                            onClick={() => useFriendStore.getState().blockUser(friend.id)} 
+                            className="w-9 h-9 rounded-full bg-[#2B2D31] flex items-center justify-center text-[#B5BAC1] hover:text-[#F23F43] transition-colors"
+                            title="Bloquear Usuário"
+                          >
+                            <Slash size={18} />
+                          </button>
+                          <button 
+                            onClick={() => removeFriend(friend.id)} 
+                            className="w-9 h-9 rounded-full bg-[#2B2D31] flex items-center justify-center text-[#B5BAC1] hover:text-[#F23F43] transition-colors"
+                            title="Remover Amigo"
+                          >
                             <XCircle size={20} />
                           </button>
                         </div>
