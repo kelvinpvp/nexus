@@ -1,0 +1,20 @@
+{"level":30,"time":1787447066264,"pid":19876,"hostname":"DESKTOP-KRA2HD2","msg":"Server listening at http://0.0.0.0:4000"}
+{"level":30,"time":1787447066265,"pid":19876,"hostname":"DESKTOP-KRA2HD2","msg":"Server running on http://localhost:4000"}
+{"level":30,"time":1787447068732,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-1","req":{"method":"POST","url":"/api/auth/register","hostname":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53682},"msg":"incoming request"}
+{"level":30,"time":1787447068775,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-1","res":{"statusCode":400},"responseTime":42.521099999547005,"msg":"request completed"}
+{"level":30,"time":1787447068778,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-2","req":{"method":"POST","url":"/api/auth/register","hostname":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53682},"msg":"incoming request"}
+{"level":30,"time":1787447068781,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-2","res":{"statusCode":400},"responseTime":2.5341999996453524,"msg":"request completed"}
+{"level":30,"time":1787447068782,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-3","req":{"method":"POST","url":"/api/auth/register","hostname":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53682},"msg":"incoming request"}
+{"level":30,"time":1787447068785,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-3","res":{"statusCode":400},"responseTime":2.800400000065565,"msg":"request completed"}
+{"level":30,"time":1787447068786,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-4","req":{"method":"POST","url":"/api/auth/login","hostname":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53682},"msg":"incoming request"}
+{"level":30,"time":1787447068863,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-4","res":{"statusCode":200},"responseTime":77.58090000040829,"msg":"request completed"}
+{"level":30,"time":1787447068864,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-5","req":{"method":"POST","url":"/api/auth/login","hostname":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53682},"msg":"incoming request"}
+{"level":30,"time":1787447068934,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-5","res":{"statusCode":401},"responseTime":69.31030000001192,"msg":"request completed"}
+{"level":30,"time":1787447068935,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-6","req":{"method":"GET","url":"/api/auth/me","hostname":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53682},"msg":"incoming request"}
+Authenticating. Cookie sessionId: 745ba342faebd03cb731597941a8069614fb734e5714315fecba938d5e1ad793
+{"level":30,"time":1787447068971,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-6","res":{"statusCode":200},"responseTime":35.58850000053644,"msg":"request completed"}
+{"level":30,"time":1787447068971,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-7","req":{"method":"POST","url":"/api/auth/logout","hostname":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53682},"msg":"incoming request"}
+{"level":30,"time":1787447068994,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-7","res":{"statusCode":200},"responseTime":22.21870000101626,"msg":"request completed"}
+Authenticating. Cookie sessionId: 
+{"level":30,"time":1787447068995,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-8","req":{"method":"GET","url":"/api/auth/me","hostname":"localhost:4000","remoteAddress":"127.0.0.1","remotePort":53682},"msg":"incoming request"}
+{"level":30,"time":1787447068996,"pid":19876,"hostname":"DESKTOP-KRA2HD2","reqId":"req-8","res":{"statusCode":401},"responseTime":1.0897999983280897,"msg":"request completed"}

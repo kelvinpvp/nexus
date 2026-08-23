@@ -1,0 +1,267 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  username    String   @unique
+  password    String
+  displayName String?
+  avatarUrl   String?
+  status      String   @default("offline") // online, offline, idle, dnd
+  customStatus String?
+  bio         String?
+  bannerUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  sessions    Session[]
+  serversOwned Server[]
+  memberships  ServerMember[]
+  messages     Message[]
+
+  preference  UserPreference?
+
+  // Social
+  friendRequestsSent     FriendRequest[] @relation("RequestSender")
+  friendRequestsReceived FriendRequest[] @relation("RequestReceiver")
+  
+  friendshipsA           Friendship[]    @relation("FriendUserA")
+  friendshipsB           Friendship[]    @relation("FriendUserB")
+
+  blocksInitiated        Block[]         @relation("Blocker")
+  blocksReceived         Block[]         @relation("Blocked")
+
+  // DMs
+  conversationParticipations ConversationParticipant[]
+  directMessages             DirectMessage[]
+}
+
+enum ScreenShareQuality {
+  AUTO
+  P720_30
+  P1080_30
+  P1080_60
+  MAX
+}
+
+enum CameraQuality {
+  AUTO
+  P720
+  P1080
+}
+
+model UserPreference {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  joinMuted           Boolean  @default(false)
+  joinDeafened        Boolean  @default(false)
+  screenShareQuality  ScreenShareQuality @default(AUTO)
+  cameraQuality       CameraQuality @default(AUTO)
+  theme               String   @default("dark")
+  messageDisplay      String   @default("cozy")
+  reducedMotion       Boolean  @default(false)
+  notificationSounds  Boolean  @default(true)
+  desktopNotifications Boolean @default(true)
+  friendRequestPolicy String   @default("EVERYONE") // EVERYONE, FRIENDS_OF_FRIENDS, SERVER_MEMBERS, NOBODY
+  allowServerDMs      Boolean  @default(true)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  IGNORED
+}
+
+model FriendRequest {
+  id          String        @id @default(cuid())
+  senderId    String
+  sender      User          @relation("RequestSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId  String
+  receiver    User          @relation("RequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  status      RequestStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([senderId, receiverId])
+  @@index([senderId])
+  @@index([receiverId])
+}
+
+model Friendship {
+  id        String   @id @default(cuid())
+  userAId   String
+  userA     User     @relation("FriendUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userBId   String
+  userB     User     @relation("FriendUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  blockerId String
+  blocker   User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blockedId String
+  blocked   User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+model Server {
+  id          String   @id @default(cuid())
+  name        String
+  iconUrl     String?
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     ServerMember[]
+  categories  Category[]
+  channels    Channel[]
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model ServerMember {
+  id        String     @id @default(cuid())
+  role      MemberRole @default(MEMBER)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serverId  String
+  server    Server     @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([userId, serverId])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  order     Int      @default(0)
+  serverId  String
+  server    Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  channels  Channel[]
+}
+
+enum ChannelType {
+  TEXT
+  VOICE
+  STAGE
+  FORUM
+  MEDIA
+  ANNOUNCEMENT
+}
+
+model Channel {
+  id         String      @id @default(cuid())
+  name       String
+  type       ChannelType @default(TEXT)
+  order      Int         @default(0)
+  
+  serverId   String
+  server     Server      @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  
+  categoryId String?
+  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  messages   Message[]
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  isEdited  Boolean  @default(false)
+  
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  channelId String
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// --- DIRECT MESSAGES ---
+
+model Conversation {
+  id        String   @id @default(cuid())
+  type      String   @default("DM") // DM, GROUP_DM
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  participants ConversationParticipant[]
+  messages     DirectMessage[]
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  joinedAt       DateTime     @default(now())
+
+  @@unique([userId, conversationId])
+}
+
+model DirectMessage {
+  id             String       @id @default(cuid())
+  content        String
+  isEdited       Boolean      @default(false)
+  
+  authorId       String
+  author         User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}

@@ -1,0 +1,137 @@
+import { useAppStore } from '@/store/appStore';
+import { useVoiceStore } from '@/store/voiceStore';
+import { useAuth } from '@/contexts/AuthContext';
+import { Hash, Volume2, Mic, MicOff, Headphones, LogOut, ChevronDown, Radio, PhoneOff, Settings } from 'lucide-react';
+import { socket } from '@/lib/socket';
+import { useEffect } from 'react';
+import UserPanel from './UserPanel';
+
+export default function ChannelList() {
+  const { servers, activeServerId, activeChannelId, setActiveChannel, voiceStates, setVoiceStates } = useAppStore();
+  const { connectedVoiceChannelId, connectToVoice, disconnectFromVoice } = useVoiceStore();
+  const { user } = useAuth();
+
+  const activeServer = servers.find(s => s.id === activeServerId);
+
+  useEffect(() => {
+    const onVoiceUpdate = (states: any[]) => {
+      setVoiceStates(states);
+    };
+    socket.on('voice_states_update', onVoiceUpdate);
+    return () => {
+      socket.off('voice_states_update', onVoiceUpdate);
+    };
+  }, [setVoiceStates]);
+
+  if (!activeServer || !activeServer.categories) {
+    return (
+      <div className="w-[240px] bg-[#2B2D31] flex flex-col flex-shrink-0">
+        <div className="flex-1 flex items-center justify-center text-[#949BA4] text-sm">
+          Carregando...
+        </div>
+      </div>
+    );
+  }
+
+  // Find connected channel details for bottom status bar
+  const allChannels = activeServer.categories.flatMap(c => c.channels);
+  const connectedChannel = allChannels.find(c => c.id === connectedVoiceChannelId);
+
+  const handleChannelClick = (channel: any) => {
+    setActiveChannel(channel.id);
+    if (channel.type === 'VOICE' || channel.type === 'STAGE') {
+      connectToVoice(channel.id, activeServer.id);
+    }
+  };
+
+  return (
+    <div className="w-[240px] bg-[#2B2D31] flex flex-col flex-shrink-0 h-full select-none">
+      {/* Server Header */}
+      <header className="h-12 border-b border-[#1F2023] flex items-center justify-between px-4 hover:bg-[#35373C] cursor-pointer transition-colors shadow-sm">
+        <h1 className="font-bold text-white text-[15px] truncate">{activeServer.name}</h1>
+        <ChevronDown size={18} className="text-[#949BA4]" />
+      </header>
+
+      {/* Channels List */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-4 mt-2">
+        {activeServer.categories.map((category) => (
+          <div key={category.id}>
+            <div className="flex items-center text-[#949BA4] hover:text-[#DBDEE1] cursor-pointer mb-1 px-1">
+              <ChevronDown size={12} className="mr-1" />
+              <span className="text-[11px] font-bold uppercase tracking-wider">{category.name}</span>
+            </div>
+            
+            <div className="space-y-0.5">
+              {category.channels.map(channel => {
+                const isActive = channel.id === activeChannelId;
+                const isVoiceConnected = channel.id === connectedVoiceChannelId;
+                const Icon = channel.type === 'VOICE' ? Volume2 : Hash;
+                
+                return (
+                  <div key={channel.id}>
+                    <div 
+                      onClick={() => handleChannelClick(channel)}
+                      className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer group transition-colors ${
+                        isActive 
+                          ? 'bg-[#404249] text-white' 
+                          : 'hover:bg-[#35373C] text-[#949BA4] hover:text-[#DBDEE1]'
+                      }`}
+                    >
+                      <div className="flex items-center truncate">
+                        <Icon size={18} className={`mr-1.5 flex-shrink-0 ${isVoiceConnected ? 'text-[#23A559]' : isActive ? 'text-[#DBDEE1]' : 'text-[#80848E]'}`} />
+                        <span className={`font-medium text-[15px] truncate ${isVoiceConnected ? 'text-[#23A559] font-bold' : ''}`}>
+                          {channel.name}
+                        </span>
+                      </div>
+                      {isVoiceConnected && (
+                        <Radio size={14} className="text-[#23A559] animate-pulse flex-shrink-0 ml-1" />
+                      )}
+                    </div>
+                    {/* Render voice members if this is a voice channel */}
+                    {channel.type === 'VOICE' && voiceStates.filter(vs => vs.channelId === channel.id).map(vs => (
+                      <div key={vs.userId} className="flex items-center px-2 py-1 ml-6 mr-2 rounded hover:bg-[#35373C] cursor-pointer group">
+                        <div className="w-6 h-6 rounded-full bg-[#5865F2] flex items-center justify-center text-white text-xs font-bold mr-2 flex-shrink-0 overflow-hidden">
+                          {vs.avatarUrl ? <img src={vs.avatarUrl} alt="" className="w-full h-full object-cover"/> : vs.username.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-[#949BA4] group-hover:text-[#DBDEE1] text-[13px] font-medium truncate flex-1">{vs.username}</span>
+                        <div className="flex items-center space-x-1 flex-shrink-0">
+                          {vs.isMuted && <MicOff size={14} className="text-[#F23F43]" />}
+                          {vs.isDeafened && <Headphones size={14} className="text-[#F23F43]" />}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Voice Connected Bar (Shown when user is connected to a voice channel) */}
+      {connectedVoiceChannelId && (
+        <div className="bg-[#111214] border-t border-[#1F2023] p-2.5 flex items-center justify-between text-xs">
+          <div className="flex items-center space-x-2 truncate">
+            <Radio size={18} className="text-[#23A559] animate-pulse flex-shrink-0" />
+            <div className="truncate">
+              <div className="font-bold text-[#23A559] text-[12px] leading-tight">Voz Conectada</div>
+              <div className="text-[#949BA4] text-[11px] truncate leading-tight">
+                {connectedChannel ? connectedChannel.name : 'Canal de Voz'} / {activeServer.name}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={disconnectFromVoice}
+            className="text-[#949BA4] hover:text-[#F23F43] p-1 rounded transition-colors flex-shrink-0"
+            title="Desconectar da Voz"
+          >
+            <PhoneOff size={18} />
+          </button>
+        </div>
+      )}
+
+      {/* User Panel */}
+      <UserPanel />
+    </div>
+  );
+}
