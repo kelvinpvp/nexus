@@ -2,6 +2,14 @@ import { create } from 'zustand';
 import { apiFetch } from '@/lib/api';
 import { socket } from '@/lib/socket';
 
+export interface UserInfo {
+  id: string;
+  username: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  status?: string;
+}
+
 export interface DirectMessage {
   id: string;
   content: string;
@@ -10,25 +18,18 @@ export interface DirectMessage {
   conversationId: string;
   createdAt: string;
   updatedAt: string;
-  author: {
-    id: string;
-    username: string;
-    displayName: string | null;
-    avatarUrl: string | null;
-  };
+  author: UserInfo;
 }
 
 export interface DMConversation {
   id: string;
-  type: string;
+  type: 'DIRECT' | 'GROUP';
   updatedAt: string;
-  recipient: {
-    id: string;
-    username: string;
-    displayName: string | null;
-    avatarUrl: string | null;
-    status: string;
-  };
+  name?: string | null;
+  iconUrl?: string | null;
+  ownerId?: string | null;
+  recipient?: UserInfo | null;
+  participants: UserInfo[];
   lastMessage?: DirectMessage;
 }
 
@@ -41,6 +42,8 @@ interface DMStore {
 
   fetchConversations: () => Promise<void>;
   openConversationWith: (userId: string) => Promise<string>;
+  createGroupDM: (userIds: string[], name?: string, iconUrl?: string) => Promise<string>;
+  leaveGroup: (groupId: string) => Promise<void>;
   setActiveConversation: (id: string | null) => void;
   fetchMessages: (conversationId: string) => Promise<void>;
   sendMessage: (conversationId: string, content: string) => Promise<void>;
@@ -80,6 +83,35 @@ export const useDMStore = create<DMStore>((set, get) => ({
     }
   },
 
+  createGroupDM: async (userIds: string[], name?: string, iconUrl?: string) => {
+    try {
+      const data = await apiFetch('/api/dms/group', {
+        method: 'POST',
+        body: JSON.stringify({ userIds, name, iconUrl })
+      });
+      await get().fetchConversations();
+      get().setActiveConversation(data.id);
+      return data.id;
+    } catch (error) {
+      console.error('Failed to create Group DM', error);
+      throw error;
+    }
+  },
+
+  leaveGroup: async (groupId: string) => {
+    try {
+      await apiFetch(`/api/dms/${groupId}/leave`, { method: 'POST' });
+      const currentActive = get().activeConversationId;
+      await get().fetchConversations();
+      if (currentActive === groupId) {
+        get().setActiveConversation(null);
+      }
+    } catch (error) {
+      console.error('Failed to leave Group DM', error);
+      throw error;
+    }
+  },
+
   setActiveConversation: (id: string | null) => {
     set({ activeConversationId: id });
     if (id) {
@@ -107,7 +139,6 @@ export const useDMStore = create<DMStore>((set, get) => ({
         method: 'POST',
         body: JSON.stringify({ content })
       });
-      // The socket event will append the message to the store, but we can do it optimistically here too if needed.
     } catch (error) {
       console.error('Failed to send message', error);
       throw error;
@@ -121,17 +152,14 @@ export const useDMStore = create<DMStore>((set, get) => ({
         const convId = message.conversationId;
         const existingMessages = state.messages[convId] || [];
         
-        // Update the conversation's last message and sort them
         let newConversations = [...state.conversations];
         const convIndex = newConversations.findIndex(c => c.id === convId);
         
         if (convIndex >= 0) {
           newConversations[convIndex].lastMessage = message;
           newConversations[convIndex].updatedAt = message.createdAt;
-          // Sort to bring this conv to top
           newConversations.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
         } else {
-          // If we received a message for a conv we don't know about, fetch convs again
           get().fetchConversations();
         }
 
@@ -144,9 +172,23 @@ export const useDMStore = create<DMStore>((set, get) => ({
         };
       });
     });
+
+    socket.on('dm:group:created', () => get().fetchConversations());
+    socket.on('dm:group:participant_added', () => get().fetchConversations());
+    socket.on('dm:group:participant_removed', () => get().fetchConversations());
+    socket.on('dm:group:left', (data) => {
+      if (get().activeConversationId === data.conversationId) {
+        get().setActiveConversation(null);
+      }
+      get().fetchConversations();
+    });
   },
 
   cleanupSocketListeners: () => {
     socket.off('dm:message');
+    socket.off('dm:group:created');
+    socket.off('dm:group:participant_added');
+    socket.off('dm:group:participant_removed');
+    socket.off('dm:group:left');
   }
 }));

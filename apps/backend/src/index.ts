@@ -35,10 +35,17 @@ import dmRoutes from './routes/dms';
 
 import callRoutes from './routes/calls';
 
+import inviteRoutes from './routes/invites';
+
 app.register(async (fastify) => {
   fastify.addHook('preHandler', authenticate);
   serverRoutes(fastify, prisma);
 }, { prefix: '/api/servers' });
+
+app.register(async (fastify) => {
+  fastify.addHook('preHandler', authenticate);
+  inviteRoutes(fastify, prisma);
+}, { prefix: '/api/invites' });
 
 let ioServer: Server;
 

@@ -38,16 +38,21 @@ model User {
   friendRequestsSent     FriendRequest[] @relation("RequestSender")
   friendRequestsReceived FriendRequest[] @relation("RequestReceiver")
   
+
   friendshipsA           Friendship[]    @relation("FriendUserA")
   friendshipsB           Friendship[]    @relation("FriendUserB")
 
   blocksInitiated        Block[]         @relation("Blocker")
   blocksReceived         Block[]         @relation("Blocked")
 
-  // DMs
+  // DMs & Groups
   conversationParticipations ConversationParticipant[]
   directMessages             DirectMessage[]
   callsInitiated             CallSession[]
+  ownedConversations         Conversation[]  @relation("ConversationOwner")
+
+  // Invites
+  createdInvites             ServerInvite[]  @relation("InviteCreator")
 }
 
 enum ScreenShareQuality {
@@ -154,6 +159,7 @@ model Server {
   members     ServerMember[]
   categories  Category[]
   channels    Channel[]
+  invites     ServerInvite[]
 }
 
 enum MemberRole {
@@ -231,11 +237,20 @@ model Message {
 
 // --- DIRECT MESSAGES ---
 
+enum ConversationType {
+  DIRECT
+  GROUP
+}
+
 model Conversation {
-  id        String   @id @default(cuid())
-  type      String   @default("DM") // DM, GROUP_DM
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String           @id @default(cuid())
+  type      ConversationType @default(DIRECT)
+  name      String?
+  iconUrl   String?
+  ownerId   String?
+  owner     User?            @relation("ConversationOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
   
   participants ConversationParticipant[]
   messages     DirectMessage[]
@@ -305,4 +320,17 @@ model CallSession {
   createdAt      DateTime     @default(now())
   acceptedAt     DateTime?
   endedAt        DateTime?
+}
+
+model ServerInvite {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  serverId  String
+  server    Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  creatorId String
+  creator   User     @relation("InviteCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  uses      Int      @default(0)
+  maxUses   Int      @default(0) // 0 = unlimited
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
 }

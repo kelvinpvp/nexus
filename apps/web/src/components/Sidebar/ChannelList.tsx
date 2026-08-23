@@ -5,11 +5,14 @@ import { Hash, Volume2, Mic, MicOff, Headphones, LogOut, ChevronDown, Radio, Pho
 import { socket } from '@/lib/socket';
 import { useEffect } from 'react';
 import UserPanel from './UserPanel';
+import { useState } from 'react';
+import CreateServerInviteModal from '../Modals/CreateServerInviteModal';
 
 export default function ChannelList() {
   const { servers, activeServerId, activeChannelId, setActiveChannel, voiceStates, setVoiceStates } = useAppStore();
   const { connectedVoiceChannelId, connectToVoice, disconnectFromVoice } = useVoiceStore();
   const { user } = useAuth();
+  const [isInviteModalOpen, setInviteModalOpen] = useState(false);
 
   const activeServer = servers.find(s => s.id === activeServerId);
 
@@ -45,9 +48,13 @@ export default function ChannelList() {
   };
 
   return (
-    <div className="w-[240px] bg-[#2B2D31] flex flex-col flex-shrink-0 h-full select-none">
+    <div className="w-[240px] bg-[#2B2D31] flex flex-col flex-shrink-0 h-full select-none relative">
       {/* Server Header */}
-      <header className="h-12 border-b border-[#1F2023] flex items-center justify-between px-4 hover:bg-[#35373C] cursor-pointer transition-colors shadow-sm">
+      <header 
+        onClick={() => setInviteModalOpen(true)}
+        className="h-12 border-b border-[#1F2023] flex items-center justify-between px-4 hover:bg-[#35373C] cursor-pointer transition-colors shadow-sm"
+        title="Convidar Pessoas"
+      >
         <h1 className="font-bold text-white text-[15px] truncate">{activeServer.name}</h1>
         <ChevronDown size={18} className="text-[#949BA4]" />
       </header>
@@ -132,6 +139,12 @@ export default function ChannelList() {
 
       {/* User Panel */}
       <UserPanel />
+
+      <CreateServerInviteModal 
+        isOpen={isInviteModalOpen} 
+        onClose={() => setInviteModalOpen(false)} 
+        serverId={activeServer.id} 
+      />
     </div>
   );
 }

@@ -2,32 +2,70 @@ import { useState, useRef, useEffect } from 'react';
 import { useDMStore } from '@/store/dmStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCallStore } from '@/store/callStore';
-import { Phone, Video, Hash, PlusCircle, Smile, Image as ImageIcon, Send } from 'lucide-react';
+import { Phone, Video, Hash, Users, Smile, LogOut, UserPlus } from 'lucide-react';
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
 
 export default function DMArea() {
-  const { activeConversationId, conversations, messages, sendMessage, isLoadingMessages } = useDMStore();
+  const { activeConversationId, conversations, messages, sendMessage, isLoadingMessages, leaveGroup } = useDMStore();
   const { user } = useAuth();
   const { initiateCall } = useCallStore();
   const [content, setContent] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isCalling, setIsCalling] = useState<'VOICE' | 'VIDEO' | null>(null);
+  const [isLeaving, setIsLeaving] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const conversation = conversations.find(c => c.id === activeConversationId);
-  const friend = conversation?.recipient;
   const currentMessages = activeConversationId ? messages[activeConversationId] || [] : [];
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [currentMessages]);
 
-  if (!conversation || !friend) {
+  if (!conversation) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-[#313338] text-[#949BA4]">
         Selecione uma conversa.
       </div>
     );
+  }
+
+  const isGroup = conversation.type === 'GROUP';
+  const friend = conversation.recipient; // Only for DIRECT
+  
+  let displayName = '';
+  let avatarContent = null;
+  let statusContent = null;
+
+  if (!isGroup && friend) {
+    displayName = friend.displayName || friend.username;
+    avatarContent = (
+      <div className="w-[80px] h-[80px] rounded-full bg-[#5865F2] flex items-center justify-center text-white text-3xl font-bold mb-4 shrink-0">
+        {friend.avatarUrl ? <img src={friend.avatarUrl} alt="" className="w-full h-full rounded-full object-cover"/> : friend.username.charAt(0).toUpperCase()}
+      </div>
+    );
+    statusContent = (
+      <>
+        {friend.status === 'ONLINE' && <span className="w-2 h-2 rounded-full bg-[#23A559] ml-2"></span>}
+        {friend.status === 'IDLE' && <span className="w-2 h-2 rounded-full bg-[#F0B232] ml-2"></span>}
+        {friend.status === 'DND' && <span className="w-2 h-2 rounded-full bg-[#F23F43] ml-2"></span>}
+      </>
+    );
+  } else if (isGroup) {
+    displayName = conversation.name || conversation.participants.map(p => p.username).join(', ');
+    if (!displayName) displayName = 'Grupo Desconhecido';
+    
+    avatarContent = (
+      <div className="w-[80px] h-[80px] rounded-full bg-[#2B2D31] flex items-center justify-center text-[#DBDEE1] shrink-0 overflow-hidden mb-4">
+        {conversation.iconUrl ? (
+          <img src={conversation.iconUrl} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <Users size={40} />
+        )}
+      </div>
+    );
+  } else {
+    return null; // DIRECT without recipient somehow
   }
 
   const handleSend = async (e: React.FormEvent) => {
@@ -44,19 +82,41 @@ export default function DMArea() {
     }
   };
 
+  const handleLeaveGroup = async () => {
+    if (!confirm('Tem certeza que deseja sair deste grupo?')) return;
+    setIsLeaving(true);
+    try {
+      await leaveGroup(conversation.id);
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao sair do grupo');
+    } finally {
+      setIsLeaving(false);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col bg-[#313338] h-full">
       {/* Top Bar */}
       <div className="h-12 border-b border-[#1F2023] flex items-center justify-between px-4 shrink-0 shadow-sm">
         <div className="flex items-center text-white space-x-2">
-          <Hash size={24} className="text-[#80848E]" />
-          <span className="font-bold text-[15px]">{friend.displayName || friend.username}</span>
-          {friend.status === 'ONLINE' && <span className="w-2 h-2 rounded-full bg-[#23A559] ml-2"></span>}
-          {friend.status === 'IDLE' && <span className="w-2 h-2 rounded-full bg-[#F0B232] ml-2"></span>}
-          {friend.status === 'DND' && <span className="w-2 h-2 rounded-full bg-[#F23F43] ml-2"></span>}
+          {isGroup ? <Users size={24} className="text-[#80848E]" /> : <Hash size={24} className="text-[#80848E]" />}
+          <span className="font-bold text-[15px] truncate max-w-[400px]">{displayName}</span>
+          {statusContent}
         </div>
         
         <div className="flex items-center space-x-4 text-[#B5BAC1]">
+          {isGroup && (
+            <button 
+              onClick={handleLeaveGroup}
+              disabled={isLeaving}
+              className={`transition-colors ${isLeaving ? 'text-[#949BA4] cursor-not-allowed' : 'hover:text-[#F23F43]'}`}
+              title="Sair do Grupo"
+            >
+              <LogOut size={20} />
+            </button>
+          )}
+
           <button 
             onClick={async () => {
               if (!activeConversationId || isCalling) return;
@@ -102,12 +162,12 @@ export default function DMArea() {
           <>
             <div className="mt-auto">
               <div className="mb-8">
-                <div className="w-[80px] h-[80px] rounded-full bg-[#5865F2] flex items-center justify-center text-white text-3xl font-bold mb-4">
-                  {friend.avatarUrl ? <img src={friend.avatarUrl} alt="" className="w-full h-full rounded-full object-cover"/> : friend.username.charAt(0).toUpperCase()}
-                </div>
-                <h1 className="text-white text-3xl font-bold mb-2">{friend.displayName || friend.username}</h1>
-                <h2 className="text-[#DBDEE1] text-lg font-medium mb-1">{friend.username}</h2>
-                <p className="text-[#949BA4] text-[15px]">Este é o começo do seu histórico de mensagens diretas com @{friend.username}.</p>
+                {avatarContent}
+                <h1 className="text-white text-3xl font-bold mb-2 break-words">{displayName}</h1>
+                {!isGroup && friend && <h2 className="text-[#DBDEE1] text-lg font-medium mb-1">{friend.username}</h2>}
+                <p className="text-[#949BA4] text-[15px]">
+                  {isGroup ? 'Este é o começo do seu histórico de mensagens com este grupo.' : `Este é o começo do seu histórico de mensagens diretas com @${friend?.username}.`}
+                </p>
               </div>
 
               <div className="flex flex-col space-y-4">
@@ -167,7 +227,7 @@ export default function DMArea() {
                   handleSend(e);
                 }
               }}
-              placeholder={`Conversar em @${friend.username}`}
+              placeholder={isGroup ? `Conversar em ${displayName}` : `Conversar em @${friend?.username}`}
               className="bg-transparent text-[#DBDEE1] placeholder-[#949BA4] focus:outline-none flex-1 resize-none overflow-y-auto max-h-[50vh] min-h-[44px] px-3 py-1.5 custom-scrollbar text-[15px]"
               rows={1}
             />
