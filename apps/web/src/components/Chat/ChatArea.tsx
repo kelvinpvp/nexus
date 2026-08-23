@@ -132,7 +132,7 @@ export default function ChatArea() {
   }
 
   if (activeChannel.type === 'VOICE' || activeChannel.type === 'STAGE') {
-    return <VoiceRoom channelName={activeChannel.name} />;
+    return null; // Handled globally by ServerVoiceManager to keep connection alive when viewing text channels
   }
 
   return (

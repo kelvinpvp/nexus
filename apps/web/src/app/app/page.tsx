@@ -10,6 +10,7 @@ import HomeSidebar from '@/components/Home/HomeSidebar';
 import HomeArea from '@/components/Home/HomeArea';
 import DMArea from '@/components/Home/DMArea';
 import CallManager from '@/components/Call/CallManager';
+import ServerVoiceManager from '@/components/Voice/ServerVoiceManager';
 import { useAuth } from '@/contexts/AuthContext';
 
 import ServerSettingsModal from '@/components/Modals/ServerSettingsModal';
@@ -43,7 +44,10 @@ export default function App() {
       ) : activeServerId === null ? (
         activeConversationId ? <DMArea /> : <HomeArea />
       ) : (
-        <ChatArea />
+        <>
+          <ChatArea />
+          <ServerVoiceManager />
+        </>
       )}
 
       {/* Global Call Manager for DMs */}
