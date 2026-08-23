@@ -11,6 +11,16 @@ import crypto from 'crypto';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
+import { execSync } from 'child_process';
+
+// Run migrations automatically before anything else
+try {
+  console.log('Running database migrations...');
+  execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+  console.log('Migrations completed successfully.');
+} catch (error) {
+  console.error('Error running migrations:', error);
+}
 
 export const prisma = new PrismaClient();
 export const app = fastify({ logger: true });
