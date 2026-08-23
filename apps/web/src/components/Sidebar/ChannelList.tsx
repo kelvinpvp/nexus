@@ -11,7 +11,7 @@ import CreateServerInviteModal from '../Modals/CreateServerInviteModal';
 import { UserPlus, Shield, Check, X } from 'lucide-react';
 
 export default function ChannelList() {
-  const { servers, activeServerId, activeChannelId, setActiveChannel, voiceStates, setVoiceStates, setSettingsModalOpen } = useAppStore();
+  const { servers, activeServerId, activeChannelId, setActiveChannel, voiceStates, setVoiceStates, setSettingsModalOpen, setServerSettingsOpen } = useAppStore();
   const { connectedVoiceChannelId, connectToVoice, disconnectFromVoice } = useVoiceStore();
   const { user } = useAuth();
   const [isInviteModalOpen, setInviteModalOpen] = useState(false);
@@ -81,11 +81,11 @@ export default function ChannelList() {
           <button
             onClick={() => {
               setServerMenuOpen(false);
-              setSettingsModalOpen(true);
+              setServerSettingsOpen(true);
             }}
             className="w-full flex items-center justify-between px-2.5 py-2 rounded text-sm text-[#B5BAC1] hover:bg-[#35373C] hover:text-white transition-colors"
           >
-            <span>Configurações de Cargos</span>
+            <span>Configurações do Servidor</span>
             <Shield size={16} />
           </button>
         </div>

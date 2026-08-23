@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { PrismaClient, ServerMember } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { Server } from 'socket.io';
+import { PermissionService, Permissions } from '../services/PermissionService';
 
 export default async function channelRoutes(fastify: FastifyInstance, prisma: PrismaClient, getIo: () => Server) {
   
@@ -10,14 +11,28 @@ export default async function channelRoutes(fastify: FastifyInstance, prisma: Pr
     const { channelId } = request.params as { channelId: string };
 
     try {
-      // Validate user has access to this channel (through server)
       const channel = await prisma.channel.findUnique({
         where: { id: channelId },
-        include: { server: { include: { members: true } } }
+        include: {
+          server: true,
+          overrides: true
+        }
       });
 
-      if (!channel || !channel.server.members.some((m: ServerMember) => m.userId === user.id)) {
-        return reply.status(403).send({ error: 'Access denied' });
+      if (!channel) return reply.status(404).send({ error: 'Channel not found' });
+
+      const member = await prisma.serverMember.findUnique({
+        where: { userId_serverId: { userId: user.id, serverId: channel.serverId } },
+        include: { roles: { include: { role: true } } }
+      });
+
+      if (!member) return reply.status(403).send({ error: 'Access denied' });
+
+      const allRoles = await prisma.role.findMany({ where: { serverId: channel.serverId } });
+      const channelPerms = PermissionService.computeChannelPermissions(channel.server, member, allRoles, channel.overrides);
+
+      if (!PermissionService.hasFlag(channelPerms, Permissions.VIEW_CHANNEL)) {
+        return reply.status(403).send({ error: 'Você não tem permissão para ver este canal.' });
       }
 
       const messages = await prisma.message.findMany({
@@ -49,14 +64,28 @@ export default async function channelRoutes(fastify: FastifyInstance, prisma: Pr
     }
 
     try {
-      // Validate access
       const channel = await prisma.channel.findUnique({
         where: { id: channelId },
-        include: { server: { include: { members: true } } }
+        include: {
+          server: true,
+          overrides: true
+        }
       });
 
-      if (!channel || !channel.server.members.some((m: ServerMember) => m.userId === user.id)) {
-        return reply.status(403).send({ error: 'Access denied' });
+      if (!channel) return reply.status(404).send({ error: 'Channel not found' });
+
+      const member = await prisma.serverMember.findUnique({
+        where: { userId_serverId: { userId: user.id, serverId: channel.serverId } },
+        include: { roles: { include: { role: true } } }
+      });
+
+      if (!member) return reply.status(403).send({ error: 'Access denied' });
+
+      const allRoles = await prisma.role.findMany({ where: { serverId: channel.serverId } });
+      const channelPerms = PermissionService.computeChannelPermissions(channel.server, member, allRoles, channel.overrides);
+
+      if (!PermissionService.hasFlag(channelPerms, Permissions.VIEW_CHANNEL) || !PermissionService.hasFlag(channelPerms, Permissions.SEND_MESSAGES)) {
+        return reply.status(403).send({ error: 'Você não tem permissão para enviar mensagens neste canal.' });
       }
 
       const message = await prisma.message.create({

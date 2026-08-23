@@ -2,12 +2,36 @@ import { create } from 'zustand';
 import { apiFetch } from '@/lib/api';
 import { socket } from '@/lib/socket';
 
+export interface Role {
+  id: string;
+  name: string;
+  color: string;
+  position: number;
+  permissions: string;
+  isDefault: boolean;
+  mentionable: boolean;
+  serverId: string;
+}
+
+export interface ChannelOverride {
+  id: string;
+  type: 'ROLE' | 'MEMBER';
+  allow: string;
+  deny: string;
+  channelId: string;
+  roleId?: string | null;
+  memberId?: string | null;
+}
+
 export interface Channel {
   id: string;
   name: string;
   type: 'TEXT' | 'VOICE' | 'STAGE' | 'FORUM' | 'MEDIA' | 'ANNOUNCEMENT';
+  topic?: string | null;
+  userLimit?: number;
   categoryId?: string | null;
   serverId: string;
+  overrides?: ChannelOverride[];
 }
 
 export interface Category {
@@ -23,24 +47,42 @@ export interface VoiceState {
   channelId: string;
   isMuted: boolean;
   isDeafened: boolean;
+  serverMuted?: boolean;
+  serverDeafened?: boolean;
+}
+
+export interface ServerMemberRole {
+  id: string;
+  memberId: string;
+  roleId: string;
+  role: Role;
 }
 
 export interface ServerMember {
   id: string;
   role: string;
+  nickname?: string | null;
+  serverMuted?: boolean;
+  serverDeafened?: boolean;
   user: {
     id: string;
     username: string;
+    displayName?: string | null;
     avatarUrl: string | null;
     status: string;
+    customStatus?: string | null;
+    bio?: string | null;
   };
+  roles?: ServerMemberRole[];
 }
 
 export interface Server {
   id: string;
   name: string;
   iconUrl: string | null;
+  description?: string | null;
   ownerId: string;
+  roles?: Role[];
   categories: Category[];
   members: ServerMember[];
 }
@@ -51,6 +93,8 @@ interface AppState {
   activeChannelId: string | null;
   isLoadingServers: boolean;
   voiceStates: VoiceState[];
+  isServerSettingsOpen: boolean;
+  setServerSettingsOpen: (isOpen: boolean) => void;
   
   fetchServers: () => Promise<void>;
   fetchServerDetails: (serverId: string) => Promise<void>;
@@ -71,7 +115,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   isLoadingServers: false,
   voiceStates: [],
   isSettingsModalOpen: false,
+  isServerSettingsOpen: false,
 
+  setServerSettingsOpen: (isOpen) => set({ isServerSettingsOpen: isOpen }),
   setSettingsModalOpen: (isOpen) => set({ isSettingsModalOpen: isOpen }),
   setVoiceStates: (states) => set({ voiceStates: states }),
 

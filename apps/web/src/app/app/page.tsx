@@ -12,8 +12,10 @@ import DMArea from '@/components/Home/DMArea';
 import CallManager from '@/components/Call/CallManager';
 import { useAuth } from '@/contexts/AuthContext';
 
+import ServerSettingsModal from '@/components/Modals/ServerSettingsModal';
+
 export default function App() {
-  const { fetchServers, isLoadingServers, activeServerId } = useAppStore();
+  const { fetchServers, isLoadingServers, activeServerId, isServerSettingsOpen, setServerSettingsOpen } = useAppStore();
   const { activeConversationId } = useDMStore();
   const { user } = useAuth();
 
@@ -46,6 +48,11 @@ export default function App() {
 
       {/* Global Call Manager for DMs */}
       <CallManager />
+
+      {/* Server Settings Modal */}
+      {isServerSettingsOpen && (
+        <ServerSettingsModal onClose={() => setServerSettingsOpen(false)} />
+      )}
     </div>
   );
 }

@@ -51,8 +51,11 @@ model User {
   callsInitiated             CallSession[]
   ownedConversations         Conversation[]  @relation("ConversationOwner")
 
-  // Invites
+  // Invites & Moderation
   createdInvites             ServerInvite[]  @relation("InviteCreator")
+  bansReceived               ServerBan[]     @relation("BannedUser")
+  bansIssued                 ServerBan[]     @relation("BanModerator")
+  auditActions               AuditLog[]      @relation("AuditActor")
 }
 
 enum ScreenShareQuality {
@@ -151,15 +154,19 @@ model Server {
   id          String   @id @default(cuid())
   name        String
   iconUrl     String?
+  description String?
   ownerId     String
   owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   members     ServerMember[]
+  roles       Role[]
   categories  Category[]
   channels    Channel[]
   invites     ServerInvite[]
+  bans        ServerBan[]
+  auditLogs   AuditLog[]
 }
 
 enum MemberRole {
@@ -168,17 +175,57 @@ enum MemberRole {
   MEMBER
 }
 
+model Role {
+  id          String   @id @default(cuid())
+  name        String
+  color       String   @default("#99AAB5")
+  position    Int      @default(0)
+  permissions String   @default("0") // BigInt stored as String for safety
+  isDefault   Boolean  @default(false) // @everyone role flag
+  mentionable Boolean  @default(false)
+
+  serverId    String
+  server      Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  members     ServerMemberRole[]
+  overrides   ChannelPermissionOverride[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([serverId, position])
+}
+
 model ServerMember {
-  id        String     @id @default(cuid())
-  role      MemberRole @default(MEMBER)
-  userId    String
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  serverId  String
-  server    Server     @relation(fields: [serverId], references: [id], onDelete: Cascade)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id             String     @id @default(cuid())
+  role           MemberRole @default(MEMBER)
+  nickname       String?
+  timeoutUntil   DateTime?
+  serverMuted    Boolean    @default(false)
+  serverDeafened Boolean    @default(false)
+
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serverId       String
+  server         Server     @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  roles          ServerMemberRole[]
+  overrides      ChannelPermissionOverride[]
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   @@unique([userId, serverId])
+}
+
+model ServerMemberRole {
+  id        String       @id @default(cuid())
+  memberId  String
+  member    ServerMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  roleId    String
+  role      Role         @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([memberId, roleId])
 }
 
 model Category {
@@ -206,6 +253,8 @@ model Channel {
   id         String      @id @default(cuid())
   name       String
   type       ChannelType @default(TEXT)
+  topic      String?
+  userLimit  Int         @default(0) // 0 = unlimited for voice channels
   order      Int         @default(0)
   
   serverId   String
@@ -214,10 +263,66 @@ model Channel {
   categoryId String?
   category   Category?   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   
+  overrides  ChannelPermissionOverride[]
+
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
   messages   Message[]
+}
+
+enum OverrideType {
+  ROLE
+  MEMBER
+}
+
+model ChannelPermissionOverride {
+  id        String       @id @default(cuid())
+  type      OverrideType @default(ROLE)
+  allow     String       @default("0")
+  deny      String       @default("0")
+
+  channelId String
+  channel   Channel      @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  roleId    String?
+  role      Role?        @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  memberId  String?
+  member    ServerMember? @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, roleId])
+  @@unique([channelId, memberId])
+}
+
+model ServerBan {
+  id          String   @id @default(cuid())
+  serverId    String
+  server      Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation("BannedUser", fields: [userId], references: [id], onDelete: Cascade)
+  moderatorId String
+  moderator   User     @relation("BanModerator", fields: [moderatorId], references: [id], onDelete: Cascade)
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  @@unique([serverId, userId])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  serverId    String
+  server      Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  actorId     String
+  actor       User     @relation("AuditActor", fields: [actorId], references: [id], onDelete: Cascade)
+  action      String
+  targetType  String
+  targetId    String?
+  reason      String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([serverId, createdAt])
 }
 
 model Message {

@@ -27,6 +27,13 @@ export default function ServerMemberList({ members }: ServerMemberListProps) {
   const admins = members.filter(m => m.role === 'ADMIN');
   const regularMembers = members.filter(m => m.role !== 'OWNER' && m.role !== 'ADMIN');
 
+  const [contextMenu, setContextMenu] = useState<{ member: ServerMember; x: number; y: number } | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent, m: ServerMember) => {
+    e.preventDefault();
+    setContextMenu({ member: m, x: e.clientX, y: e.clientY });
+  };
+
   const renderMemberItem = (m: ServerMember) => {
     const isOnline = m.user.status === 'ONLINE' || m.user.status === 'idle' || m.user.status === 'dnd';
     const isOwner = m.role === 'OWNER';
@@ -36,7 +43,8 @@ export default function ServerMemberList({ members }: ServerMemberListProps) {
       <div 
         key={m.id}
         onClick={(e) => handleUserClick(e, m.user.id)}
-        className="flex items-center px-2 py-1.5 rounded hover:bg-[#35373C] cursor-pointer group transition-colors"
+        onContextMenu={(e) => handleContextMenu(e, m)}
+        className="flex items-center px-2 py-1.5 rounded hover:bg-[#35373C] cursor-pointer group transition-colors relative"
       >
         <div className="relative w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold text-sm shrink-0 mr-3">
           {m.user.avatarUrl ? (
@@ -104,6 +112,25 @@ export default function ServerMemberList({ members }: ServerMemberListProps) {
           position={{ top: selectedUserPopout.top, left: selectedUserPopout.left }}
           onClose={() => setSelectedUserPopout(null)}
         />
+      )}
+
+      {contextMenu && (
+        <div 
+          onClick={(e) => e.stopPropagation()}
+          style={{ top: contextMenu.y, left: Math.min(contextMenu.x, window.innerWidth - 220) }}
+          className="fixed z-50 bg-[#111214] border border-[#1F2023] rounded-lg shadow-2xl p-1.5 w-48 space-y-1 animate-in fade-in zoom-in-95 duration-100"
+        >
+          <button
+            onClick={() => {
+              setSelectedUserPopout({ userId: contextMenu.member.user.id, top: contextMenu.y, left: contextMenu.x });
+              setContextMenu(null);
+            }}
+            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded text-sm text-[#DBDEE1] hover:bg-[#35373C] hover:text-white transition-colors"
+          >
+            <span>Perfil</span>
+            <User size={16} />
+          </button>
+        </div>
       )}
     </div>
   );
