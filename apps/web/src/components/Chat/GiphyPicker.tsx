@@ -56,8 +56,12 @@ export default function GiphyPicker({ onSelectGif, onClose }: GiphyPickerProps) 
   };
 
   useEffect(() => {
-    fetchGifs('');
-  }, []);
+    const timer = setTimeout(() => {
+      fetchGifs(searchTerm);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,20 +69,31 @@ export default function GiphyPicker({ onSelectGif, onClose }: GiphyPickerProps) 
   };
 
   return (
-    <div className="w-80 h-96 bg-[#2B2D31] border border-[#1F2023] rounded-lg shadow-2xl flex flex-col overflow-hidden z-50">
+    <div 
+      className="w-80 h-96 bg-[#2B2D31] border border-[#1F2023] rounded-lg shadow-2xl flex flex-col overflow-hidden z-50"
+      onClick={(e) => e.stopPropagation()}
+    >
       {/* Header / Search */}
       <div className="p-3 border-b border-[#1F2023] flex items-center space-x-2 bg-[#1E1F22]">
-        <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center bg-[#313338] px-2.5 py-1.5 rounded text-sm">
-          <Search size={16} className="text-[#949BA4] mr-2" />
+        <div className="flex-1 flex items-center bg-[#313338] px-2.5 py-1.5 rounded text-sm">
+          <Search size={16} className="text-[#949BA4] mr-2 shrink-0" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar Tenor / GIF..."
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                fetchGifs(searchTerm);
+              }
+            }}
+            autoFocus
+            placeholder="Buscar GIF no Giphy..."
             className="bg-transparent border-none outline-none text-[#DBDEE1] w-full text-xs placeholder-[#949BA4]"
           />
-        </form>
-        <button onClick={onClose} className="text-[#949BA4] hover:text-white p-1">
+        </div>
+        <button type="button" onClick={onClose} className="text-[#949BA4] hover:text-white p-1 shrink-0">
           <X size={18} />
         </button>
       </div>
