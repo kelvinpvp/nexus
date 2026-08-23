@@ -58,6 +58,13 @@ import callRoutes from './routes/calls';
 
 import inviteRoutes from './routes/invites';
 
+// Setup Plugins
+app.register(multipart, {
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  }
+});
+
 app.register(async (fastify) => {
   fastify.addHook('preHandler', authenticate);
   serverRoutes(fastify, prisma);

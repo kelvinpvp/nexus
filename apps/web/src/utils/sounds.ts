@@ -17,96 +17,118 @@ export const playSound = (type: SoundType) => {
       ctx.resume();
     }
     
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    
     const now = ctx.currentTime;
-    
+
     switch (type) {
-      case 'unmute':
-        // Ascending boop
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(400, now);
-        osc.frequency.setValueAtTime(600, now + 0.1);
-        
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.5, now + 0.05);
-        gain.gain.setValueAtTime(0.5, now + 0.1);
-        gain.gain.linearRampToValueAtTime(0, now + 0.2);
-        
-        osc.start(now);
-        osc.stop(now + 0.2);
+      case 'unmute': {
+        // Modern soft dual-tone pop (Discord style)
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(480, now);
+        osc1.frequency.exponentialRampToValueAtTime(720, now + 0.08);
+
+        gain1.gain.setValueAtTime(0.001, now);
+        gain1.gain.exponentialRampToValueAtTime(0.25, now + 0.02);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+
+        osc1.start(now);
+        osc1.stop(now + 0.12);
         break;
+      }
         
-      case 'mute':
-        // Descending boop
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(600, now);
-        osc.frequency.setValueAtTime(400, now + 0.1);
-        
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.5, now + 0.05);
-        gain.gain.setValueAtTime(0.5, now + 0.1);
-        gain.gain.linearRampToValueAtTime(0, now + 0.2);
-        
-        osc.start(now);
-        osc.stop(now + 0.2);
+      case 'mute': {
+        // Soft descending pop
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(720, now);
+        osc1.frequency.exponentialRampToValueAtTime(420, now + 0.08);
+
+        gain1.gain.setValueAtTime(0.001, now);
+        gain1.gain.exponentialRampToValueAtTime(0.25, now + 0.02);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+
+        osc1.start(now);
+        osc1.stop(now + 0.12);
         break;
+      }
         
-      case 'join':
-        // Happy ascending chord-like sequence
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(440, now); // A4
-        osc.frequency.setValueAtTime(554.37, now + 0.1); // C#5
-        osc.frequency.setValueAtTime(659.25, now + 0.2); // E5
-        
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.3, now + 0.05);
-        gain.gain.setValueAtTime(0.3, now + 0.3);
-        gain.gain.linearRampToValueAtTime(0, now + 0.4);
-        
-        osc.start(now);
-        osc.stop(now + 0.4);
+      case 'join': {
+        // Warm 2-note chime (Discord connect style)
+        [523.25, 659.25].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const startTime = now + i * 0.07;
+          
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, startTime);
+
+          gain.gain.setValueAtTime(0.001, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.2, startTime + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.start(startTime);
+          osc.stop(startTime + 0.25);
+        });
         break;
+      }
         
       case 'leave':
-      case 'disconnect':
-        // Sad descending sequence
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(659.25, now); // E5
-        osc.frequency.setValueAtTime(554.37, now + 0.1); // C#5
-        osc.frequency.setValueAtTime(440, now + 0.2); // A4
-        
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.3, now + 0.05);
-        gain.gain.setValueAtTime(0.3, now + 0.3);
-        gain.gain.linearRampToValueAtTime(0, now + 0.4);
-        
-        osc.start(now);
-        osc.stop(now + 0.4);
+      case 'disconnect': {
+        // Gentle 2-note disconnect chime
+        [659.25, 523.25].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const startTime = now + i * 0.07;
+          
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, startTime);
+
+          gain.gain.setValueAtTime(0.001, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.2, startTime + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.22);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.start(startTime);
+          osc.stop(startTime + 0.22);
+        });
         break;
+      }
         
-      case 'ring':
-        // Ringing phone style trill
-        osc.type = 'sine';
-        
-        for (let i = 0; i < 4; i++) {
-          const t = now + i * 0.1;
-          osc.frequency.setValueAtTime(600, t);
-          osc.frequency.setValueAtTime(800, t + 0.05);
-        }
-        
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
-        gain.gain.setValueAtTime(0.2, now + 0.35);
-        gain.gain.linearRampToValueAtTime(0, now + 0.4);
-        
-        osc.start(now);
-        osc.stop(now + 0.4);
+      case 'ring': {
+        // Modern double-beep ringtone (Discord call ring style)
+        [0, 0.15].forEach((offset) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          const startTime = now + offset;
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(853.3, startTime);
+
+          gain.gain.setValueAtTime(0.001, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.18, startTime + 0.01);
+          gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.1);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.start(startTime);
+          osc.stop(startTime + 0.1);
+        });
         break;
+      }
     }
   } catch (e) {
     console.error('Failed to play sound', e);
