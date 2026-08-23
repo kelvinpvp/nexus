@@ -7,7 +7,7 @@ import { useAppStore } from '@/store/appStore';
 
 interface ProfilePopoutProps {
   userId: string;
-  position: { bottom: number; left: number };
+  position: { top?: number; bottom?: number; left: number };
   onClose: () => void;
 }
 
@@ -30,7 +30,7 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
 
     const fetchUser = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${userId}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/users/${userId}`, {
           credentials: 'include'
         });
         if (res.ok) {
@@ -94,8 +94,8 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
       ref={popoutRef}
       className="fixed z-[100] w-[340px] bg-[#111214] rounded-lg shadow-xl overflow-hidden animate-in zoom-in-95 duration-100"
       style={{
-        bottom: position.bottom,
-        left: position.left,
+        ...(position.top !== undefined ? { top: Math.min(position.top, window.innerHeight - 380) } : { bottom: position.bottom }),
+        left: Math.min(position.left, window.innerWidth - 360),
       }}
       onClick={(e) => e.stopPropagation()}
     >

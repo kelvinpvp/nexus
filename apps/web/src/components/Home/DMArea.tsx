@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCallStore } from '@/store/callStore';
 import { Phone, Video, Hash, Users, Smile, LogOut, UserPlus } from 'lucide-react';
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
-import GiphyPicker from '../Chat/GiphyPicker';
+import ProfilePopout from '../Profile/ProfilePopout';
 
 export default function DMArea() {
   const { activeConversationId, conversations, messages, sendMessage, isLoadingMessages, leaveGroup } = useDMStore();
@@ -15,7 +15,18 @@ export default function DMArea() {
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [isCalling, setIsCalling] = useState<'VOICE' | 'VIDEO' | null>(null);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [selectedUserPopout, setSelectedUserPopout] = useState<{ userId: string; top: number; left: number } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleUserClick = (e: React.MouseEvent, authorId: string) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setSelectedUserPopout({
+      userId: authorId,
+      top: rect.bottom + 5,
+      left: rect.left,
+    });
+  };
 
   const handleSendGif = async (gifUrl: string) => {
     if (!activeConversationId) return;
@@ -190,7 +201,10 @@ export default function DMArea() {
                   return (
                     <div key={msg.id} className={`flex items-start group hover:bg-[#2E3035] -mx-4 px-4 py-0.5 ${showHeader ? 'mt-4' : 'mt-0'}`}>
                       {showHeader ? (
-                        <div className="w-10 h-10 rounded-full bg-[#5865F2] shrink-0 mr-4 mt-0.5 flex items-center justify-center text-white font-bold cursor-pointer">
+                        <div 
+                          onClick={(e) => handleUserClick(e, msg.authorId)}
+                          className="w-10 h-10 rounded-full bg-[#5865F2] shrink-0 mr-4 mt-0.5 flex items-center justify-center text-white font-bold cursor-pointer hover:opacity-80 transition-opacity"
+                        >
                           {msg.author.avatarUrl ? <img src={msg.author.avatarUrl} alt="" className="w-full h-full rounded-full object-cover"/> : msg.author.username.charAt(0).toUpperCase()}
                         </div>
                       ) : (
@@ -202,7 +216,10 @@ export default function DMArea() {
                       <div className="flex-1 min-w-0">
                         {showHeader && (
                           <div className="flex items-baseline mb-1">
-                            <span className="font-medium text-[#F2F3F5] mr-2 cursor-pointer hover:underline text-[15px]">
+                            <span 
+                              onClick={(e) => handleUserClick(e, msg.authorId)}
+                              className="font-medium text-[#F2F3F5] mr-2 cursor-pointer hover:underline text-[15px]"
+                            >
                               {msg.author.displayName || msg.author.username}
                             </span>
                             <span className="text-xs text-[#949BA4] font-medium">
@@ -298,6 +315,14 @@ export default function DMArea() {
           </div>
         </form>
       </div>
+
+      {selectedUserPopout && (
+        <ProfilePopout 
+          userId={selectedUserPopout.userId} 
+          position={{ top: selectedUserPopout.top, left: selectedUserPopout.left }} 
+          onClose={() => setSelectedUserPopout(null)} 
+        />
+      )}
     </div>
   );
 }

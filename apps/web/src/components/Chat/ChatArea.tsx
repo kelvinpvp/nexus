@@ -8,6 +8,8 @@ import VoiceRoom from '../Voice/VoiceRoom';
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
 import GiphyPicker from './GiphyPicker';
 
+import ProfilePopout from '../Profile/ProfilePopout';
+
 interface Message {
   id: string;
   content: string;
@@ -27,7 +29,18 @@ export default function ChatArea() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedUserPopout, setSelectedUserPopout] = useState<{ userId: string; top: number; left: number } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleUserClick = (e: React.MouseEvent, authorId: string) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setSelectedUserPopout({
+      userId: authorId,
+      top: rect.bottom + 5,
+      left: rect.left,
+    });
+  };
 
   const handleSendGif = async (gifUrl: string) => {
     if (!activeChannelId) return;
@@ -149,16 +162,22 @@ export default function ChatArea() {
             <div className="space-y-4">
               {messages.map((message) => (
                 <div key={message.id} className="flex hover:bg-[#2E3035] p-1 -mx-1 rounded transition-colors group">
-                  <div className="w-10 h-10 rounded-full bg-[#5865F2] flex-shrink-0 mt-0.5 cursor-pointer flex items-center justify-center text-white font-bold text-lg">
+                  <div 
+                    onClick={(e) => handleUserClick(e, message.author.id)}
+                    className="w-10 h-10 rounded-full bg-[#5865F2] flex-shrink-0 mt-0.5 cursor-pointer flex items-center justify-center text-white font-bold text-lg hover:opacity-80 transition-opacity"
+                  >
                     {message.author.avatarUrl ? (
-                      <img src={message.author.avatarUrl} alt="Avatar" className="w-full h-full rounded-full" />
+                      <img src={message.author.avatarUrl} alt="Avatar" className="w-full h-full rounded-full object-cover" />
                     ) : (
                       message.author.username.charAt(0).toUpperCase()
                     )}
                   </div>
                   <div className="ml-4 flex-1 min-w-0">
                     <div className="flex items-baseline">
-                      <span className="font-medium text-[15px] text-white hover:underline cursor-pointer mr-2">
+                      <span 
+                        onClick={(e) => handleUserClick(e, message.author.id)}
+                        className="font-medium text-[15px] text-white hover:underline cursor-pointer mr-2"
+                      >
                         {message.author.username}
                       </span>
                       <span className="text-xs text-[#949BA4]">
@@ -250,6 +269,14 @@ export default function ChatArea() {
           </div>
         </form>
       </div>
+
+      {selectedUserPopout && (
+        <ProfilePopout 
+          userId={selectedUserPopout.userId} 
+          position={{ top: selectedUserPopout.top, left: selectedUserPopout.left }} 
+          onClose={() => setSelectedUserPopout(null)} 
+        />
+      )}
     </div>
   );
 }
