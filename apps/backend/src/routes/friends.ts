@@ -146,7 +146,7 @@ export default function friendRoutes(fastify: FastifyInstance, prisma: PrismaCli
     } catch (error) {
       console.error(error);
       if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Username inválido' });
-      return reply.status(500).send({ error: 'Internal server error' });
+      return reply.status(500).send({ error: 'Internal server error: ' + (error instanceof Error ? error.message : String(error)) });
     }
   });
 
@@ -168,12 +168,6 @@ export default function friendRoutes(fastify: FastifyInstance, prisma: PrismaCli
       let friendship = null;
 
       await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        // Update request status
-        await tx.friendRequest.update({
-          where: { id },
-          data: { status: 'ACCEPTED' }
-        });
-
         // Create friendship
         friendship = await tx.friendship.create({
           data: {
@@ -186,7 +180,7 @@ export default function friendRoutes(fastify: FastifyInstance, prisma: PrismaCli
           }
         });
         
-        // Delete the request (optional, some platforms keep it as ACCEPTED, but deleting cleans up)
+        // Delete the request
         await tx.friendRequest.delete({ where: { id } });
       });
 
@@ -206,7 +200,7 @@ export default function friendRoutes(fastify: FastifyInstance, prisma: PrismaCli
 
       return reply.send({ success: true });
     } catch (error) {
-      return reply.status(500).send({ error: 'Internal server error' });
+      return reply.status(500).send({ error: 'Internal server error: ' + (error instanceof Error ? error.message : String(error)) });
     }
   });
 
@@ -230,7 +224,7 @@ export default function friendRoutes(fastify: FastifyInstance, prisma: PrismaCli
 
       return reply.send({ success: true });
     } catch (error) {
-      return reply.status(500).send({ error: 'Internal server error' });
+      return reply.status(500).send({ error: 'Internal server error: ' + (error instanceof Error ? error.message : String(error)) });
     }
   });
 
@@ -254,7 +248,7 @@ export default function friendRoutes(fastify: FastifyInstance, prisma: PrismaCli
 
       return reply.send({ success: true });
     } catch (error) {
-      return reply.status(500).send({ error: 'Internal server error' });
+      return reply.status(500).send({ error: 'Internal server error: ' + (error instanceof Error ? error.message : String(error)) });
     }
   });
 
@@ -287,7 +281,7 @@ export default function friendRoutes(fastify: FastifyInstance, prisma: PrismaCli
 
       return reply.send({ success: true });
     } catch (error) {
-      return reply.status(500).send({ error: 'Internal server error' });
+      return reply.status(500).send({ error: 'Internal server error: ' + (error instanceof Error ? error.message : String(error)) });
     }
   });
 }

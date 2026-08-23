@@ -4,9 +4,11 @@ import { useState, useRef } from 'react';
 import SettingsModal from '@/components/Settings/SettingsModal';
 import ProfilePopout from '@/components/Profile/ProfilePopout';
 
+import { useAppStore } from '@/store/appStore';
+
 export default function UserPanel() {
   const { user } = useAuth();
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const { isSettingsModalOpen, setSettingsModalOpen } = useAppStore();
   const [showProfilePopout, setShowProfilePopout] = useState(false);
   const [popoutPos, setPopoutPos] = useState({ bottom: 0, left: 0 });
   const profileContainerRef = useRef<HTMLDivElement>(null);
@@ -55,7 +57,7 @@ export default function UserPanel() {
             <Headphones size={20} />
           </button>
           <button 
-            onClick={() => setShowSettingsModal(true)} 
+            onClick={() => setSettingsModalOpen(true)} 
             className="w-8 h-8 flex items-center justify-center hover:bg-[#3F4147] rounded hover:text-[#DBDEE1] transition-colors" 
             title="Configurações de Usuário"
           >
@@ -64,8 +66,8 @@ export default function UserPanel() {
         </div>
       </div>
 
-      {showSettingsModal && (
-        <SettingsModal onClose={() => setShowSettingsModal(false)} initialTab="account" />
+      {isSettingsModalOpen && (
+        <SettingsModal onClose={() => setSettingsModalOpen(false)} initialTab="account" />
       )}
 
       {showProfilePopout && (

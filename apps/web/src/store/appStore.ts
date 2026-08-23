@@ -57,6 +57,8 @@ interface AppState {
   setActiveChannel: (channelId: string) => void;
   addServer: (server: Server) => void;
   setVoiceStates: (states: VoiceState[]) => void;
+  isSettingsModalOpen: boolean;
+  setSettingsModalOpen: (isOpen: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -65,7 +67,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeChannelId: null,
   isLoadingServers: false,
   voiceStates: [],
+  isSettingsModalOpen: false,
 
+  setSettingsModalOpen: (isOpen) => set({ isSettingsModalOpen: isOpen }),
   setVoiceStates: (states) => set({ voiceStates: states }),
 
   fetchServers: async () => {

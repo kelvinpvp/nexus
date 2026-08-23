@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { User, Copy, Edit2, UserPlus, Check, X, MessageSquare, Ban, Unlock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFriendStore } from '@/store/friendStore';
+import { useAppStore } from '@/store/appStore';
 
 interface ProfilePopoutProps {
   userId: string;
@@ -130,7 +131,13 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
             {/* Buttons (Right aligned) */}
             <div className="flex justify-end pt-3 pb-2 h-12 space-x-2">
               {isCurrentUser ? (
-                <button className="bg-[#4E5058] hover:bg-[#6D6F78] px-3 py-1 rounded text-[13px] font-medium text-white transition-colors h-7 flex items-center">
+                <button 
+                  onClick={() => {
+                    useAppStore.getState().setSettingsModalOpen(true);
+                    onClose();
+                  }}
+                  className="bg-[#4E5058] hover:bg-[#6D6F78] px-3 py-1 rounded text-[13px] font-medium text-white transition-colors h-7 flex items-center"
+                >
                   <Edit2 size={14} className="mr-1.5" />
                   Editar Perfil
                 </button>
