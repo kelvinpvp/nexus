@@ -116,11 +116,6 @@ app.register(async (fastify) => {
 }, { prefix: '/api/calls' });
 
 // Setup Plugins
-app.register(multipart, {
-  limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
-  }
-});
 
 app.register(fastifyStatic, {
   root: path.join(__dirname, '../uploads'),
