@@ -6,6 +6,7 @@ import { socket } from '@/lib/socket';
 import { apiFetch } from '@/lib/api';
 import VoiceRoom from '../Voice/VoiceRoom';
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
+import GiphyPicker from './GiphyPicker';
 
 interface Message {
   id: string;
@@ -24,8 +25,21 @@ export default function ChatArea() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleSendGif = async (gifUrl: string) => {
+    if (!activeChannelId) return;
+    try {
+      await apiFetch(`/api/channels/${activeChannelId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify({ content: gifUrl }),
+      });
+    } catch (err) {
+      console.error('Error sending GIF:', err);
+    }
+  };
 
   const activeServer = servers.find(s => s.id === activeServerId);
   const activeChannel = activeServer?.categories?.flatMap(c => c.channels).find(ch => ch.id === activeChannelId);
@@ -152,7 +166,13 @@ export default function ChatArea() {
                       </span>
                     </div>
                     <div className="text-[#DBDEE1] text-[15px] leading-[22px] whitespace-pre-wrap break-words">
-                      {message.content}
+                      {message.content.match(/^https?:\/\/.+\.(gif|png|jpg|jpeg|webp)($|\?)/i) || message.content.includes('media.giphy.com') || message.content.includes('giphy.com/media') ? (
+                        <div className="mt-1 max-w-sm rounded-lg overflow-hidden border border-[#1E1F22]">
+                          <img src={message.content} alt="GIF/Imagem" className="w-full max-h-72 object-contain bg-black/20" />
+                        </div>
+                      ) : (
+                        message.content
+                      )}
                     </div>
                   </div>
                 </div>
@@ -176,12 +196,38 @@ export default function ChatArea() {
           <div className="flex items-center space-x-3 ml-3 relative">
             <button 
               type="button" 
-              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              onClick={() => {
+                setShowGifPicker(!showGifPicker);
+                setShowEmojiPicker(false);
+              }}
+              className="text-xs font-bold bg-[#4E5058] hover:bg-[#6D6F78] text-white px-2 py-1 rounded transition-colors"
+            >
+              GIF
+            </button>
+
+            <button 
+              type="button" 
+              onClick={() => {
+                setShowEmojiPicker(!showEmojiPicker);
+                setShowGifPicker(false);
+              }}
               className="text-[#B5BAC1] hover:text-[#DBDEE1] transition-colors"
             >
               <Smile size={22} />
             </button>
             
+            {showGifPicker && (
+              <div className="absolute bottom-12 right-0 z-50">
+                <GiphyPicker
+                  onSelectGif={(gifUrl) => {
+                    handleSendGif(gifUrl);
+                    setShowGifPicker(false);
+                  }}
+                  onClose={() => setShowGifPicker(false)}
+                />
+              </div>
+            )}
+
             {showEmojiPicker && (
               <div className="absolute bottom-12 right-0 z-50">
                 <EmojiPicker
