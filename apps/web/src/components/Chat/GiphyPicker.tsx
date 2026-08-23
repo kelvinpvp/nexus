@@ -15,8 +15,8 @@ export default function GiphyPicker({ onSelectGif, onClose }: GiphyPickerProps) 
   const fetchGifs = async (query: string) => {
     setIsLoading(true);
     try {
-      // Usando o Klipy / Giphy public SDK endpoint livre sem bloqueio 403
-      const apiKey = 'GlV172lhBxWFUTBAA666yW6wD69YWAUt';
+      // Chave oficial fornecida pelo usuário
+      const apiKey = 'UGC7H7FspGUjVvi15ztgkiajpOCFfBCL';
       const endpoint = query.trim()
         ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=24&rating=g`
         : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=24&rating=g`;
