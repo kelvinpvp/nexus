@@ -1,6 +1,6 @@
 import { useAppStore } from '@/store/appStore';
 import { useAuth } from '@/contexts/AuthContext';
-import { Hash, PlusCircle, Smile, Send } from 'lucide-react';
+import { Hash, PlusCircle, Smile, Send, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
 import { apiFetch } from '@/lib/api';
@@ -9,6 +9,7 @@ import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
 import GiphyPicker from './GiphyPicker';
 
 import ProfilePopout from '../Profile/ProfilePopout';
+import ServerMemberList from '../Server/ServerMemberList';
 
 interface Message {
   id: string;
@@ -28,6 +29,7 @@ export default function ChatArea() {
   const [inputValue, setInputValue] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
+  const [showMembersList, setShowMembersList] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedUserPopout, setSelectedUserPopout] = useState<{ userId: string; top: number; left: number } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -134,12 +136,25 @@ export default function ChatArea() {
   }
 
   return (
-    <div className="flex-1 bg-[#313338] flex flex-col h-full min-w-0">
-      {/* Header */}
-      <header className="h-12 border-b border-[#1F2023] flex items-center px-4 shadow-sm flex-shrink-0">
-        <Hash size={24} className="text-[#80848E] mr-2" />
-        <h2 className="font-bold text-white text-[15px]">{activeChannel.name}</h2>
-      </header>
+    <div className="flex-1 bg-[#313338] flex h-full min-w-0">
+      {/* Main Chat Column */}
+      <div className="flex-1 flex flex-col h-full min-w-0">
+        {/* Header */}
+        <header className="h-12 border-b border-[#1F2023] flex items-center justify-between px-4 shadow-sm flex-shrink-0">
+          <div className="flex items-center">
+            <Hash size={24} className="text-[#80848E] mr-2" />
+            <h2 className="font-bold text-white text-[15px]">{activeChannel.name}</h2>
+          </div>
+          <div className="flex items-center space-x-3 text-[#B5BAC1]">
+            <button
+              onClick={() => setShowMembersList(!showMembersList)}
+              className={`p-1 rounded hover:text-[#DBDEE1] hover:bg-[#35373C] transition-colors ${showMembersList ? 'text-white bg-[#35373C]' : ''}`}
+              title="Lista de Membros"
+            >
+              <Users size={20} />
+            </button>
+          </div>
+        </header>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col">
@@ -292,6 +307,13 @@ export default function ChatArea() {
           </div>
         </form>
       </div>
+
+      </div>
+
+      {/* Right Server Member List Sidebar */}
+      {showMembersList && activeServer?.members && (
+        <ServerMemberList members={activeServer.members} />
+      )}
 
       {selectedUserPopout && (
         <ProfilePopout 

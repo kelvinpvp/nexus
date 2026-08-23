@@ -8,11 +8,14 @@ import UserPanel from './UserPanel';
 import { useState } from 'react';
 import CreateServerInviteModal from '../Modals/CreateServerInviteModal';
 
+import { UserPlus, Shield, Check, X } from 'lucide-react';
+
 export default function ChannelList() {
-  const { servers, activeServerId, activeChannelId, setActiveChannel, voiceStates, setVoiceStates } = useAppStore();
+  const { servers, activeServerId, activeChannelId, setActiveChannel, voiceStates, setVoiceStates, setSettingsModalOpen } = useAppStore();
   const { connectedVoiceChannelId, connectToVoice, disconnectFromVoice } = useVoiceStore();
   const { user } = useAuth();
   const [isInviteModalOpen, setInviteModalOpen] = useState(false);
+  const [isServerMenuOpen, setServerMenuOpen] = useState(false);
 
   const activeServer = servers.find(s => s.id === activeServerId);
 
@@ -49,15 +52,44 @@ export default function ChannelList() {
 
   return (
     <div className="w-[240px] bg-[#2B2D31] flex flex-col flex-shrink-0 h-full select-none relative">
-      {/* Server Header */}
+      {/* Server Header Dropdown */}
       <header 
-        onClick={() => setInviteModalOpen(true)}
-        className="h-12 border-b border-[#1F2023] flex items-center justify-between px-4 hover:bg-[#35373C] cursor-pointer transition-colors shadow-sm"
-        title="Convidar Pessoas"
+        onClick={() => setServerMenuOpen(!isServerMenuOpen)}
+        className="h-12 border-b border-[#1F2023] flex items-center justify-between px-4 hover:bg-[#35373C] cursor-pointer transition-colors shadow-sm relative z-20"
       >
         <h1 className="font-bold text-white text-[15px] truncate">{activeServer.name}</h1>
-        <ChevronDown size={18} className="text-[#949BA4]" />
+        <ChevronDown size={18} className={`text-[#949BA4] transition-transform duration-200 ${isServerMenuOpen ? 'rotate-180' : ''}`} />
       </header>
+
+      {/* Server Menu Dropdown */}
+      {isServerMenuOpen && (
+        <div 
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-14 left-2 right-2 z-50 bg-[#111214] border border-[#1F2023] rounded-lg shadow-2xl p-1.5 space-y-1 animate-in fade-in zoom-in-95 duration-100"
+        >
+          <button
+            onClick={() => {
+              setServerMenuOpen(false);
+              setInviteModalOpen(true);
+            }}
+            className="w-full flex items-center justify-between px-2.5 py-2 rounded text-sm text-[#5865F2] font-semibold hover:bg-[#5865F2] hover:text-white transition-colors"
+          >
+            <span>Convidar Pessoas</span>
+            <UserPlus size={16} />
+          </button>
+          
+          <button
+            onClick={() => {
+              setServerMenuOpen(false);
+              setSettingsModalOpen(true);
+            }}
+            className="w-full flex items-center justify-between px-2.5 py-2 rounded text-sm text-[#B5BAC1] hover:bg-[#35373C] hover:text-white transition-colors"
+          >
+            <span>Configurações de Cargos</span>
+            <Shield size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Channels List */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-4 mt-2">
