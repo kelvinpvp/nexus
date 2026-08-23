@@ -30,31 +30,32 @@ export default async function callRoutes(fastify: FastifyInstance, prisma: Prism
       return reply.status(403).send({ error: 'You are not a participant in this conversation.' });
     }
 
-    // Auto-expire any RINGING calls older than 60s (missed) or end stuck ACTIVE calls > 4 hours
-    const sixtySecondsAgo = new Date(Date.now() - 60 * 1000);
+    // Always clear any RINGING calls for this conversation — they should be answered or rejected instantly.
+    // Only keep ACTIVE calls that were accepted within the last 4 hours.
     const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
     
     await prisma.callSession.updateMany({
       where: {
         conversationId,
         OR: [
-          { status: 'RINGING', createdAt: { lt: sixtySecondsAgo } },
+          { status: 'RINGING' },
           { status: 'ACTIVE', createdAt: { lt: fourHoursAgo } },
         ]
       },
       data: { status: 'MISSED', endedAt: new Date() }
     });
 
-    // Check if there is STILL an active or ringing call (non-expired)
-    const existingCall = await prisma.callSession.findFirst({
+    // Only block if there is a genuinely ACTIVE (accepted) call in the last 4 hours
+    const existingActiveCall = await prisma.callSession.findFirst({
       where: {
         conversationId,
-        status: { in: ['RINGING', 'ACTIVE'] }
+        status: 'ACTIVE',
+        createdAt: { gte: fourHoursAgo }
       }
     });
 
-    if (existingCall) {
-      return reply.status(400).send({ error: 'A call is already active or ringing in this conversation.', call: existingCall });
+    if (existingActiveCall) {
+      return reply.status(400).send({ error: 'A call is already active in this conversation.', call: existingActiveCall });
     }
 
     const call = await prisma.callSession.create({
