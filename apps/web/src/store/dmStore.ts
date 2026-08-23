@@ -115,6 +115,7 @@ export const useDMStore = create<DMStore>((set, get) => ({
   },
 
   setupSocketListeners: () => {
+    get().cleanupSocketListeners();
     socket.on('dm:message', (message: DirectMessage) => {
       set(state => {
         const convId = message.conversationId;

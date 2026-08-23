@@ -127,6 +127,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setupSocketListeners: () => {
+    get().cleanupSocketListeners();
     socket.on('voice_states_update', (states: VoiceState[]) => {
       set({ voiceStates: states });
     });

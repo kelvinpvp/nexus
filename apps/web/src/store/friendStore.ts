@@ -140,17 +140,23 @@ export const useFriendStore = create<FriendStore>((set, get) => ({
   },
 
   setupSocketListeners: () => {
+    get().cleanupSocketListeners();
+
     socket.on('friend:request_received', (request: FriendRequest) => {
       set(state => ({ receivedRequests: [...state.receivedRequests, request] }));
     });
 
     socket.on('friend:request_accepted', ({ friendshipId, friend }) => {
       // If we sent it, remove from sent
-      set(state => ({
-        sentRequests: state.sentRequests.filter(r => r.receiverId !== friend.id),
-        receivedRequests: state.receivedRequests.filter(r => r.senderId !== friend.id),
-        friends: [...state.friends, { ...friend, friendshipId }]
-      }));
+      set(state => {
+        // Prevent duplicates
+        if (state.friends.some(f => f.id === friend.id)) return state;
+        return {
+          sentRequests: state.sentRequests.filter(r => r.receiverId !== friend.id),
+          receivedRequests: state.receivedRequests.filter(r => r.senderId !== friend.id),
+          friends: [...state.friends, { ...friend, friendshipId }]
+        };
+      });
     });
 
     socket.on('friend:request_rejected', ({ requestId }) => {

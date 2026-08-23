@@ -139,6 +139,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
   },
 
   setupSocketListeners: () => {
+    get().cleanupSocketListeners();
     const { socket } = require('@/lib/socket');
     
     socket.on('dm:call:incoming', (call: CallSession) => {
