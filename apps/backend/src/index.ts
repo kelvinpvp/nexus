@@ -36,6 +36,14 @@ try {
 export const prisma = new PrismaClient();
 export const app = fastify({ logger: true });
 
+// Register multipart plugin right after app creation
+app.register(multipart, {
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  attachFieldsToBody: false
+});
+
 // Input Validation Schemas
 const registerSchema = z.object({
   email: z.string().email(),
@@ -58,12 +66,7 @@ import callRoutes from './routes/calls';
 
 import inviteRoutes from './routes/invites';
 
-// Setup Plugins
-app.register(multipart, {
-  limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
-  }
-});
+// Setup Routes
 
 app.register(async (fastify) => {
   fastify.addHook('preHandler', authenticate);
