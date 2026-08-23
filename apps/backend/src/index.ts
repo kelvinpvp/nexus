@@ -82,9 +82,8 @@ app.register(fastifyStatic, {
   prefix: '/uploads/',
 });
 
-// Setup Plugins
 app.register(cors, {
-  origin: process.env.WEB_URL || 'http://localhost:3000',
+  origin: process.env.WEB_URL ? process.env.WEB_URL.split(',') : true,
   credentials: true,
 });
 
@@ -184,7 +183,7 @@ app.post('/api/auth/login', async (request, reply) => {
       path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
     });
 
@@ -235,10 +234,9 @@ const start = async () => {
     await app.listen({ port, host: '0.0.0.0' });
     app.log.info(`Server running on http://localhost:${port}`);
 
-    // Attach Socket.IO
     ioServer = new Server(app.server, {
       cors: {
-        origin: process.env.WEB_URL || 'http://localhost:3000',
+        origin: process.env.WEB_URL ? process.env.WEB_URL.split(',') : true,
         credentials: true,
       },
     });

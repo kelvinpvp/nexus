@@ -98,20 +98,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        {/* Right side: QR Code placeholder (hidden on mobile) */}
-        <div className="hidden sm:flex flex-col items-center justify-center w-[240px] ml-16">
-          <div className="w-[176px] h-[176px] bg-white rounded-lg p-2 flex items-center justify-center">
-            {/* Fake QR Code */}
-            <div className="w-full h-full border-4 border-dashed border-gray-300 rounded text-gray-400 flex items-center justify-center text-xs text-center">
-              QR Code Placeholder
-            </div>
-          </div>
-          <h2 className="text-white font-bold text-xl mt-8 mb-2 text-center">Entrar com código QR</h2>
-          <p className="text-[#B5BAC1] text-sm text-center">
-            Escaneie isso com o aplicativo móvel do Nexus para fazer login instantaneamente.
-          </p>
-        </div>
-
+        {/* QR Code placeholder was removed to avoid fake features */}
       </div>
     </div>
   );
