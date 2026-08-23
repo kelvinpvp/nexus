@@ -11,7 +11,7 @@ export default function ServerVoiceManager() {
   const server = servers.find(s => s.id === activeServerId);
   if (!server) return null;
 
-  const allChannels = server.categories.flatMap(c => c.channels);
+  const allChannels = server.categories?.flatMap(c => c.channels) || [];
   const activeChannel = allChannels.find(c => c.id === activeChannelId);
   const connectedChannel = allChannels.find(c => c.id === connectedVoiceChannelId);
 
