@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ServerMember } from '@prisma/client';
 import { Server } from 'socket.io';
 
 export default async function channelRoutes(fastify: FastifyInstance, prisma: PrismaClient, getIo: () => Server) {
@@ -16,7 +16,7 @@ export default async function channelRoutes(fastify: FastifyInstance, prisma: Pr
         include: { server: { include: { members: true } } }
       });
 
-      if (!channel || !channel.server.members.some(m => m.userId === user.id)) {
+      if (!channel || !channel.server.members.some((m: ServerMember) => m.userId === user.id)) {
         return reply.status(403).send({ error: 'Access denied' });
       }
 
@@ -55,7 +55,7 @@ export default async function channelRoutes(fastify: FastifyInstance, prisma: Pr
         include: { server: { include: { members: true } } }
       });
 
-      if (!channel || !channel.server.members.some(m => m.userId === user.id)) {
+      if (!channel || !channel.server.members.some((m: ServerMember) => m.userId === user.id)) {
         return reply.status(403).send({ error: 'Access denied' });
       }
 
