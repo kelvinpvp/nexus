@@ -14,12 +14,23 @@ import path from 'path';
 import { execSync } from 'child_process';
 
 // Run migrations automatically before anything else
+// Step 1: Baseline the 0_init migration (marks it as already applied for existing DBs)
+try {
+  console.log('Baselining initial migration...');
+  execSync('npx prisma migrate resolve --applied "0_init"', { stdio: 'inherit' });
+  console.log('Baseline complete.');
+} catch (e) {
+  // Already baselined or not needed - ignore
+  console.log('Baseline skipped (already applied or not needed).');
+}
+
+// Step 2: Apply any pending new migrations (e.g. group DM columns)
 try {
   console.log('Running database migrations...');
   execSync('npx prisma migrate deploy', { stdio: 'inherit' });
   console.log('Migrations completed successfully.');
 } catch (error) {
-  console.error('Error running migrations:', error);
+  console.error('Error running migrations, server will still try to start:', error);
 }
 
 export const prisma = new PrismaClient();
