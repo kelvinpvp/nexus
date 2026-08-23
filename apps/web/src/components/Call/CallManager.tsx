@@ -11,7 +11,8 @@ import {
   useTrackToggle
 } from '@livekit/components-react';
 import { Track } from 'livekit-client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { playSound } from '@/utils/sounds';
 import '@livekit/components-styles';
 
 export default function CallManager() {
@@ -30,6 +31,21 @@ export default function CallManager() {
 
   const isRinging = activeCall && activeCall.status === 'RINGING';
   const isActive   = activeCall && activeCall.status === 'ACTIVE' && liveKitToken && roomName;
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (incomingCall || (isCallModalOpen && isRinging)) {
+      playSound('ring');
+      interval = setInterval(() => playSound('ring'), 2500);
+    }
+    return () => clearInterval(interval);
+  }, [incomingCall, isRinging, isCallModalOpen]);
+
+  useEffect(() => {
+    if (isActive) {
+      playSound('join');
+    }
+  }, [isActive]);
 
   return (
     <>
@@ -50,7 +66,7 @@ export default function CallManager() {
             </p>
             <div className="flex justify-center space-x-4 w-full">
               <button 
-                onClick={() => declineCall(incomingCall.id)}
+                onClick={() => { playSound('leave'); declineCall(incomingCall.id); }}
                 className="flex-1 bg-[#DA373C] hover:bg-[#A12828] text-white py-2 rounded transition-colors flex items-center justify-center font-medium"
               >
                 <PhoneOff size={20} className="mr-2" /> Recusar
@@ -84,7 +100,7 @@ export default function CallManager() {
               {activeCall.type === 'VIDEO' ? '📹 Vídeo' : '📞 Voz'}
             </p>
             <button 
-              onClick={() => endCall(activeCall.id)}
+              onClick={() => { playSound('leave'); endCall(activeCall.id); }}
               className="w-full bg-[#DA373C] hover:bg-[#A12828] text-white py-2 rounded transition-colors flex items-center justify-center font-medium"
             >
               <PhoneOff size={18} className="mr-2" /> Cancelar
@@ -107,6 +123,7 @@ export default function CallManager() {
             }
           }}
           onDisconnected={() => {
+            playSound('leave');
             endCall(activeCall.id);
           }}
           style={{ display: 'contents' }}
@@ -153,6 +170,7 @@ function DiscordCallWrapper({ isModalOpen, setModalOpen, endCall, activeCall }: 
         <button 
           onClick={(e) => {
             e.stopPropagation();
+            playSound('leave');
             endCall();
           }}
           className="bg-[#DA373C] hover:bg-[#A12828] text-white p-2 rounded-full transition-colors ml-1"
@@ -307,7 +325,10 @@ function DiscordCallLayout({ endCall, isVideoCall }: DiscordCallLayoutProps) {
       <div className="h-20 shrink-0 flex items-center justify-center">
         <div className="bg-[#1E1F22] px-6 py-3 rounded-full flex items-center space-x-4 border border-[#2B2D31] shadow-2xl">
           <button 
-            onClick={() => toggleMic()}
+            onClick={() => {
+              playSound(isMicEnabled ? 'mute' : 'unmute');
+              toggleMic();
+            }}
             className={`p-3.5 rounded-full transition-all duration-200 ${!isMicEnabled ? 'bg-[#DA373C] text-white hover:bg-[#A12828]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
             title={!isMicEnabled ? "Ativar Microfone" : "Mudar para Mudo"}
           >
@@ -331,7 +352,7 @@ function DiscordCallLayout({ endCall, isVideoCall }: DiscordCallLayoutProps) {
           </button>
 
           <button 
-            onClick={endCall}
+            onClick={() => { playSound('leave'); endCall(); }}
             className="p-3.5 rounded-full bg-[#DA373C] hover:bg-[#A12828] text-white transition-all duration-200 shadow-lg transform hover:scale-105 active:scale-95"
             title="Desconectar"
           >
