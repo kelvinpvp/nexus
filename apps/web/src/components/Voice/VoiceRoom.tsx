@@ -368,7 +368,10 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
               }
 
               await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, { 
-                audio: true,
+                audio: {
+                  systemAudio: 'include',
+                  selfBrowserSurface: 'include',
+                } as any,
                 resolution
               });
               console.log('[VOICE DEBUG] Screen share toggled. New state:', !isScreenShareEnabled, 'Resolution:', resolution);
