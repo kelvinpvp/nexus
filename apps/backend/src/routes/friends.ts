@@ -1,11 +1,18 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { Server } from 'socket.io';
 
 const requestSchema = z.object({
   username: z.string(),
 });
+
+type FriendshipWithUsers = Prisma.FriendshipGetPayload<{
+  include: {
+    userA: { select: { id: true, username: true, displayName: true, avatarUrl: true, status: true } },
+    userB: { select: { id: true, username: true, displayName: true, avatarUrl: true, status: true } }
+  }
+}>;
 
 export default function friendRoutes(fastify: FastifyInstance, prisma: PrismaClient, getIo: () => Server) {
 
@@ -26,7 +33,7 @@ export default function friendRoutes(fastify: FastifyInstance, prisma: PrismaCli
       }
     });
 
-    const friends = friendships.map(f => {
+    const friends = friendships.map((f: FriendshipWithUsers) => {
       const friend = f.userAId === user.id ? f.userB : f.userA;
       return { ...friend, friendshipId: f.id, friendshipCreatedAt: f.createdAt };
     });
@@ -160,7 +167,7 @@ export default function friendRoutes(fastify: FastifyInstance, prisma: PrismaCli
 
       let friendship = null;
 
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         // Update request status
         await tx.friendRequest.update({
           where: { id },
@@ -187,13 +194,13 @@ export default function friendRoutes(fastify: FastifyInstance, prisma: PrismaCli
       const io = getIo();
       if (io) {
         io.to(`user_${friendRequest.senderId}`).emit('friend:request_accepted', {
-          friendshipId: friendship!.id,
-          friend: friendship!.userB // To sender, friend is userB (receiver)
+          friendshipId: (friendship as any)!.id,
+          friend: (friendship as any)!.userB // To sender, friend is userB (receiver)
         });
         // Emit to receiver (self)
         io.to(`user_${friendRequest.receiverId}`).emit('friend:request_accepted', {
-          friendshipId: friendship!.id,
-          friend: friendship!.userA // To receiver, friend is userA (sender)
+          friendshipId: (friendship as any)!.id,
+          friend: (friendship as any)!.userA // To receiver, friend is userA (sender)
         });
       }
 

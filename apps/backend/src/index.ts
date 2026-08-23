@@ -231,7 +231,7 @@ app.get('/api/auth/me', { preHandler: [authenticate] }, async (request, reply) =
 // Start the server
 const start = async () => {
   try {
-    const port = 4000;
+    const port = Number(process.env.PORT || 4000);
     await app.listen({ port, host: '0.0.0.0' });
     app.log.info(`Server running on http://localhost:${port}`);
 

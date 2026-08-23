@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ConversationParticipant, Prisma } from '@prisma/client';
 import { Server } from 'socket.io';
 import { z } from 'zod';
 
@@ -31,13 +31,26 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
       }
     });
 
-    const dms = participations.map(p => ({
+    type ParticipationWithConversation = Prisma.ConversationParticipantGetPayload<{
+      include: {
+        conversation: {
+          include: {
+            participants: {
+              include: { user: { select: { id: true, username: true, displayName: true, avatarUrl: true, status: true } } }
+            },
+            messages: true
+          }
+        }
+      }
+    }>;
+
+    const dms = participations.map((p: any) => ({
       id: p.conversation.id,
       type: p.conversation.type,
       recipient: p.conversation.participants[0]?.user,
       lastMessage: p.conversation.messages[0],
       updatedAt: p.conversation.updatedAt,
-    })).sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    })).sort((a: any, b: any) => b.updatedAt.getTime() - a.updatedAt.getTime());
 
     return reply.send(dms);
   });
@@ -58,9 +71,9 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
         include: { conversation: { include: { participants: true } } }
       });
 
-      const existingDM = existingParticipations.find(p => 
+      const existingDM = existingParticipations.find((p: any) => 
         p.conversation.type === 'DM' && 
-        p.conversation.participants.some(cp => cp.userId === targetUserId)
+        p.conversation.participants.some((cp: ConversationParticipant) => cp.userId === targetUserId)
       );
 
       if (existingDM) {
@@ -128,12 +141,12 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
 
       if (!conversation) return reply.status(404).send({ error: 'Conversation not found' });
 
-      if (!conversation.participants.some(p => p.userId === user.id)) {
+      if (!conversation.participants.some((p: ConversationParticipant) => p.userId === user.id)) {
         return reply.status(403).send({ error: 'Access denied' });
       }
 
       // Check blocks (if A blocked B, or B blocked A, don't allow sending)
-      const otherParticipant = conversation.participants.find(p => p.userId !== user.id);
+      const otherParticipant = conversation.participants.find((p: ConversationParticipant) => p.userId !== user.id);
       if (otherParticipant) {
         const block = await prisma.block.findFirst({
           where: {
@@ -165,7 +178,7 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
       // Emit to all participants
       const io = getIo();
       if (io) {
-        conversation.participants.forEach(p => {
+        conversation.participants.forEach((p: ConversationParticipant) => {
           io.to(`user_${p.userId}`).emit('dm:message', message);
         });
       }

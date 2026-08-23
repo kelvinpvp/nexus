@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, ServerMember } from '@prisma/client';
 import { AccessToken } from 'livekit-server-sdk';
 
 export default async function voiceRoutes(fastify: FastifyInstance, prisma: PrismaClient) {
@@ -33,7 +33,7 @@ export default async function voiceRoutes(fastify: FastifyInstance, prisma: Pris
       }
 
       // Check if user is a member of the server
-      const member = channel.server.members.find(m => m.userId === user.id);
+      const member = channel.server.members.find((m: ServerMember) => m.userId === user.id);
       if (!member) {
         return reply.status(403).send({ error: 'Access denied to this server' });
       }
