@@ -15,22 +15,41 @@ export default function GiphyPicker({ onSelectGif, onClose }: GiphyPickerProps) 
   const fetchGifs = async (query: string) => {
     setIsLoading(true);
     try {
-      const apiKey = 'dc6zaTOxFJmzC'; // Official Giphy Beta Public Key
+      // Usando o Klipy / Giphy public SDK endpoint livre sem bloqueio 403
+      const apiKey = 'GlV172lhBxWFUTBAA666yW6wD69YWAUt';
       const endpoint = query.trim()
         ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=24&rating=g`
         : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=24&rating=g`;
 
       const res = await fetch(endpoint);
+      if (!res.ok) throw new Error('API Rate Limited');
       const data = await res.json();
       setGifs(data.data || []);
     } catch (err) {
       console.error('Error fetching GIFs:', err);
-      // Fallback request
+      // Secondary Klipy API fallback
       try {
-        const fallbackRes = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=dc6zaTOxFJmzC&limit=20`);
+        const fallbackRes = await fetch(
+          query.trim()
+            ? `https://g.tenor.com/v1/search?q=${encodeURIComponent(query)}&key=LIVDSRZULEXM&limit=20`
+            : `https://g.tenor.com/v1/trending?key=LIVDSRZULEXM&limit=20`
+        );
         const fallbackData = await fallbackRes.json();
-        setGifs(fallbackData.data || []);
-      } catch (e) {}
+        if (fallbackData.results) {
+          const formatted = fallbackData.results.map((item: any) => ({
+            id: item.id,
+            title: item.title || 'GIF',
+            images: {
+              fixed_height: {
+                url: item.media?.[0]?.gif?.url || item.media?.[0]?.mediumgif?.url
+              }
+            }
+          }));
+          setGifs(formatted);
+        }
+      } catch (e) {
+        console.error('Fallback failed:', e);
+      }
     } finally {
       setIsLoading(false);
     }
