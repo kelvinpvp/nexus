@@ -100,6 +100,12 @@ export default function CallManager() {
           audio={true}
           token={liveKitToken}
           serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+          options={{
+            publishDefaults: {
+              simulcast: true,
+              screenShareEncoding: { maxBitrate: 1500000, maxFramerate: 30 }
+            }
+          }}
           onDisconnected={() => {
             endCall(activeCall.id);
           }}
@@ -220,56 +226,86 @@ function DiscordCallLayout({ endCall, isVideoCall }: DiscordCallLayoutProps) {
     { onlySubscribed: false }
   );
 
+  const [focusedTrackId, setFocusedTrackId] = useState<string | null>(null);
+
+  let displayFocusedTrackId = focusedTrackId;
+  const screenShareTrack = tracks.find(t => t.source === Track.Source.ScreenShare);
+  if (!displayFocusedTrackId && screenShareTrack) {
+    displayFocusedTrackId = `${screenShareTrack.participant.sid}-${screenShareTrack.source}`;
+  }
+
+  const focusedTrack = displayFocusedTrackId ? tracks.find(t => `${t.participant.sid}-${t.source}` === displayFocusedTrackId) : null;
+  const otherTracks = displayFocusedTrackId ? tracks.filter(t => `${t.participant.sid}-${t.source}` !== displayFocusedTrackId) : tracks;
+
+  const renderTrack = (trackRef: any, isThumbnail: boolean = false) => {
+    const isLocal = trackRef.participant.isLocal;
+    const hasVideo = trackRef.publication && !trackRef.publication.isMuted;
+    const displayName = trackRef.participant.name || trackRef.participant.identity;
+    const isScreen = trackRef.source === Track.Source.ScreenShare;
+    const trackId = `${trackRef.participant.sid}-${trackRef.source}`;
+    
+    return (
+      <div 
+        key={trackId}
+        onClick={() => {
+          if (focusedTrackId === trackId) setFocusedTrackId(null);
+          else setFocusedTrackId(trackId);
+        }}
+        className={`relative bg-[#2B2D31] rounded-xl overflow-hidden shadow-md border-2 ${displayFocusedTrackId === trackId && !isThumbnail ? 'border-[#5865F2]' : 'border-transparent hover:border-[#5865F2]/50'} transition-all flex items-center justify-center group cursor-pointer ${isThumbnail ? 'aspect-video sm:h-32 w-full shrink-0' : 'w-full h-full'}`}
+      >
+        {trackRef.source === Track.Source.Camera && hasVideo ? (
+          <VideoTrack trackRef={trackRef as any} className="w-full h-full object-cover" />
+        ) : isScreen ? (
+          <VideoTrack trackRef={trackRef as any} className="w-full h-full object-contain bg-black" />
+        ) : (
+          <div className="flex flex-col items-center justify-center">
+            <div className={`${isThumbnail ? 'w-12 h-12 text-xl' : 'w-24 h-24 text-3xl'} rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold shadow-lg ring-4 ring-transparent group-hover:ring-[#5865F2]/40 transition-all`}>
+              {displayName.charAt(0).toUpperCase()}
+            </div>
+          </div>
+        )}
+
+        <div className="absolute bottom-3 left-3 bg-[#111214]/60 backdrop-blur-md px-3 py-1.5 rounded-md text-white text-xs font-semibold flex items-center">
+          <span className="max-w-[120px] truncate">{displayName}</span>
+          {isLocal && <span className="ml-1.5 text-[10px] text-[#949BA4]">(Você)</span>}
+          {isScreen && (
+            <span className="ml-2 bg-[#5865F2] text-white text-[9px] px-1 rounded">TELA</span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full justify-between p-4 relative">
-      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center justify-center p-2 overflow-y-auto max-h-[calc(100%-80px)]">
+      <div className="flex-1 w-full overflow-hidden flex flex-col max-h-[calc(100%-80px)]">
         {tracks.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center text-[#949BA4] h-64">
+          <div className="flex-1 flex flex-col items-center justify-center text-[#949BA4]">
             <div className="w-20 h-20 rounded-full bg-[#313338] flex items-center justify-center mb-4">
               <Phone size={36} className="text-[#5865F2] animate-bounce" />
             </div>
             <p className="text-lg font-medium text-white">Aguardando participantes...</p>
           </div>
-        ) : (
-          tracks.map((trackRef) => {
-            const isLocal = trackRef.participant.isLocal;
-            const hasVideo = trackRef.publication && !trackRef.publication.isMuted;
-            const displayName = trackRef.participant.name || trackRef.participant.identity;
-            
-            return (
-              <div 
-                key={`${trackRef.participant.sid}-${trackRef.source}`}
-                className="relative bg-[#2B2D31] rounded-xl overflow-hidden aspect-video shadow-md border-2 border-transparent hover:border-[#5865F2]/50 transition-all flex items-center justify-center group"
-              >
-                {trackRef.source === Track.Source.Camera && hasVideo ? (
-                  <VideoTrack trackRef={trackRef as any} className="w-full h-full object-cover" />
-                ) : trackRef.source === Track.Source.ScreenShare ? (
-                  <VideoTrack trackRef={trackRef as any} className="w-full h-full object-contain bg-black" />
-                ) : (
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="w-24 h-24 rounded-full bg-[#5865F2] flex items-center justify-center text-white text-3xl font-bold shadow-lg ring-4 ring-transparent group-hover:ring-[#5865F2]/40 transition-all">
-                      {displayName.charAt(0).toUpperCase()}
-                    </div>
-                  </div>
-                )}
-
-                <div className="absolute bottom-3 left-3 bg-[#111214]/60 backdrop-blur-md px-3 py-1.5 rounded-md text-white text-xs font-semibold flex items-center">
-                  <span className="max-w-[120px] truncate">{displayName}</span>
-                  {isLocal && <span className="ml-1.5 text-[10px] text-[#949BA4]">(Você)</span>}
-                  {trackRef.source === Track.Source.ScreenShare && (
-                    <span className="ml-2 bg-[#5865F2] text-white text-[9px] px-1 rounded">TELA</span>
-                  )}
-                </div>
+        ) : focusedTrack ? (
+          <div className="flex-1 flex flex-col sm:flex-row gap-4 h-full overflow-hidden">
+            <div className="flex-1 h-full min-h-[200px]">
+              {renderTrack(focusedTrack, false)}
+            </div>
+            {otherTracks.length > 0 && (
+              <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto w-full sm:w-56 shrink-0 h-32 sm:h-full pb-2 sm:pb-0 sm:pr-2">
+                {otherTracks.map(t => renderTrack(t, true))}
               </div>
-            );
-          })
+            )}
+          </div>
+        ) : (
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-center justify-center h-full overflow-y-auto p-1">
+            {tracks.map(t => renderTrack(t, false))}
+          </div>
         )}
       </div>
 
-      {/* Control Bar (Discord Style) */}
       <div className="h-20 shrink-0 flex items-center justify-center">
         <div className="bg-[#1E1F22] px-6 py-3 rounded-full flex items-center space-x-4 border border-[#2B2D31] shadow-2xl">
-          {/* Mute Button */}
           <button 
             onClick={() => toggleMic()}
             className={`p-3.5 rounded-full transition-all duration-200 ${!isMicEnabled ? 'bg-[#DA373C] text-white hover:bg-[#A12828]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
@@ -278,7 +314,6 @@ function DiscordCallLayout({ endCall, isVideoCall }: DiscordCallLayoutProps) {
             {!isMicEnabled ? <MicOff size={20} /> : <Mic size={20} />}
           </button>
 
-          {/* Camera Button */}
           <button 
             onClick={() => toggleCam()}
             className={`p-3.5 rounded-full transition-all duration-200 ${!isCamEnabled ? 'bg-[#DA373C] text-white hover:bg-[#A12828]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
@@ -287,7 +322,6 @@ function DiscordCallLayout({ endCall, isVideoCall }: DiscordCallLayoutProps) {
             {isCamEnabled ? <Video size={20} /> : <VideoOff size={20} />}
           </button>
 
-          {/* Screen Share Button */}
           <button 
             onClick={() => toggleScreen()}
             className={`p-3.5 rounded-full transition-all duration-200 ${isScreenEnabled ? 'bg-[#23A559] text-white hover:bg-[#1A7C43]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
@@ -296,7 +330,6 @@ function DiscordCallLayout({ endCall, isVideoCall }: DiscordCallLayoutProps) {
             {isScreenEnabled ? <MonitorOff size={20} /> : <Monitor size={20} />}
           </button>
 
-          {/* Red End Call Button */}
           <button 
             onClick={endCall}
             className="p-3.5 rounded-full bg-[#DA373C] hover:bg-[#A12828] text-white transition-all duration-200 shadow-lg transform hover:scale-105 active:scale-95"
