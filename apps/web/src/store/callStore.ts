@@ -74,17 +74,16 @@ export const useCallStore = create<CallStore>((set, get) => ({
     roomName: null,
   }),
 
-  // Query active call from backend securely
   checkActiveCall: async (conversationId: string) => {
     try {
       const data = await apiFetch(`/api/calls/active/${conversationId}`);
-      if (data.activeCall) {
+      if (data.activeCall && data.activeCall.status !== 'ENDED') {
         set((state) => ({
           activeGroupCalls: {
             ...state.activeGroupCalls,
             [conversationId]: {
               call: data.activeCall,
-              participantCount: data.participantCount || 1,
+              participantCount: typeof data.participantCount === 'number' ? data.participantCount : 0,
             }
           }
         }));
