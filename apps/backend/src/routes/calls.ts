@@ -389,6 +389,7 @@ export default async function callRoutes(fastify: FastifyInstance, prisma: Prism
     const at = new AccessToken(process.env.LIVEKIT_API_KEY, process.env.LIVEKIT_API_SECRET, {
       identity: user.id,
       name: participantName,
+      metadata: JSON.stringify({ avatarUrl: user.avatarUrl || '' }),
     });
     
     at.addGrant({ roomJoin: true, room: roomName, canPublish: true, canSubscribe: true });

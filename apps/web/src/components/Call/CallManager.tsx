@@ -232,6 +232,7 @@ interface DiscordCallLayoutProps {
 }
 
 function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: DiscordCallLayoutProps) {
+  const { user } = useAuth();
   const { toggle: toggleMic, enabled: isMicEnabled } = useTrackToggle({
     source: Track.Source.Microphone,
   });
@@ -270,6 +271,19 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
     const isScreen = trackRef.source === Track.Source.ScreenShare;
     const trackId = `${trackRef.participant.sid}-${trackRef.source}`;
     
+    let avatarUrl = '';
+    try {
+      if (trackRef.participant.metadata) {
+        const parsed = JSON.parse(trackRef.participant.metadata);
+        avatarUrl = parsed.avatarUrl || '';
+      }
+    } catch (e) {}
+
+    // Fallback to local user avatarUrl if local participant
+    if (isLocal && !avatarUrl && user?.avatarUrl) {
+      avatarUrl = user.avatarUrl;
+    }
+    
     return (
       <div 
         key={trackId}
@@ -285,8 +299,12 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
           <VideoTrack trackRef={trackRef as any} className="w-full h-full object-contain bg-black" />
         ) : (
           <div className="flex flex-col items-center justify-center">
-            <div className={`${isThumbnail ? 'w-12 h-12 text-xl' : 'w-24 h-24 text-3xl'} rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold shadow-lg ring-4 ring-transparent group-hover:ring-[#5865F2]/40 transition-all`}>
-              {displayName.charAt(0).toUpperCase()}
+            <div className={`${isThumbnail ? 'w-12 h-12 text-xl' : 'w-24 h-24 text-3xl'} rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold shadow-lg ring-4 ring-transparent group-hover:ring-[#5865F2]/40 transition-all overflow-hidden`}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                displayName.charAt(0).toUpperCase()
+              )}
             </div>
           </div>
         )}
