@@ -68,15 +68,22 @@ export default function AccountSettings() {
       const formData = new FormData();
       formData.append('avatar', file);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me/avatar`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const res = await fetch(`${apiUrl}/api/users/me/avatar`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Erro ao enviar avatar');
+        let errorMsg = 'Erro ao enviar avatar';
+        try {
+          const err = await res.json();
+          errorMsg = err.error || errorMsg;
+        } catch (e) {
+          errorMsg = res.statusText || errorMsg;
+        }
+        throw new Error(errorMsg);
       }
 
       const data = await res.json();
@@ -103,15 +110,22 @@ export default function AccountSettings() {
       const formData = new FormData();
       formData.append('banner', file);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me/banner`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const res = await fetch(`${apiUrl}/api/users/me/banner`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Erro ao enviar banner');
+        let errorMsg = 'Erro ao enviar banner';
+        try {
+          const err = await res.json();
+          errorMsg = err.error || errorMsg;
+        } catch (e) {
+          errorMsg = res.statusText || errorMsg;
+        }
+        throw new Error(errorMsg);
       }
 
       const data = await res.json();
