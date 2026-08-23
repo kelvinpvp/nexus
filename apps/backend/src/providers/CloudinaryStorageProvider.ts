@@ -12,10 +12,12 @@ export class CloudinaryStorageProvider implements StorageProvider {
 
   async saveFile(fileBuffer: Buffer, originalName: string, mimeType: string): Promise<string> {
     return new Promise((resolve, reject) => {
+      const isGif = mimeType === 'image/gif';
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: 'nexus',
-          resource_type: 'auto',
+          resource_type: 'image',
+          flags: isGif ? 'animated' : undefined,
         },
         (error, result) => {
           if (error) return reject(error);
