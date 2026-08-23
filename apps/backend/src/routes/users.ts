@@ -22,9 +22,12 @@ const profileUpdateSchema = z.object({
   avatarUrl: z.string().url().nullable().optional(),
 });
 
+import { CloudinaryStorageProvider } from '../providers/CloudinaryStorageProvider';
 import { LocalFileStorageProvider } from '../providers/LocalFileStorageProvider';
 
-const storageProvider = new LocalFileStorageProvider();
+const storageProvider = process.env.CLOUDINARY_CLOUD_NAME
+  ? new CloudinaryStorageProvider()
+  : new LocalFileStorageProvider();
 
 export default async function userRoutes(fastify: FastifyInstance, prisma: PrismaClient) {
   
