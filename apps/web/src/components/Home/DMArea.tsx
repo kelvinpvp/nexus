@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCallStore } from '@/store/callStore';
 import { Phone, Video, Hash, Users, Smile, LogOut, UserPlus } from 'lucide-react';
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
+import GiphyPicker from '../Chat/GiphyPicker';
 
 export default function DMArea() {
   const { activeConversationId, conversations, messages, sendMessage, isLoadingMessages, leaveGroup } = useDMStore();
@@ -11,9 +12,19 @@ export default function DMArea() {
   const { initiateCall } = useCallStore();
   const [content, setContent] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
   const [isCalling, setIsCalling] = useState<'VOICE' | 'VIDEO' | null>(null);
   const [isLeaving, setIsLeaving] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const handleSendGif = async (gifUrl: string) => {
+    if (!activeConversationId) return;
+    try {
+      await sendMessage(activeConversationId, gifUrl);
+    } catch (err) {
+      console.error('Error sending GIF in DM:', err);
+    }
+  };
 
   const conversation = conversations.find(c => c.id === activeConversationId);
   const currentMessages = activeConversationId ? messages[activeConversationId] || [] : [];
@@ -200,7 +211,13 @@ export default function DMArea() {
                           </div>
                         )}
                         <div className="text-[#DBDEE1] text-[15px] whitespace-pre-wrap leading-[1.375rem] break-words font-normal">
-                          {msg.content}
+                          {msg.content.match(/^https?:\/\/.+\.(gif|png|jpg|jpeg|webp)($|\?)/i) || msg.content.includes('media.giphy.com') || msg.content.includes('giphy.com/media') ? (
+                            <div className="mt-1 max-w-sm rounded-lg overflow-hidden border border-[#1E1F22]">
+                              <img src={msg.content} alt="GIF/Imagem" className="w-full max-h-72 object-contain bg-black/20" />
+                            </div>
+                          ) : (
+                            msg.content
+                          )}
                           {msg.isEdited && <span className="text-[11px] text-[#949BA4] ml-1">(editado)</span>}
                         </div>
                       </div>
@@ -234,12 +251,38 @@ export default function DMArea() {
             <div className="flex items-center space-x-2 shrink-0 ml-2 relative">
               <button 
                 type="button" 
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                onClick={() => {
+                  setShowGifPicker(!showGifPicker);
+                  setShowEmojiPicker(false);
+                }}
+                className="text-xs font-bold bg-[#4E5058] hover:bg-[#6D6F78] text-white px-2 py-1 rounded transition-colors"
+              >
+                GIF
+              </button>
+
+              <button 
+                type="button" 
+                onClick={() => {
+                  setShowEmojiPicker(!showEmojiPicker);
+                  setShowGifPicker(false);
+                }}
                 className="text-[#B5BAC1] hover:text-[#DBDEE1] p-1 transition-colors"
               >
                 <Smile size={24} />
               </button>
               
+              {showGifPicker && (
+                <div className="absolute bottom-12 right-0 z-50">
+                  <GiphyPicker
+                    onSelectGif={(gifUrl) => {
+                      handleSendGif(gifUrl);
+                      setShowGifPicker(false);
+                    }}
+                    onClose={() => setShowGifPicker(false)}
+                  />
+                </div>
+              )}
+
               {showEmojiPicker && (
                 <div className="absolute bottom-12 right-0 z-50">
                   <EmojiPicker

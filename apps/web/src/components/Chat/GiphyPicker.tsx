@@ -15,16 +15,22 @@ export default function GiphyPicker({ onSelectGif, onClose }: GiphyPickerProps) 
   const fetchGifs = async (query: string) => {
     setIsLoading(true);
     try {
-      // Usando Klipy / Giphy public endpoint para buscar gifs populares
+      const apiKey = 'dc6zaTOxFJmzC'; // Official Giphy Beta Public Key
       const endpoint = query.trim()
-        ? `https://api.giphy.com/v1/gifs/search?api_key=GZ596nbGtWVPMoRKnUX0WHBkrLyRIy82&q=${encodeURIComponent(query)}&limit=20&rating=g`
-        : `https://api.giphy.com/v1/gifs/trending?api_key=GZ596nbGtWVPMoRKnUX0WHBkrLyRIy82&limit=20&rating=g`;
+        ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=24&rating=g`
+        : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=24&rating=g`;
 
       const res = await fetch(endpoint);
       const data = await res.json();
       setGifs(data.data || []);
     } catch (err) {
       console.error('Error fetching GIFs:', err);
+      // Fallback request
+      try {
+        const fallbackRes = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=dc6zaTOxFJmzC&limit=20`);
+        const fallbackData = await fallbackRes.json();
+        setGifs(fallbackData.data || []);
+      } catch (e) {}
     } finally {
       setIsLoading(false);
     }
