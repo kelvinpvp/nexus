@@ -149,7 +149,7 @@ app.post('/api/auth/register', async (request, reply) => {
       return reply.status(400).send({ error: 'Invalid input', details: error.errors });
     }
     app.log.error(error);
-    return reply.status(500).send({ error: 'Internal server error' });
+    return reply.status(500).send({ error: 'Internal server error: ' + (error instanceof Error ? error.message : String(error)) });
   }
 });
 
@@ -196,7 +196,7 @@ app.post('/api/auth/login', async (request, reply) => {
       return reply.status(400).send({ error: 'Invalid input', details: error.errors });
     }
     app.log.error(error);
-    return reply.status(500).send({ error: 'Internal server error' });
+    return reply.status(500).send({ error: 'Internal server error: ' + (error instanceof Error ? error.message : String(error)) });
   }
 });
 
