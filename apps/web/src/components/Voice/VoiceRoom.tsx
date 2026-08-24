@@ -230,15 +230,42 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
       <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-center items-center relative">
         {focusedTrack ? (
           /* Focused Stream View (Screen Share or Pinned Cam) */
-          <div className="flex-1 w-full h-full flex flex-col items-center justify-center relative bg-black rounded-lg overflow-hidden border border-[#2B2D31]">
-            <VideoTrack trackRef={focusedTrack} className="w-full h-full object-contain" />
-            <div className="absolute top-3 left-3 bg-black/70 backdrop-blur px-3 py-1.5 rounded-md flex items-center space-x-2 text-xs font-bold text-white">
+          <div 
+            className="flex-1 w-full h-full flex flex-col items-center justify-center relative bg-black rounded-lg overflow-hidden border border-[#2B2D31]"
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const participant = focusedTrack.participant;
+              if (participant && !participant.isLocal) {
+                let meta: any = {};
+                try {
+                  meta = JSON.parse(participant.metadata || '{}');
+                } catch (err) {}
+                const displayName = meta.username || participant.name || participant.identity;
+
+                setContextMenuUser({
+                  userId: participant.identity,
+                  username: displayName,
+                  x: e.clientX,
+                  y: e.clientY,
+                });
+              }
+            }}
+          >
+            {/* Invisible overlay to catch right clicks */}
+            <div className="absolute inset-0 z-0 cursor-context-menu" />
+            
+            <div className="w-full h-full pointer-events-none z-0 relative">
+              <VideoTrack trackRef={focusedTrack} className="w-full h-full object-contain" />
+            </div>
+
+            <div className="absolute top-3 left-3 bg-black/70 backdrop-blur px-3 py-1.5 rounded-md flex items-center space-x-2 text-xs font-bold text-white z-10">
               <span className="w-2 h-2 rounded-full bg-[#F23F43] animate-ping" />
               <span>TRANSMISSÃO AO VIVO - {focusedTrack.participant?.identity || 'Você'}</span>
             </div>
             <button
               onClick={() => setFocusedTrack(null)}
-              className="absolute top-3 right-3 bg-black/70 hover:bg-black p-2 rounded-md text-white text-xs flex items-center space-x-1"
+              className="absolute top-3 right-3 bg-black/70 hover:bg-black p-2 rounded-md text-white text-xs flex items-center space-x-1 z-10"
             >
               <Minimize2 size={16} />
               <span>Voltar para Grade</span>
