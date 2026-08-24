@@ -12,6 +12,7 @@ import {
   AudioTrack,
   useConnectionState,
   useLocalParticipant,
+  useParticipants,
   useTrackToggle
 } from '@livekit/components-react';
 import { Track } from 'livekit-client';
@@ -262,7 +263,28 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
     { onlySubscribed: false }
   );
 
-  const visualTracks = tracks.filter(t => t.source === Track.Source.Camera || t.source === Track.Source.ScreenShare);
+  const participants = useParticipants();
+
+  // Create visual tracks array
+  const visualTracks: any[] = [];
+  
+  // Add all screen shares
+  tracks.filter(t => t.source === Track.Source.ScreenShare).forEach(t => visualTracks.push(t));
+  
+  // Add exactly one main card per participant (Camera if available, otherwise just use the participant data)
+  participants.forEach(p => {
+    const camTrack = tracks.find(t => t.participant.identity === p.identity && t.source === Track.Source.Camera);
+    if (camTrack) {
+      visualTracks.push(camTrack);
+    } else {
+      // Create a dummy track ref for the avatar card
+      visualTracks.push({
+        participant: p,
+        source: Track.Source.Microphone, // acts as a fallback for avatar
+        publication: p.getTrackPublication(Track.Source.Microphone)
+      });
+    }
+  });
 
   const [focusedTrackId, setFocusedTrackId] = useState<string | null>(null);
 
