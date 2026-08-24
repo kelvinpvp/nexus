@@ -226,6 +226,32 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
 
       {/* Permission Error Banner removed for simplification via useTrackToggle */}
 
+      {/* Audio Engine: render all audio tracks unconditionally so they don't drop when UI changes */}
+      <div className="hidden">
+        {participants.map((participant) => {
+          if (participant.isLocal) return null;
+          
+          const pAudio = tracks.find(t => t.participant?.identity === participant.identity && t.source === Track.Source.Microphone);
+          const pScreenAudio = tracks.find(t => t.participant?.identity === participant.identity && t.source === Track.Source.ScreenShareAudio);
+          
+          const isLocallyMuted = !!participantAudioPreferences[participant.identity]?.voiceMuted;
+          const localVolume = participantAudioPreferences[participant.identity]?.voiceVolume ?? 1;
+          const isStreamMuted = !!participantAudioPreferences[participant.identity]?.screenShareMuted;
+          const streamVolume = participantAudioPreferences[participant.identity]?.screenShareVolume ?? 1;
+
+          return (
+            <div key={`audio-${participant.sid}`}>
+              {pAudio && (
+                <AudioTrack trackRef={pAudio} volume={isLocallyMuted ? 0 : localVolume} muted={isLocallyMuted} />
+              )}
+              {pScreenAudio && (
+                <AudioTrack trackRef={pScreenAudio} volume={isStreamMuted ? 0 : streamVolume} muted={isStreamMuted} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
       {/* Main Grid / Stage */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-center items-center relative">
         {focusedTrack ? (
@@ -570,22 +596,7 @@ function ParticipantCard({
     >
       {/* Invisible overlay to catch right clicks consistently */}
       <div className="absolute inset-0 z-0 cursor-context-menu" />
-      
-      {audioTrack && !participant.isLocal && (
-        <AudioTrack 
-          trackRef={audioTrack} 
-          volume={isLocallyMuted ? 0 : (localVolume ?? 1)} 
-          muted={isLocallyMuted ?? false} 
-        />
-      )}
-
-      {screenAudioTrack && !participant.isLocal && (
-        <AudioTrack 
-          trackRef={screenAudioTrack} 
-          volume={isStreamMuted ? 0 : (streamVolume ?? 1)} 
-          muted={isStreamMuted ?? false} 
-        />
-      )}
+      {/* Audio tracks are now handled globally in VoiceRoomInner to prevent unmounting */}
 
       {cameraTrack ? (
         <div className="w-full h-full pointer-events-none z-0">
@@ -647,7 +658,7 @@ function ParticipantCard({
 }
 
 // Right Click Context Menu
-function UserContextMenu({
+export function UserContextMenu({
   user,
   onClose,
 }: {

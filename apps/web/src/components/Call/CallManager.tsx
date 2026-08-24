@@ -2,12 +2,14 @@ import { useCallStore } from '@/store/callStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useKrispNoiseSuppression } from '@/hooks/useKrispNoiseSuppression';
+import { useVoiceStore } from '@/store/voiceStore';
+import { UserContextMenu } from '../Voice/VoiceRoom';
 import { Phone, PhoneOff, Video, VideoOff, X, PhoneCall, Mic, MicOff, Monitor, MonitorOff } from 'lucide-react';
 import { 
   LiveKitRoom, 
-  RoomAudioRenderer, 
   useTracks, 
   VideoTrack,
+  AudioTrack,
   useConnectionState,
   useLocalParticipant,
   useTrackToggle
@@ -138,7 +140,6 @@ export default function CallManager() {
             endCallForEveryone={() => endCallForEveryone(activeCall.id)}
             activeCall={activeCall}
           />
-          <RoomAudioRenderer />
         </LiveKitRoom>
       )}
     </>
@@ -248,24 +249,31 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
 
   const isScreenEnabled = localParticipant?.isScreenShareEnabled ?? false;
 
+  const { participantAudioPreferences } = useVoiceStore();
+  const [contextMenuUser, setContextMenuUser] = useState<{ userId: string; username: string; x: number; y: number } | null>(null);
+
   const tracks = useTracks(
     [
-      { source: Track.Source.Camera, withPlaceholder: true },
-      { source: Track.Source.ScreenShare, withPlaceholder: false }
+      Track.Source.Camera,
+      Track.Source.ScreenShare,
+      Track.Source.Microphone,
+      Track.Source.ScreenShareAudio
     ],
     { onlySubscribed: false }
   );
 
+  const visualTracks = tracks.filter(t => t.source === Track.Source.Camera || t.source === Track.Source.ScreenShare);
+
   const [focusedTrackId, setFocusedTrackId] = useState<string | null>(null);
 
   let displayFocusedTrackId = focusedTrackId;
-  const screenShareTrack = tracks.find(t => t.source === Track.Source.ScreenShare);
+  const screenShareTrack = visualTracks.find(t => t.source === Track.Source.ScreenShare);
   if (!displayFocusedTrackId && screenShareTrack) {
     displayFocusedTrackId = `${screenShareTrack.participant.sid}-${screenShareTrack.source}`;
   }
 
-  const focusedTrack = displayFocusedTrackId ? tracks.find(t => `${t.participant.sid}-${t.source}` === displayFocusedTrackId) : null;
-  const otherTracks = displayFocusedTrackId ? tracks.filter(t => `${t.participant.sid}-${t.source}` !== displayFocusedTrackId) : tracks;
+  const focusedTrack = displayFocusedTrackId ? visualTracks.find(t => `${t.participant.sid}-${t.source}` === displayFocusedTrackId) : null;
+  const otherTracks = displayFocusedTrackId ? visualTracks.filter(t => `${t.participant.sid}-${t.source}` !== displayFocusedTrackId) : visualTracks;
 
   const renderTrack = (trackRef: any, isThumbnail: boolean = false) => {
     const isLocal = trackRef.participant.isLocal;
@@ -294,17 +302,35 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
           if (focusedTrackId === trackId) setFocusedTrackId(null);
           else setFocusedTrackId(trackId);
         }}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!isLocal) {
+            setContextMenuUser({
+              userId: trackRef.participant.identity,
+              username: displayName,
+              x: e.clientX,
+              y: e.clientY,
+            });
+          }
+        }}
         className={`relative bg-[#2B2D31] rounded-xl overflow-hidden shadow-md border-2 ${displayFocusedTrackId === trackId && !isThumbnail ? 'border-[#5865F2]' : 'border-transparent hover:border-[#5865F2]/50'} transition-all flex items-center justify-center group cursor-pointer ${isThumbnail ? 'aspect-video sm:h-32 w-full shrink-0' : 'w-full h-full'}`}
       >
+        <div className="absolute inset-0 z-0 cursor-context-menu" />
+        
         {trackRef.source === Track.Source.Camera && hasVideo ? (
-          <VideoTrack trackRef={trackRef as any} className="w-full h-full object-cover" />
+          <div className="w-full h-full pointer-events-none z-0">
+            <VideoTrack trackRef={trackRef as any} className="w-full h-full object-cover" />
+          </div>
         ) : isScreen ? (
-          <VideoTrack trackRef={trackRef as any} className="w-full h-full object-contain bg-black" />
+          <div className="w-full h-full pointer-events-none z-0">
+            <VideoTrack trackRef={trackRef as any} className="w-full h-full object-contain bg-black" />
+          </div>
         ) : (
-          <div className="flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center justify-center z-0 pointer-events-none">
             <div className={`${isThumbnail ? 'w-12 h-12 text-xl' : 'w-24 h-24 text-3xl'} rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold shadow-lg ring-4 ring-transparent group-hover:ring-[#5865F2]/40 transition-all overflow-hidden`}>
               {avatarUrl ? (
-                <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+                <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover pointer-events-none" />
               ) : (
                 displayName.charAt(0).toUpperCase()
               )}
@@ -324,9 +350,39 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
   };
 
   return (
-    <div className="flex flex-col h-full justify-between p-4 relative">
+    <div className="flex flex-col h-full justify-between p-4 relative select-none">
+      
+      {/* Audio Engine */}
+      <div className="hidden">
+        {tracks.filter(t => t.source === Track.Source.Microphone && !t.participant.isLocal).map((t) => {
+          const participant = t.participant;
+          const pScreenAudio = tracks.find(st => st.participant.sid === participant.sid && st.source === Track.Source.ScreenShareAudio);
+          
+          const isLocallyMuted = !!participantAudioPreferences[participant.identity]?.voiceMuted;
+          const localVolume = participantAudioPreferences[participant.identity]?.voiceVolume ?? 1;
+          const isStreamMuted = !!participantAudioPreferences[participant.identity]?.screenShareMuted;
+          const streamVolume = participantAudioPreferences[participant.identity]?.screenShareVolume ?? 1;
+
+          return (
+            <div key={`audio-${participant.sid}`}>
+              <AudioTrack trackRef={t} volume={isLocallyMuted ? 0 : localVolume} muted={isLocallyMuted} />
+              {pScreenAudio && (
+                <AudioTrack trackRef={pScreenAudio} volume={isStreamMuted ? 0 : streamVolume} muted={isStreamMuted} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {contextMenuUser && (
+        <UserContextMenu
+          user={contextMenuUser}
+          onClose={() => setContextMenuUser(null)}
+        />
+      )}
+
       <div className="flex-1 w-full overflow-hidden flex flex-col max-h-[calc(100%-80px)]">
-        {tracks.length === 0 ? (
+        {visualTracks.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-[#949BA4]">
             <div className="w-20 h-20 rounded-full bg-[#313338] flex items-center justify-center mb-4">
               <Phone size={36} className="text-[#5865F2] animate-bounce" />
@@ -346,7 +402,7 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
           </div>
         ) : (
           <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-center justify-center h-full overflow-y-auto p-1">
-            {tracks.map(t => renderTrack(t, false))}
+            {visualTracks.map(t => renderTrack(t, false))}
           </div>
         )}
       </div>
