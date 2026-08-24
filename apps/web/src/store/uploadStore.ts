@@ -111,12 +111,19 @@ export const useUploadStore = create<UploadStore>((set, get) => ({
           xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
               const progress = Math.round((event.loaded / event.total) * 100);
-              set(state => ({
-                uploads: {
-                  ...state.uploads,
-                  [contextId]: state.uploads[contextId].map(u => u.id === upload.id ? { ...u, progress } : u)
+              
+              set(state => {
+                const currentUpload = state.uploads[contextId]?.find(u => u.id === upload.id);
+                if (currentUpload && currentUpload.progress === progress) {
+                  return state; // No state change needed
                 }
-              }));
+                return {
+                  uploads: {
+                    ...state.uploads,
+                    [contextId]: state.uploads[contextId].map(u => u.id === upload.id ? { ...u, progress } : u)
+                  }
+                };
+              });
             }
           };
 
