@@ -6,6 +6,7 @@ import { socket } from '@/lib/socket';
 import { apiFetch } from '@/lib/api';
 import VoiceRoom from '../Voice/VoiceRoom';
 import MessageInput from './MessageInput';
+import AttachmentViewer from './AttachmentViewer';
 
 import ProfilePopout from '../Profile/ProfilePopout';
 import ServerMemberList from '../Server/ServerMemberList';
@@ -19,6 +20,7 @@ interface Message {
     username: string;
     avatarUrl: string | null;
   };
+  attachments?: any[];
 }
 
 export default function ChatArea() {
@@ -230,6 +232,13 @@ export default function ChatArea() {
                         message.content
                       )}
                     </div>
+                    {message.attachments && message.attachments.length > 0 && (
+                      <div className="mt-2 space-y-2">
+                        {message.attachments.map((att: any) => (
+                          <AttachmentViewer key={att.id} attachment={att} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

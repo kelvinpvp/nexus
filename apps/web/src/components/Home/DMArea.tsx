@@ -5,6 +5,7 @@ import { useCallStore } from '@/store/callStore';
 import { Phone, Video, Hash, Users, LogOut } from 'lucide-react';
 import ProfilePopout from '../Profile/ProfilePopout';
 import MessageInput from '../Chat/MessageInput';
+import AttachmentViewer from '../Chat/AttachmentViewer';
 
 export default function DMArea() {
   const { activeConversationId, conversations, messages, sendMessage, isLoadingMessages, leaveGroup } = useDMStore();
@@ -281,6 +282,13 @@ export default function DMArea() {
                           )}
                           {msg.isEdited && <span className="text-[11px] text-[#949BA4] ml-1">(editado)</span>}
                         </div>
+                        {msg.attachments && msg.attachments.length > 0 && (
+                          <div className="mt-2 space-y-2">
+                            {msg.attachments.map((att: any) => (
+                              <AttachmentViewer key={att.id} attachment={att} />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
