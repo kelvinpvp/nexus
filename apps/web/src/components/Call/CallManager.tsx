@@ -463,7 +463,7 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
                 if (localParticipant) {
                   await localParticipant.setScreenShareEnabled(!isScreenEnabled, {
                     audio: {
-                      echoCancellation: true,
+                      echoCancellation: false,
                       noiseSuppression: false,
                       autoGainControl: false,
                       systemAudio: 'include',
