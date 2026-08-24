@@ -20,6 +20,7 @@ export class S3StorageProvider implements StorageProvider {
         secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
       },
       forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true',
+      requestChecksumCalculation: 'WHEN_REQUIRED', // Fix for B2 throwing 400 Bad Request on fetch uploads due to CRC32 mismatch
     });
   }
 
@@ -28,7 +29,8 @@ export class S3StorageProvider implements StorageProvider {
       Bucket: this.bucketName,
       Key: storageKey,
       ContentType: mimeType,
-      ContentLength: sizeBytes,
+      // We explicitly OMIT ContentLength here because fetch() in the browser 
+      // manages it automatically and AWS SDK signing it causes Signature Mismatch!
     });
     
     // URL valid for 15 minutes to initiate the upload
