@@ -1,6 +1,6 @@
 import { useAppStore } from '@/store/appStore';
 import { useAuth } from '@/contexts/AuthContext';
-import { Hash, Users } from 'lucide-react';
+import { Hash, Users, Trash2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
 import { apiFetch } from '@/lib/api';
@@ -58,6 +58,16 @@ export default function ChatArea() {
     }
   };
 
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!activeChannelId) return;
+    try {
+      await apiFetch(`/api/channels/${activeChannelId}/messages/${messageId}`, { method: 'DELETE' });
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+    } catch (err) {
+      console.error('Error deleting message:', err);
+    }
+  };
+
   const activeServer = servers.find(s => s.id === activeServerId);
   const activeChannel = activeServer?.categories?.flatMap(c => c.channels).find(ch => ch.id === activeChannelId);
 
@@ -93,8 +103,14 @@ export default function ChatArea() {
 
     socket.on('new_message', handleNewMessage);
 
+    const handleMessageDeleted = ({ messageId }: { messageId: string }) => {
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+    };
+    socket.on('message_deleted', handleMessageDeleted);
+
     return () => {
       socket.off('new_message', handleNewMessage);
+      socket.off('message_deleted', handleMessageDeleted);
       socket.emit('leave_channel', activeChannelId);
     };
   }, [activeChannelId]);
@@ -178,7 +194,17 @@ export default function ChatArea() {
 
             <div className="space-y-4">
               {messages.map((message) => (
-                <div key={message.id} className="flex hover:bg-[#2E3035] p-1 -mx-1 rounded transition-colors group">
+                <div key={message.id} className="flex hover:bg-[#2E3035] p-1 -mx-1 rounded transition-colors group relative">
+                  {/* Delete button — shown on hover, only for own messages or admins */}
+                  {(message.author.id === user?.id) && (
+                    <button
+                      onClick={() => handleDeleteMessage(message.id)}
+                      className="absolute right-2 top-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-[#DA373C] text-[#949BA4] hover:text-white"
+                      title="Deletar mensagem"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                   <div 
                     onClick={(e) => handleUserClick(e, message.author.id)}
                     className="w-10 h-10 rounded-full bg-[#5865F2] flex-shrink-0 mt-0.5 cursor-pointer flex items-center justify-center text-white font-bold text-lg hover:opacity-80 transition-opacity"

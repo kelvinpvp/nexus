@@ -2,14 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { useDMStore } from '@/store/dmStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCallStore } from '@/store/callStore';
-import { Phone, Video, Hash, Users, LogOut } from 'lucide-react';
+import { Phone, Video, Hash, Users, LogOut, Trash2 } from 'lucide-react';
 import ProfilePopout from '../Profile/ProfilePopout';
 import MessageInput from '../Chat/MessageInput';
 import AttachmentViewer from '../Chat/AttachmentViewer';
 import GroupMemberList from './GroupMemberList';
 
 export default function DMArea() {
-  const { activeConversationId, conversations, messages, sendMessage, isLoadingMessages, leaveGroup } = useDMStore();
+  const { activeConversationId, conversations, messages, sendMessage, deleteMessage, isLoadingMessages, leaveGroup } = useDMStore();
   const { user } = useAuth();
   const { initiateCall, checkActiveCall, activeGroupCalls, joinActiveCall, activeCall } = useCallStore();
   const [isCalling, setIsCalling] = useState<'VOICE' | 'VIDEO' | null>(null);
@@ -221,7 +221,17 @@ export default function DMArea() {
                     (new Date(msg.createdAt).getTime() - new Date(currentMessages[idx - 1].createdAt).getTime() > 5 * 60 * 1000);
 
                   return (
-                    <div key={msg.id} className={`flex items-start group hover:bg-[#2E3035] -mx-4 px-4 py-0.5 ${showHeader ? 'mt-4' : 'mt-0'}`}>
+                    <div key={msg.id} className={`flex items-start group hover:bg-[#2E3035] -mx-4 px-4 py-0.5 relative ${showHeader ? 'mt-4' : 'mt-0'}`}>
+                      {/* Delete button — shown on hover for own messages */}
+                      {(msg.authorId === user?.id) && (
+                        <button
+                          onClick={() => deleteMessage(activeConversationId!, msg.id)}
+                          className="absolute right-2 top-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-[#DA373C] text-[#949BA4] hover:text-white"
+                          title="Deletar mensagem"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                       {showHeader ? (
                         <div 
                           onClick={(e) => handleUserClick(e, msg.authorId)}

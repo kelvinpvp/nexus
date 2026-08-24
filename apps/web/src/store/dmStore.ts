@@ -48,6 +48,7 @@ interface DMStore {
   setActiveConversation: (id: string | null) => void;
   fetchMessages: (conversationId: string) => Promise<void>;
   sendMessage: (conversationId: string, content: string, attachmentIds?: string[]) => Promise<void>;
+  deleteMessage: (conversationId: string, messageId: string) => Promise<void>;
 
   setupSocketListeners: () => void;
   cleanupSocketListeners: () => void;
@@ -148,6 +149,16 @@ export const useDMStore = create<DMStore>((set, get) => ({
     }
   },
 
+  deleteMessage: async (conversationId: string, messageId: string) => {
+    try {
+      await apiFetch(`/api/dms/${conversationId}/messages/${messageId}`, { method: 'DELETE' });
+      // Optimistic update could go here, but socket will handle it
+    } catch (error) {
+      console.error('Failed to delete message', error);
+      throw error;
+    }
+  },
+
   setupSocketListeners: () => {
     get().cleanupSocketListeners();
     socket.on('dm:message', (message: DirectMessage) => {
@@ -185,6 +196,18 @@ export const useDMStore = create<DMStore>((set, get) => ({
       }
       get().fetchConversations();
     });
+
+    socket.on('dm:message_deleted', ({ messageId, conversationId }) => {
+      set(state => {
+        const existingMessages = state.messages[conversationId] || [];
+        return {
+          messages: {
+            ...state.messages,
+            [conversationId]: existingMessages.filter(m => m.id !== messageId)
+          }
+        };
+      });
+    });
   },
 
   cleanupSocketListeners: () => {
@@ -193,5 +216,6 @@ export const useDMStore = create<DMStore>((set, get) => ({
     socket.off('dm:group:participant_added');
     socket.off('dm:group:participant_removed');
     socket.off('dm:group:left');
+    socket.off('dm:message_deleted');
   }
 }));

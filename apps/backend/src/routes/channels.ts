@@ -154,4 +154,40 @@ export default async function channelRoutes(fastify: FastifyInstance, prisma: Pr
       return reply.status(500).send({ error: 'Internal server error' });
     }
   });
+
+  // Delete a message
+  fastify.delete('/:channelId/messages/:messageId', async (request: FastifyRequest, reply: FastifyReply) => {
+    const user = (request as any).user;
+    const { channelId, messageId } = request.params as { channelId: string; messageId: string };
+
+    try {
+      const message = await prisma.message.findUnique({
+        where: { id: messageId },
+        include: { attachments: true },
+      });
+
+      if (!message) return reply.status(404).send({ error: 'Message not found' });
+      if (message.channelId !== channelId) return reply.status(404).send({ error: 'Message not found' });
+
+      // Only the author or a server admin/owner can delete
+      if (message.authorId !== user.id) {
+        // Check if user is admin in the server that owns this channel
+        const channel = await prisma.channel.findUnique({ where: { id: channelId }, include: { server: true } });
+        const isOwner = channel?.server?.ownerId === user.id;
+        if (!isOwner) return reply.status(403).send({ error: 'Sem permissão para deletar esta mensagem' });
+      }
+
+      await prisma.message.delete({ where: { id: messageId } });
+
+      const io = getIo();
+      if (io) {
+        io.to(channelId).emit('message_deleted', { messageId, channelId });
+      }
+
+      return reply.status(204).send();
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
 }

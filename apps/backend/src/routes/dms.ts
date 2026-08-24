@@ -471,4 +471,35 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
       return reply.status(500).send({ error: 'Internal server error' });
     }
   });
+
+  // Delete a DM message
+  fastify.delete('/:id/messages/:messageId', async (request: FastifyRequest, reply: FastifyReply) => {
+    const user = (request as any).user;
+    const { id: conversationId, messageId } = request.params as { id: string; messageId: string };
+
+    try {
+      const message = await prisma.directMessage.findUnique({
+        where: { id: messageId },
+        include: { conversation: { include: { participants: true } } },
+      });
+
+      if (!message) return reply.status(404).send({ error: 'Message not found' });
+      if (message.conversationId !== conversationId) return reply.status(404).send({ error: 'Message not found' });
+      if (message.authorId !== user.id) return reply.status(403).send({ error: 'Sem permissão' });
+
+      await prisma.directMessage.delete({ where: { id: messageId } });
+
+      const io = getIo();
+      if (io) {
+        message.conversation.participants.forEach((p) => {
+          io.to(`user_${p.userId}`).emit('dm:message_deleted', { messageId, conversationId });
+        });
+      }
+
+      return reply.status(204).send();
+    } catch (error) {
+      console.error(error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
 }
