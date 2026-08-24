@@ -28,8 +28,8 @@ export default function RegisterPage() {
       } else {
         setError(data.error || 'Erro ao fazer registro');
       }
-    } catch (err) {
-      setError('Erro de conexão. O servidor está rodando?');
+    } catch (err: any) {
+      setError(`Erro de conexão: ${err.message || 'Desconhecido'}. A API é: ${process.env.NEXT_PUBLIC_API_URL}`);
     }
   };
 
