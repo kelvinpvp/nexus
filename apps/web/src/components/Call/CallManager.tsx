@@ -467,7 +467,8 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
                       noiseSuppression: false,
                       autoGainControl: false,
                       systemAudio: 'include',
-                      selfBrowserSurface: 'include',
+                      suppressLocalAudioPlayback: true,
+                      selfBrowserSurface: 'exclude',
                     } as any,
                   });
                 }

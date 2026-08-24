@@ -477,7 +477,8 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
                   noiseSuppression: false,
                   autoGainControl: false,
                   systemAudio: 'include',
-                  selfBrowserSurface: 'include',
+                  suppressLocalAudioPlayback: true,
+                  selfBrowserSurface: 'exclude',
                 } as any,
                 resolution
               });
