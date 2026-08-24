@@ -125,12 +125,8 @@ export default async function userRoutes(fastify: FastifyInstance, prisma: Prism
       
       const uploadUrl = await storage.createUploadUrl(storageKey, body.mimeType, body.sizeBytes);
       
-      const baseUrl = process.env.STORAGE_PUBLIC_URL || 
-                      (process.env.S3_ENDPOINT && process.env.S3_BUCKET_NAME 
-                        ? `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET_NAME}` 
-                        : 'https://storage.googleapis.com/nexus-bucket'); // Fallback placeholder
-      
-      const fileUrl = `${baseUrl.replace(/\/$/, '')}/${storageKey}`;
+      const backendUrl = process.env.API_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000';
+      const fileUrl = `${backendUrl.replace(/\/$/, '')}/api/storage/${storageKey}`;
 
       return reply.send({ uploadUrl, fileUrl, storageKey });
     } catch (e) {
@@ -210,12 +206,8 @@ export default async function userRoutes(fastify: FastifyInstance, prisma: Prism
       
       const uploadUrl = await storage.createUploadUrl(storageKey, body.mimeType, body.sizeBytes);
       
-      const baseUrl = process.env.STORAGE_PUBLIC_URL || 
-                      (process.env.S3_ENDPOINT && process.env.S3_BUCKET_NAME 
-                        ? `${process.env.S3_ENDPOINT}/${process.env.S3_BUCKET_NAME}` 
-                        : 'https://storage.googleapis.com/nexus-bucket'); // Fallback placeholder
-      
-      const fileUrl = `${baseUrl.replace(/\/$/, '')}/${storageKey}`;
+      const backendUrl = process.env.API_URL || process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000';
+      const fileUrl = `${backendUrl.replace(/\/$/, '')}/api/storage/${storageKey}`;
 
       return reply.send({ uploadUrl, fileUrl, storageKey });
     } catch (e) {

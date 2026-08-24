@@ -7,6 +7,7 @@ import argon2 from 'argon2';
 import serverRoutes from './routes/servers';
 import channelRoutes from './routes/channels';
 import gifsRoutes from './routes/gifs';
+import { storageRoutes } from './routes/storage';
 import { z } from 'zod';
 import crypto from 'crypto';
 import multipart from '@fastify/multipart';
@@ -87,6 +88,9 @@ app.register(async (fastify) => {
   fastify.register(async (instance) => {
     await gifsRoutes(instance, prisma);
   }, { prefix: '/api/gifs' });
+  
+  // Storage Proxy (for private B2 buckets)
+  fastify.register(storageRoutes, { prefix: '/api/storage' });
 });
 
 let ioServer: Server;
