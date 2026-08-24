@@ -11,6 +11,8 @@ export default function VoiceSettings() {
   const [screenShareQuality, setScreenShareQuality] = useState<"AUTO" | "P720_30" | "P1080_30" | "P1080_60" | "MAX">(preferences?.screenShareQuality ?? 'AUTO');
   const [audioInputId, setAudioInputId] = useState<string>(preferences?.audioInputDeviceId ?? 'default');
   const [audioOutputId, setAudioOutputId] = useState<string>(preferences?.audioOutputDeviceId ?? 'default');
+  const [noiseSuppressionEnabled, setNoiseSuppressionEnabled] = useState<boolean>(preferences?.noiseSuppressionEnabled ?? true);
+  const [krispSupported, setKrispSupported] = useState<boolean>(false);
 
   const [audioInputs, setAudioInputs] = useState<MediaDeviceInfo[]>([]);
   const [audioOutputs, setAudioOutputs] = useState<MediaDeviceInfo[]>([]);
@@ -24,8 +26,16 @@ export default function VoiceSettings() {
       setScreenShareQuality(preferences.screenShareQuality || 'AUTO');
       setAudioInputId(preferences.audioInputDeviceId || 'default');
       setAudioOutputId(preferences.audioOutputDeviceId || 'default');
+      setNoiseSuppressionEnabled(preferences.noiseSuppressionEnabled ?? true);
     }
   }, [preferences]);
+
+  // Check Krisp support
+  useEffect(() => {
+    import('@livekit/krisp-noise-filter').then(({ isKrispNoiseFilterSupported }) => {
+      setKrispSupported(isKrispNoiseFilterSupported());
+    }).catch(() => setKrispSupported(false));
+  }, []);
 
   useEffect(() => {
     async function getDevices() {
@@ -75,6 +85,12 @@ export default function VoiceSettings() {
     const newValue = e.target.value;
     setAudioOutputId(newValue);
     updatePreferences({ audioOutputDeviceId: newValue });
+  };
+
+  const toggleNoiseSuppression = () => {
+    const newValue = !noiseSuppressionEnabled;
+    setNoiseSuppressionEnabled(newValue);
+    updatePreferences({ noiseSuppressionEnabled: newValue });
   };
 
   return (
@@ -178,6 +194,40 @@ export default function VoiceSettings() {
               >
                 <div className={`absolute w-4 h-4 bg-white rounded-full transition-all flex items-center justify-center ${joinDeafened ? 'left-[22px]' : 'left-1'}`}>
                   {joinDeafened && <Check size={12} className="text-[#23A559]" />}
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div className="h-px bg-[#3F4147] my-6" />
+
+        {/* Noise Suppression */}
+        <div>
+          <h3 className="text-xs font-bold uppercase text-[#949BA4] mb-4">Processamento de Áudio</h3>
+          <div className="space-y-4">
+            <label className={`flex items-start justify-between gap-4 ${krispSupported ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'}`}>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-[16px] text-[#DBDEE1]">Supressão de Ruído (IA)</span>
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#5865F2] text-white uppercase tracking-wide">Krisp</span>
+                </div>
+                <div className="text-sm text-[#949BA4] mt-1">
+                  {krispSupported
+                    ? 'Remove ruído de fundo do seu microfone em tempo real usando inteligência artificial. Mesma tecnologia usada pelo Discord e Zoom.'
+                    : 'Seu navegador não suporta supressão de ruído por IA. Use Chrome ou Edge para ativar este recurso.'}
+                </div>
+              </div>
+              <div 
+                onClick={krispSupported ? toggleNoiseSuppression : undefined}
+                className={`mt-1 flex-shrink-0 w-10 h-6 rounded-full transition-colors relative flex items-center ${
+                  !krispSupported ? 'bg-[#3F4147]' : noiseSuppressionEnabled ? 'bg-[#23A559]' : 'bg-[#80848E]'
+                }`}
+              >
+                <div className={`absolute w-4 h-4 bg-white rounded-full transition-all flex items-center justify-center ${
+                  noiseSuppressionEnabled && krispSupported ? 'left-[22px]' : 'left-1'
+                }`}>
+                  {noiseSuppressionEnabled && krispSupported && <Check size={12} className="text-[#23A559]" />}
                 </div>
               </div>
             </label>

@@ -1,6 +1,7 @@
 import { useCallStore } from '@/store/callStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettingsStore } from '@/store/settingsStore';
+import { useKrispNoiseSuppression } from '@/hooks/useKrispNoiseSuppression';
 import { Phone, PhoneOff, Video, VideoOff, X, PhoneCall, Mic, MicOff, Monitor, MonitorOff } from 'lucide-react';
 import { 
   LiveKitRoom, 
@@ -237,6 +238,9 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
   const { preferences } = useSettingsStore();
   const { localParticipant } = useLocalParticipant();
   const isMicEnabled = localParticipant?.isMicrophoneEnabled ?? false;
+
+  // Krisp AI noise suppression
+  useKrispNoiseSuppression(localParticipant as any, preferences?.noiseSuppressionEnabled ?? true);
 
   const { toggle: toggleCam, enabled: isCamEnabled } = useTrackToggle({
     source: Track.Source.Camera,

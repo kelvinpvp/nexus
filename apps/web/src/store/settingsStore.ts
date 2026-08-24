@@ -15,6 +15,7 @@ export interface UserPreferences {
   screenShareQuality?: 'AUTO' | 'P720_30' | 'P1080_30' | 'P1080_60' | 'MAX';
   audioInputDeviceId?: string;
   audioOutputDeviceId?: string;
+  noiseSuppressionEnabled?: boolean;
 }
 
 interface SettingsState {

@@ -17,6 +17,7 @@ import { useSettingsStore } from '@/store/settingsStore';
 import { useAuth } from '@/contexts/AuthContext';
 import SettingsModal from '@/components/Settings/SettingsModal';
 import { VoiceDiagnostics } from './VoiceDiagnostics';
+import { useKrispNoiseSuppression } from '@/hooks/useKrispNoiseSuppression';
 import { useSearchParams } from 'next/navigation';
 import { socket } from '@/lib/socket';
 import {
@@ -89,6 +90,12 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
   const [isInitialMicActivating, setIsInitialMicActivating] = useState(false);
   const [hasAttemptedInitialMic, setHasAttemptedInitialMic] = useState(false);
   const searchParams = useSearchParams();
+
+  // Krisp AI noise suppression
+  useKrispNoiseSuppression(
+    localParticipant as any,
+    preferences?.noiseSuppressionEnabled ?? true
+  );
 
   useEffect(() => {
     participants.forEach((p) => {
