@@ -44,13 +44,11 @@ export default function App() {
       ) : activeServerId === null ? (
         activeConversationId ? <DMArea /> : <HomeArea />
       ) : (
-        <>
-          <ChatArea />
-          <ServerVoiceManager />
-        </>
+        <ChatArea />
       )}
 
-      {/* Global Call Manager for DMs */}
+      {/* Global Voice Connections */}
+      <ServerVoiceManager />
       <CallManager />
 
       {/* Server Settings Modal */}
