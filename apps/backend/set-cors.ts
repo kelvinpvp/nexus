@@ -1,17 +1,20 @@
 import { S3Client, PutBucketCorsCommand } from '@aws-sdk/client-s3';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const client = new S3Client({
-  endpoint: 'https://s3.us-east-005.backblazeb2.com',
-  region: 'us-east-005',
+  endpoint: process.env.S3_ENDPOINT,
+  region: process.env.S3_REGION || 'us-east-005',
   credentials: {
-    accessKeyId: '00537eda03387590000000001',
-    secretAccessKey: 'K005UsgrYuNxZqS0NZn7pbGkGPtI2sU',
+    accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
   },
-  forcePathStyle: false
+  forcePathStyle: process.env.S3_FORCE_PATH_STYLE === 'true'
 });
 
 const command = new PutBucketCorsCommand({
-  Bucket: 'nexus-uploads-k',
+  Bucket: process.env.S3_BUCKET_NAME || 'nexus-uploads-k',
   CORSConfiguration: {
     CORSRules: [
       {
@@ -25,5 +28,8 @@ const command = new PutBucketCorsCommand({
 });
 
 client.send(command)
-  .then(() => console.log('CORS set successfully via S3 API'))
-  .catch(console.error);
+  .then(() => console.log('✅ CORS configurado com sucesso no S3/B2!'))
+  .catch(err => {
+    console.error('❌ Falha ao configurar CORS:');
+    console.error(err);
+  });
