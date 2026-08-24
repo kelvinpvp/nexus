@@ -1,12 +1,12 @@
 {
   "productName": "Nexus",
   "version": "0.1.0",
-  "identifier": "com.nexus.app",
+  "identifier": "com.nexus.desktop",
   "build": {
     "beforeDevCommand": "npm run dev:desktop -w web",
     "beforeBuildCommand": "npm run build:desktop -w web",
     "devUrl": "http://localhost:3000",
-    "frontendDist": "../web/out"
+    "frontendDist": "../../web/out"
   },
   "app": {
     "windows": [
