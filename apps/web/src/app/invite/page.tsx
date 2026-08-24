@@ -1,15 +1,15 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { Users } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 
-export default function InvitePage({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
-  const resolvedParams = use(searchParams);
-  const code = resolvedParams.code;
+function InviteContent() {
+  const searchParams = useSearchParams();
+  const code = searchParams.get('code');
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
   const { fetchServers } = useAppStore();
@@ -120,5 +120,13 @@ export default function InvitePage({ searchParams }: { searchParams: Promise<{ c
         ) : null}
       </div>
     </div>
+  );
+}
+
+export default function InvitePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#313338] flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5865F2]"></div></div>}>
+      <InviteContent />
+    </Suspense>
   );
 }
