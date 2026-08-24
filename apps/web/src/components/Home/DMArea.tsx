@@ -184,6 +184,15 @@ export default function DMArea() {
               ? <div className="w-6 h-6 border-2 border-[#B5BAC1] border-t-transparent rounded-full animate-spin" />
               : <Video size={24} />}
           </button>
+          {isGroup && (
+            <button 
+              onClick={() => setShowMemberList(!showMemberList)}
+              className={`transition-colors ${showMemberList ? 'text-[#DBDEE1]' : 'hover:text-[#DBDEE1]'}`}
+              title="Ocultar Lista de Membros"
+            >
+              <Users size={24} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -303,6 +312,16 @@ export default function DMArea() {
           }}
         />
       </div>
+    </div>
+
+    {/* Sidebar Members */}
+    {isGroup && showMemberList && (
+      <GroupMemberList 
+        participants={conversation.participants} 
+        ownerId={conversation.ownerId}
+        onUserClick={handleUserClick}
+      />
+    )}
 
       {selectedUserPopout && (
         <ProfilePopout 

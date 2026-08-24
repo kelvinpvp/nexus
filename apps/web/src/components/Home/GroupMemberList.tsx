@@ -58,7 +58,9 @@ export default function GroupMemberList({ participants, ownerId, onUserClick }: 
                 {participant.displayName || participant.username}
               </span>
               {participant.id === ownerId && (
-                <Crown size={14} className="ml-1.5 text-[#F0B232] shrink-0" title="Dono do Grupo" />
+                <span title="Dono do Grupo" className="ml-1.5 flex items-center">
+                  <Crown size={14} className="text-[#F0B232] shrink-0" />
+                </span>
               )}
             </div>
           </div>
