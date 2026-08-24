@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { prisma } from '../lib/prisma';
+import { prisma } from '../index';
 import { getStorageProvider } from '../services/storage';
 import crypto from 'crypto';
 import path from 'path';
@@ -18,7 +18,7 @@ export default async function attachmentsRoutes(fastify: FastifyInstance) {
   const storage = getStorageProvider();
 
   fastify.post<{ Body: PrepareUploadBody }>('/api/uploads/prepare', async (request, reply) => {
-    const user = request.user;
+    const user = (request as any).user;
     if (!user) return reply.status(401).send({ error: 'Unauthorized' });
 
     const { filename, sizeBytes, mimeType, contextType, contextId } = request.body;
@@ -99,7 +99,7 @@ export default async function attachmentsRoutes(fastify: FastifyInstance) {
   });
 
   fastify.post<{ Params: { id: string } }>('/api/uploads/:id/complete', async (request, reply) => {
-    const user = request.user;
+    const user = (request as any).user;
     if (!user) return reply.status(401).send({ error: 'Unauthorized' });
 
     const { id } = request.params;
@@ -132,7 +132,7 @@ export default async function attachmentsRoutes(fastify: FastifyInstance) {
   });
 
   fastify.get<{ Params: { id: string } }>('/api/attachments/:id/access', async (request, reply) => {
-    const user = request.user;
+    const user = (request as any).user;
     if (!user) return reply.status(401).send({ error: 'Unauthorized' });
 
     const { id } = request.params;
