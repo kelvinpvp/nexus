@@ -6,6 +6,7 @@ import { Phone, Video, Hash, Users, LogOut } from 'lucide-react';
 import ProfilePopout from '../Profile/ProfilePopout';
 import MessageInput from '../Chat/MessageInput';
 import AttachmentViewer from '../Chat/AttachmentViewer';
+import GroupMemberList from './GroupMemberList';
 
 export default function DMArea() {
   const { activeConversationId, conversations, messages, sendMessage, isLoadingMessages, leaveGroup } = useDMStore();
@@ -13,6 +14,7 @@ export default function DMArea() {
   const { initiateCall, checkActiveCall, activeGroupCalls, joinActiveCall, activeCall } = useCallStore();
   const [isCalling, setIsCalling] = useState<'VOICE' | 'VIDEO' | null>(null);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [showMemberList, setShowMemberList] = useState(true);
   const [selectedUserPopout, setSelectedUserPopout] = useState<{ userId: string; top: number; left: number } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -101,7 +103,8 @@ export default function DMArea() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#313338] h-full">
+    <div className="flex-1 flex flex-row h-full overflow-hidden">
+    <div className="flex-1 flex flex-col bg-[#313338] h-full min-w-0">
       {/* Top Bar */}
       <div className="h-12 border-b border-[#1F2023] flex items-center justify-between px-4 shrink-0 shadow-sm">
         <div className="flex items-center text-white space-x-2">
