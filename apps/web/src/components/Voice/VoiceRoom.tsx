@@ -104,7 +104,10 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
       if (!preferences.joinMuted && !isMicrophoneEnabled && !hasAttemptedInitialMic) {
         setHasAttemptedInitialMic(true);
         setIsInitialMicActivating(true);
-        localParticipant.setMicrophoneEnabled(true).catch(err => {
+        const deviceId = preferences.audioInputDeviceId && preferences.audioInputDeviceId !== 'default'
+          ? preferences.audioInputDeviceId
+          : undefined;
+        localParticipant.setMicrophoneEnabled(true, deviceId ? { deviceId } : undefined).catch(err => {
           console.error('[VOICE DEBUG] Failed initial mic auto-enable:', err);
           const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
           alert('Não foi possível ativar o microfone automaticamente:\n' + errMsg);
@@ -288,8 +291,11 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
               if (!localParticipant) return;
               try {
                 if (isDeafened) setIsDeafened(false);
-                await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
-                console.log('[VOICE DEBUG] Microphone toggled. New state:', !isMicrophoneEnabled);
+                const deviceId = preferences?.audioInputDeviceId && preferences.audioInputDeviceId !== 'default'
+                  ? preferences.audioInputDeviceId
+                  : undefined;
+                await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled, deviceId ? { deviceId } : undefined);
+                console.log('[VOICE DEBUG] Microphone toggled. New state:', !isMicrophoneEnabled, 'Device:', deviceId ?? 'default');
               } catch (err) {
                 console.error('[VOICE DEBUG] Error toggling microphone:', err);
                 const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);

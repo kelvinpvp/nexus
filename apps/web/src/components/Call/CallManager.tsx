@@ -1,5 +1,6 @@
 import { useCallStore } from '@/store/callStore';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSettingsStore } from '@/store/settingsStore';
 import { Phone, PhoneOff, Video, VideoOff, X, PhoneCall, Mic, MicOff, Monitor, MonitorOff } from 'lucide-react';
 import { 
   LiveKitRoom, 
@@ -233,15 +234,14 @@ interface DiscordCallLayoutProps {
 
 function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: DiscordCallLayoutProps) {
   const { user } = useAuth();
-  const { toggle: toggleMic, enabled: isMicEnabled } = useTrackToggle({
-    source: Track.Source.Microphone,
-  });
+  const { preferences } = useSettingsStore();
+  const { localParticipant } = useLocalParticipant();
+  const isMicEnabled = localParticipant?.isMicrophoneEnabled ?? false;
 
   const { toggle: toggleCam, enabled: isCamEnabled } = useTrackToggle({
     source: Track.Source.Camera,
   });
 
-  const { localParticipant } = useLocalParticipant();
   const isScreenEnabled = localParticipant?.isScreenShareEnabled ?? false;
 
   const tracks = useTracks(
@@ -350,9 +350,16 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
       <div className="h-20 shrink-0 flex items-center justify-center">
         <div className="bg-[#1E1F22] px-6 py-3 rounded-full flex items-center space-x-4 border border-[#2B2D31] shadow-2xl">
           <button 
-            onClick={() => {
+            onClick={async () => {
               playSound(isMicEnabled ? 'mute' : 'unmute');
-              toggleMic();
+              try {
+                const deviceId = preferences?.audioInputDeviceId && preferences.audioInputDeviceId !== 'default'
+                  ? preferences.audioInputDeviceId
+                  : undefined;
+                await localParticipant?.setMicrophoneEnabled(!isMicEnabled, deviceId ? { deviceId } : undefined);
+              } catch (err) {
+                console.error('[CALL] Error toggling mic:', err);
+              }
             }}
             className={`p-3.5 rounded-full transition-all duration-200 ${!isMicEnabled ? 'bg-[#DA373C] text-white hover:bg-[#A12828]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
             title={!isMicEnabled ? "Ativar Microfone" : "Mudar para Mudo"}
