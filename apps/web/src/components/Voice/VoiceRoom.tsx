@@ -229,25 +229,38 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
       {/* Audio Engine: render all audio tracks unconditionally so they don't drop when UI changes */}
       <div className="hidden">
         {participants.map((participant) => {
-          if (participant.isLocal) return null;
+          if (participant.isLocal) {
+            return null;
+          }
           
           const pAudio = tracks.find(t => t.participant?.identity === participant.identity && t.source === Track.Source.Microphone);
           const pScreenAudio = tracks.find(t => t.participant?.identity === participant.identity && t.source === Track.Source.ScreenShareAudio);
           
           const isLocallyMuted = !!participantAudioPreferences[participant.identity]?.voiceMuted;
           const localVolume = Math.min(1, Math.max(0, participantAudioPreferences[participant.identity]?.voiceVolume ?? 1));
+          
           const isStreamMuted = !!participantAudioPreferences[participant.identity]?.screenShareMuted;
           const streamVolume = Math.min(1, Math.max(0, participantAudioPreferences[participant.identity]?.screenShareVolume ?? 1));
 
           return (
-            <div key={`audio-${participant.sid}`}>
-              {pAudio && (
-                <AudioTrack trackRef={pAudio} volume={isLocallyMuted ? 0 : localVolume} muted={isLocallyMuted} />
+            <React.Fragment key={`audio-group-${participant.identity}`}>
+              {pAudio && pAudio.publication && (
+                <AudioTrack 
+                  key={pAudio.publication.trackSid || `mic-${participant.identity}`}
+                  trackRef={pAudio} 
+                  volume={isLocallyMuted ? 0 : localVolume} 
+                  muted={isLocallyMuted} 
+                />
               )}
-              {pScreenAudio && (
-                <AudioTrack trackRef={pScreenAudio} volume={isStreamMuted ? 0 : streamVolume} muted={isStreamMuted} />
+              {pScreenAudio && pScreenAudio.publication && (
+                <AudioTrack 
+                  key={pScreenAudio.publication.trackSid || `screen-audio-${participant.identity}`}
+                  trackRef={pScreenAudio} 
+                  volume={isStreamMuted ? 0 : streamVolume} 
+                  muted={isStreamMuted} 
+                />
               )}
-            </div>
+            </React.Fragment>
           );
         })}
       </div>

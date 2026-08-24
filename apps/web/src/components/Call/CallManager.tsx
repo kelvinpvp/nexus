@@ -16,7 +16,7 @@ import {
   useTrackToggle
 } from '@livekit/components-react';
 import { Track } from 'livekit-client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { playSound } from '@/utils/sounds';
 import '@livekit/components-styles';
 
@@ -376,9 +376,15 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
       
       {/* Audio Engine */}
       <div className="hidden">
-        {tracks.filter(t => t.source === Track.Source.Microphone && !t.participant.isLocal).map((t) => {
-          const participant = t.participant;
-          const pScreenAudio = tracks.find(st => st.participant.sid === participant.sid && st.source === Track.Source.ScreenShareAudio);
+        {useParticipants().map((participant) => {
+          if (participant.isLocal) {
+            // Em dev, podemos checar se acidentalmente o localParticipant está tocando
+            // Mas o return null impede qualquer renderização indevida
+            return null;
+          }
+
+          const pAudio = tracks.find(t => t.participant?.identity === participant.identity && t.source === Track.Source.Microphone);
+          const pScreenAudio = tracks.find(t => t.participant?.identity === participant.identity && t.source === Track.Source.ScreenShareAudio);
           
           const isLocallyMuted = !!participantAudioPreferences[participant.identity]?.voiceMuted;
           const localVolume = Math.min(1, Math.max(0, participantAudioPreferences[participant.identity]?.voiceVolume ?? 1));
@@ -386,12 +392,24 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
           const streamVolume = Math.min(1, Math.max(0, participantAudioPreferences[participant.identity]?.screenShareVolume ?? 1));
 
           return (
-            <div key={`audio-${participant.sid}`}>
-              <AudioTrack trackRef={t} volume={isLocallyMuted ? 0 : localVolume} muted={isLocallyMuted} />
-              {pScreenAudio && (
-                <AudioTrack trackRef={pScreenAudio} volume={isStreamMuted ? 0 : streamVolume} muted={isStreamMuted} />
+            <Fragment key={`audio-group-${participant.identity}`}>
+              {pAudio && pAudio.publication && (
+                <AudioTrack 
+                  key={pAudio.publication.trackSid || `mic-${participant.identity}`} 
+                  trackRef={pAudio} 
+                  volume={isLocallyMuted ? 0 : localVolume} 
+                  muted={isLocallyMuted} 
+                />
               )}
-            </div>
+              {pScreenAudio && pScreenAudio.publication && (
+                <AudioTrack 
+                  key={pScreenAudio.publication.trackSid || `screen-audio-${participant.identity}`} 
+                  trackRef={pScreenAudio} 
+                  volume={isStreamMuted ? 0 : streamVolume} 
+                  muted={isStreamMuted} 
+                />
+              )}
+            </Fragment>
           );
         })}
       </div>
