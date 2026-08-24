@@ -235,9 +235,9 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
           const pScreenAudio = tracks.find(t => t.participant?.identity === participant.identity && t.source === Track.Source.ScreenShareAudio);
           
           const isLocallyMuted = !!participantAudioPreferences[participant.identity]?.voiceMuted;
-          const localVolume = participantAudioPreferences[participant.identity]?.voiceVolume ?? 1;
+          const localVolume = Math.min(1, Math.max(0, participantAudioPreferences[participant.identity]?.voiceVolume ?? 1));
           const isStreamMuted = !!participantAudioPreferences[participant.identity]?.screenShareMuted;
-          const streamVolume = participantAudioPreferences[participant.identity]?.screenShareVolume ?? 1;
+          const streamVolume = Math.min(1, Math.max(0, participantAudioPreferences[participant.identity]?.screenShareVolume ?? 1));
 
           return (
             <div key={`audio-${participant.sid}`}>
@@ -739,7 +739,7 @@ export function UserContextMenu({
           <input
             type="range"
             min="0"
-            max="2"
+            max="1"
             step="0.05"
             value={prefs.voiceVolume}
             onChange={(e) => setAudioPreference(user.userId, 'voiceVolume', parseFloat(e.target.value))}
@@ -769,7 +769,7 @@ export function UserContextMenu({
           <input
             type="range"
             min="0"
-            max="2"
+            max="1"
             step="0.05"
             value={prefs.screenShareVolume}
             onChange={(e) => setAudioPreference(user.userId, 'screenShareVolume', parseFloat(e.target.value))}

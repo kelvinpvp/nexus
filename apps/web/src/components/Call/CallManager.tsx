@@ -381,9 +381,9 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
           const pScreenAudio = tracks.find(st => st.participant.sid === participant.sid && st.source === Track.Source.ScreenShareAudio);
           
           const isLocallyMuted = !!participantAudioPreferences[participant.identity]?.voiceMuted;
-          const localVolume = participantAudioPreferences[participant.identity]?.voiceVolume ?? 1;
+          const localVolume = Math.min(1, Math.max(0, participantAudioPreferences[participant.identity]?.voiceVolume ?? 1));
           const isStreamMuted = !!participantAudioPreferences[participant.identity]?.screenShareMuted;
-          const streamVolume = participantAudioPreferences[participant.identity]?.screenShareVolume ?? 1;
+          const streamVolume = Math.min(1, Math.max(0, participantAudioPreferences[participant.identity]?.screenShareVolume ?? 1));
 
           return (
             <div key={`audio-${participant.sid}`}>
