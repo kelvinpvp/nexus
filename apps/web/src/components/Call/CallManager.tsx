@@ -241,9 +241,8 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
     source: Track.Source.Camera,
   });
 
-  const { toggle: toggleScreen, enabled: isScreenEnabled } = useTrackToggle({
-    source: Track.Source.ScreenShare,
-  });
+  const { localParticipant } = useLocalParticipant();
+  const isScreenEnabled = localParticipant?.isScreenShareEnabled ?? false;
 
   const tracks = useTracks(
     [
@@ -370,7 +369,25 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
           </button>
 
           <button 
-            onClick={() => toggleScreen()}
+            onClick={async () => {
+              try {
+                if (localParticipant) {
+                  await localParticipant.setScreenShareEnabled(!isScreenEnabled, {
+                    audio: {
+                      echoCancellation: false,
+                      noiseSuppression: false,
+                      autoGainControl: false,
+                      systemAudio: 'include',
+                      selfBrowserSurface: 'include',
+                    } as any,
+                  });
+                }
+              } catch (err: any) {
+                if (err.name !== 'NotAllowedError') {
+                  console.error('Error toggling screen share:', err);
+                }
+              }
+            }}
             className={`p-3.5 rounded-full transition-all duration-200 ${isScreenEnabled ? 'bg-[#23A559] text-white hover:bg-[#1A7C43]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
             title={isScreenEnabled ? "Parar Compartilhamento" : "Compartilhar Tela"}
           >
