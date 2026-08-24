@@ -10,6 +10,11 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write
+    env:
+      TAURI_ENV: "true"
+      NEXT_PUBLIC_API_URL: "https://nexus-jbj5.onrender.com"
+      NEXT_PUBLIC_SOCKET_URL: "https://nexus-jbj5.onrender.com"
+      NEXT_PUBLIC_LIVEKIT_URL: "wss://nexus-2xur1gve.livekit.cloud"
 
     steps:
       - name: Checkout repository
@@ -40,9 +45,6 @@ jobs:
 
       - name: Build Web App
         run: npm run build:desktop --workspace=web
-        env:
-          TAURI_ENV: "true"
-          NEXT_PUBLIC_API_URL: "https://nexus-jbj5.onrender.com"
 
       - name: Build Tauri App & Create Release
         uses: tauri-apps/tauri-action@v0
