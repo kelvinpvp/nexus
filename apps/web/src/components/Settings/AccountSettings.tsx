@@ -62,6 +62,13 @@ export default function AccountSettings() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Se for um GIF animado, não vamos cortar para não perder a animação (Canvas só pega o 1º frame)
+    if (file.type === 'image/gif') {
+      uploadCroppedImage(file, isAvatar);
+      e.target.value = '';
+      return;
+    }
+
     // We allow larger sizes here because we will crop/compress it before upload
     const url = URL.createObjectURL(file);
     setCropModalConfig({ isOpen: true, imageSrc: url, isAvatar });
@@ -71,11 +78,11 @@ export default function AccountSettings() {
     e.target.value = '';
   };
 
-  const uploadCroppedImage = async (blob: Blob) => {
-    if (!cropModalConfig || !pendingUploadFile) return;
-    const { isAvatar } = pendingUploadFile;
+  const uploadCroppedImage = async (blob: Blob, overrideIsAvatar?: boolean) => {
+    const isAvatar = overrideIsAvatar !== undefined ? overrideIsAvatar : pendingUploadFile?.isAvatar;
+    if (isAvatar === undefined) return;
     
-    // We send as webp or jpeg
+    // We send as webp or jpeg, or gif
     const mimeType = blob.type;
     const sizeBytes = blob.size;
 
