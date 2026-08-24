@@ -25,5 +25,9 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     throw err;
   }
 
+  if (res.status === 204) {
+    return null;
+  }
+
   return res.json();
 }
