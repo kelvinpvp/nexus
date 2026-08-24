@@ -4,7 +4,10 @@ import { Server } from 'socket.io';
 import { z } from 'zod';
 
 const messageSchema = z.object({
-  content: z.string().min(1).max(2000),
+  content: z.string().max(2000).optional(),
+  attachmentIds: z.array(z.string()).optional()
+}).refine(data => data.content || (data.attachmentIds && data.attachmentIds.length > 0), {
+  message: "Content or attachments are required"
 });
 
 const MAX_GROUP_DM_PARTICIPANTS = 10;
@@ -249,7 +252,8 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
     const messages = await prisma.directMessage.findMany({
       where: { conversationId: id },
       include: {
-        author: { select: { id: true, username: true, displayName: true, avatarUrl: true } }
+        author: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
+        attachments: true
       },
       orderBy: { createdAt: 'asc' }
     });
@@ -263,7 +267,7 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
     const { id } = request.params as { id: string };
 
     try {
-      const { content } = messageSchema.parse(request.body);
+      const { content, attachmentIds = [] } = messageSchema.parse(request.body);
 
       const conversation = await prisma.conversation.findUnique({
         where: { id },
@@ -291,15 +295,52 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
         }
       }
 
-      const message = await prisma.directMessage.create({
-        data: {
-          content,
-          authorId: user.id,
-          conversationId: id
-        },
-        include: {
-          author: { select: { id: true, username: true, displayName: true, avatarUrl: true } }
+      // Validate attachments
+      if (attachmentIds.length > 0) {
+        const attachments = await prisma.attachment.findMany({
+          where: { id: { in: attachmentIds } }
+        });
+        
+        if (attachments.length !== attachmentIds.length) {
+          return reply.status(400).send({ error: 'One or more attachments not found' });
         }
+        
+        for (const attachment of attachments) {
+          if (attachment.uploaderId !== user.id) return reply.status(403).send({ error: 'You do not own this attachment' });
+          if (attachment.status !== 'READY') return reply.status(400).send({ error: 'Attachment is not ready' });
+          if (attachment.messageId || attachment.directMessageId) return reply.status(400).send({ error: 'Attachment already in use' });
+        }
+      }
+
+      const message = await prisma.$transaction(async (tx) => {
+        const msg = await tx.directMessage.create({
+          data: {
+            content: content || '',
+            authorId: user.id,
+            conversationId: id
+          },
+          include: {
+            author: { select: { id: true, username: true, displayName: true, avatarUrl: true } }
+          }
+        });
+
+        if (attachmentIds.length > 0) {
+          await tx.attachment.updateMany({
+            where: { id: { in: attachmentIds } },
+            data: { 
+              status: 'ATTACHED',
+              directMessageId: msg.id
+            }
+          });
+        }
+
+        return tx.directMessage.findUnique({
+          where: { id: msg.id },
+          include: {
+            author: { select: { id: true, username: true, displayName: true, avatarUrl: true } },
+            attachments: true
+          }
+        });
       });
 
       await prisma.conversation.update({

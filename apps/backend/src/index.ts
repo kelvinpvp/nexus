@@ -61,10 +61,9 @@ import userRoutes from './routes/users';
 import friendRoutes from './routes/friends';
 import blockRoutes from './routes/blocks';
 import dmRoutes from './routes/dms';
-
 import callRoutes from './routes/calls';
-
 import inviteRoutes from './routes/invites';
+import attachmentsRoutes from './routes/attachments';
 
 // Setup Routes
 
@@ -77,6 +76,12 @@ app.register(async (fastify) => {
   fastify.addHook('preHandler', authenticate);
   inviteRoutes(fastify, prisma);
 }, { prefix: '/api/invites' });
+
+app.register(async (fastify) => {
+  fastify.addHook('preHandler', authenticate);
+  // attachmentsRoutes handles multiple prefixes (/api/uploads, /api/attachments, /api/local-storage)
+  fastify.register(attachmentsRoutes);
+});
 
 let ioServer: Server;
 

@@ -56,6 +56,8 @@ model User {
   bansReceived               ServerBan[]     @relation("BannedUser")
   bansIssued                 ServerBan[]     @relation("BanModerator")
   auditActions               AuditLog[]      @relation("AuditActor")
+  
+  attachments                Attachment[]
 }
 
 enum ScreenShareQuality {
@@ -336,6 +338,8 @@ model Message {
   channelId String
   channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
   
+  attachments Attachment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -394,8 +398,59 @@ model DirectMessage {
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   
+  attachments    Attachment[]
+  
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+}
+
+// --- ATTACHMENTS ---
+enum AttachmentKind {
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+}
+
+enum AttachmentStatus {
+  PENDING
+  READY
+  ATTACHED
+  ABANDONED
+}
+
+model Attachment {
+  id               String   @id @default(cuid())
+  
+  uploaderId       String
+  uploader         User     @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  
+  storageKey       String   @unique
+  storageProvider  String
+  
+  originalFilename String
+  mimeType         String
+  sizeBytes        Int
+  
+  width            Int?
+  height           Int?
+  durationMs       Int?
+  
+  kind             AttachmentKind
+  status           AttachmentStatus @default(PENDING)
+  
+  messageId        String?
+  message          Message? @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  
+  directMessageId  String?
+  directMessage    DirectMessage? @relation(fields: [directMessageId], references: [id], onDelete: SetNull)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@index([uploaderId])
+  @@index([messageId])
+  @@index([directMessageId])
 }
 
 enum CallType {
