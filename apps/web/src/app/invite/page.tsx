@@ -7,8 +7,8 @@ import { apiFetch } from '@/lib/api';
 import { Users } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 
-export default function InvitePage({ params }: { params: Promise<{ code: string }> }) {
-  const resolvedParams = use(params);
+export default function InvitePage({ searchParams }: { searchParams: Promise<{ code?: string }> }) {
+  const resolvedParams = use(searchParams);
   const code = resolvedParams.code;
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
@@ -20,6 +20,12 @@ export default function InvitePage({ params }: { params: Promise<{ code: string 
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!code) {
+      setError('Código de convite ausente.');
+      setIsLoading(false);
+      return;
+    }
+
     // If not authenticated, redirect to login with callback
     if (!authLoading && !user) {
       router.push(`/login?callbackUrl=/invite/${code}`);
