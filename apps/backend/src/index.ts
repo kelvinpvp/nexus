@@ -138,7 +138,24 @@ app.register(fastifyStatic, {
 });
 
 app.register(cors, {
-  origin: process.env.WEB_URL ? process.env.WEB_URL.split(',') : true,
+  origin: (origin, cb) => {
+    // Allow Tauri Origins
+    const tauriOrigins = ['http://tauri.localhost', 'https://tauri.localhost', 'tauri://localhost', 'asset://localhost'];
+    if (!origin || tauriOrigins.includes(origin)) {
+      return cb(null, true);
+    }
+    
+    if (process.env.WEB_URL) {
+      const allowed = process.env.WEB_URL.split(',');
+      if (allowed.includes(origin)) {
+        return cb(null, true);
+      }
+    } else {
+      return cb(null, true); // Fallback se não tiver WEB_URL
+    }
+    
+    cb(new Error("Not allowed"), false);
+  },
   credentials: true,
 });
 
@@ -308,7 +325,17 @@ const start = async () => {
 
     ioServer = new Server(app.server, {
       cors: {
-        origin: process.env.WEB_URL ? process.env.WEB_URL.split(',') : true,
+        origin: (origin, cb) => {
+          const tauriOrigins = ['http://tauri.localhost', 'https://tauri.localhost', 'tauri://localhost', 'asset://localhost'];
+          if (!origin || tauriOrigins.includes(origin)) return cb(null, true);
+          if (process.env.WEB_URL) {
+            const allowed = process.env.WEB_URL.split(',');
+            if (allowed.includes(origin)) return cb(null, true);
+          } else {
+            return cb(null, true);
+          }
+          cb(new Error("Not allowed"), false);
+        },
         credentials: true,
       },
     });
