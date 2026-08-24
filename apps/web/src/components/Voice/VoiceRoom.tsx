@@ -406,10 +406,14 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
                 resolution
               });
               console.log('[VOICE DEBUG] Screen share toggled. New state:', !isScreenShareEnabled, 'Resolution:', resolution);
-            } catch (err) {
-              console.error('[VOICE DEBUG] Error toggling screen share:', err);
-              if (!isScreenShareEnabled) {
-                alert('O compartilhamento de tela foi cancelado ou negado.');
+            } catch (err: any) {
+              if (err.name === 'NotAllowedError') {
+                console.warn('[VOICE DEBUG] Screen share cancelled by user');
+              } else {
+                console.error('[VOICE DEBUG] Error toggling screen share:', err);
+                if (!isScreenShareEnabled) {
+                  alert('O compartilhamento de tela falhou: ' + err.message);
+                }
               }
             }
           }}

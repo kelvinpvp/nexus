@@ -9,6 +9,11 @@ export default function VoiceSettings() {
   const [joinDeafened, setJoinDeafened] = useState(preferences?.joinDeafened ?? false);
   const [cameraQuality, setCameraQuality] = useState<"AUTO" | "P720" | "P1080">(preferences?.cameraQuality ?? 'AUTO');
   const [screenShareQuality, setScreenShareQuality] = useState<"AUTO" | "P720_30" | "P1080_30" | "P1080_60" | "MAX">(preferences?.screenShareQuality ?? 'AUTO');
+  const [audioInputId, setAudioInputId] = useState<string>(preferences?.audioInputDeviceId ?? 'default');
+  const [audioOutputId, setAudioOutputId] = useState<string>(preferences?.audioOutputDeviceId ?? 'default');
+
+  const [audioInputs, setAudioInputs] = useState<MediaDeviceInfo[]>([]);
+  const [audioOutputs, setAudioOutputs] = useState<MediaDeviceInfo[]>([]);
 
   // Sync state if store updates
   useEffect(() => {
@@ -17,8 +22,24 @@ export default function VoiceSettings() {
       setJoinDeafened(preferences.joinDeafened);
       setCameraQuality(preferences.cameraQuality || 'AUTO');
       setScreenShareQuality(preferences.screenShareQuality || 'AUTO');
+      setAudioInputId(preferences.audioInputDeviceId || 'default');
+      setAudioOutputId(preferences.audioOutputDeviceId || 'default');
     }
   }, [preferences]);
+
+  useEffect(() => {
+    async function getDevices() {
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        setAudioInputs(devices.filter(d => d.kind === 'audioinput'));
+        setAudioOutputs(devices.filter(d => d.kind === 'audiooutput'));
+      } catch (err) {
+        console.error('Failed to get media devices:', err);
+      }
+    }
+    getDevices();
+  }, []);
 
   const toggleJoinMuted = () => {
     const newValue = !joinMuted;
@@ -44,23 +65,52 @@ export default function VoiceSettings() {
     updatePreferences({ screenShareQuality: newValue });
   };
 
+  const handleAudioInputChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newValue = e.target.value;
+    setAudioInputId(newValue);
+    updatePreferences({ audioInputDeviceId: newValue });
+  };
+
+  const handleAudioOutputChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newValue = e.target.value;
+    setAudioOutputId(newValue);
+    updatePreferences({ audioOutputDeviceId: newValue });
+  };
+
   return (
     <div className="text-white max-w-2xl">
       <h2 className="text-[20px] font-bold mb-6">Configurações de Voz e Vídeo</h2>
 
       <div className="space-y-6">
-        {/* Placeholder for future advanced voice settings */}
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold uppercase text-[#949BA4] mb-2">Dispositivo de Entrada</label>
-            <select className="w-full bg-[#1E1F22] border border-[#1E1F22] rounded p-2 text-sm outline-none text-[#DBDEE1]">
-              <option>Default (Padrão do Sistema)</option>
+            <select 
+              value={audioInputId}
+              onChange={handleAudioInputChange}
+              className="w-full bg-[#1E1F22] border border-[#1E1F22] rounded p-2 text-sm outline-none text-[#DBDEE1]"
+            >
+              <option value="default">Default (Padrão do Sistema)</option>
+              {audioInputs.map(device => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label || `Microfone ${device.deviceId.substring(0, 5)}...`}
+                </option>
+              ))}
             </select>
           </div>
           <div>
             <label className="block text-xs font-bold uppercase text-[#949BA4] mb-2">Dispositivo de Saída</label>
-            <select className="w-full bg-[#1E1F22] border border-[#1E1F22] rounded p-2 text-sm outline-none text-[#DBDEE1]">
-              <option>Default (Padrão do Sistema)</option>
+            <select 
+              value={audioOutputId}
+              onChange={handleAudioOutputChange}
+              className="w-full bg-[#1E1F22] border border-[#1E1F22] rounded p-2 text-sm outline-none text-[#DBDEE1]"
+            >
+              <option value="default">Default (Padrão do Sistema)</option>
+              {audioOutputs.map(device => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.label || `Alto-falante ${device.deviceId.substring(0, 5)}...`}
+                </option>
+              ))}
             </select>
           </div>
         </div>

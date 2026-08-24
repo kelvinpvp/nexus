@@ -13,6 +13,8 @@ export interface UserPreferences {
   allowServerDMs: boolean;
   cameraQuality?: 'AUTO' | 'P720' | 'P1080';
   screenShareQuality?: 'AUTO' | 'P720_30' | 'P1080_30' | 'P1080_60' | 'MAX';
+  audioInputDeviceId?: string;
+  audioOutputDeviceId?: string;
 }
 
 interface SettingsState {
