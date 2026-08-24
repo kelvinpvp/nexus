@@ -52,7 +52,7 @@ export default async function attachmentsRoutes(fastify: FastifyInstance) {
     } else if (contextType === 'DIRECT_MESSAGE') {
       const participant = await prisma.conversationParticipant.findUnique({
         where: {
-          conversationId_userId: {
+          userId_conversationId: {
             conversationId: contextId,
             userId: user.id
           }
@@ -165,7 +165,7 @@ export default async function attachmentsRoutes(fastify: FastifyInstance) {
         // Validate DM Access
         const participant = await prisma.conversationParticipant.findUnique({
           where: {
-            conversationId_userId: {
+            userId_conversationId: {
               conversationId: attachment.directMessage.conversationId,
               userId: user.id
             }
