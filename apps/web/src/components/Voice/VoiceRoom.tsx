@@ -473,11 +473,10 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
 
               await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, { 
                 audio: {
-                  echoCancellation: false,
+                  echoCancellation: true,
                   noiseSuppression: false,
                   autoGainControl: false,
                   systemAudio: 'include',
-                  suppressLocalAudioPlayback: true,
                   selfBrowserSurface: 'exclude',
                 } as any,
                 resolution
