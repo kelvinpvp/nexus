@@ -158,74 +158,74 @@ interface DiscordCallWrapperProps {
 function DiscordCallWrapper({ isModalOpen, setModalOpen, leaveCall, endCallForEveryone, activeCall }: DiscordCallWrapperProps) {
   const connectionState = useConnectionState();
 
-  if (!isModalOpen) {
-    return (
-      <div 
-        onClick={() => setModalOpen(true)}
-        className="fixed bottom-20 right-6 z-50 bg-[#2B2D31] hover:bg-[#35373C] border border-[#1E1F22] shadow-2xl rounded-xl p-3 flex items-center space-x-3 cursor-pointer transition-all duration-200 group animate-in slide-in-from-bottom-10"
-      >
-        <div className="relative">
-          <div className="w-10 h-10 rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold">
-            {activeCall.type === 'VIDEO' ? <Video size={18} /> : <Phone size={18} />}
-          </div>
-          <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#23A559] rounded-full border border-[#2B2D31] animate-pulse" />
-        </div>
-        <div className="pr-2">
-          <p className="text-white text-xs font-bold">Chamada em andamento</p>
-          <p className="text-[#949BA4] text-[10px]">Clique para expandir</p>
-        </div>
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            playSound('leave');
-            leaveCall();
-          }}
-          className="bg-[#DA373C] hover:bg-[#A12828] text-white p-2 rounded-full transition-colors ml-1"
-          title="Sair da Chamada"
-        >
-          <PhoneOff size={14} />
-        </button>
-      </div>
-    );
-  }
-
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#111214] p-0 sm:p-4">
-      <div className="bg-[#1E1F22] w-full h-full sm:max-w-6xl sm:h-[85vh] sm:rounded-xl flex flex-col overflow-hidden shadow-2xl border border-[#2B2D31]">
-        
-        {/* Header */}
-        <div className="h-14 bg-[#1E1F22] flex items-center justify-between px-6 border-b border-[#111214] shrink-0">
-          <div className="flex items-center text-white font-semibold">
-            <div className="w-2 h-2 rounded-full bg-[#23A559] mr-3 animate-pulse" />
-            <span>Chamada de {activeCall.type === 'VIDEO' ? 'Vídeo' : 'Voz'}</span>
-          </div>
-          <div className="flex items-center space-x-3">
-            <button 
-              onClick={() => setModalOpen(false)}
-              className="text-[#949BA4] hover:text-[#DBDEE1] hover:bg-[#35373C] p-2 rounded-full transition-all"
-              title="Minimizar chamada"
-            >
-              <X size={20} />
-            </button>
-          </div>
-        </div>
-
-        {/* Main Area */}
-        <div className="flex-1 bg-[#111214] relative overflow-hidden">
-          {connectionState !== 'connected' && (
-            <div className="absolute inset-0 z-50 bg-[#111214]/90 flex flex-col items-center justify-center text-white">
-              <div className="w-12 h-12 border-4 border-[#5865F2] border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-lg font-medium text-[#949BA4]">Conectando à chamada...</p>
+    <>
+      {!isModalOpen && (
+        <div 
+          onClick={() => setModalOpen(true)}
+          className="fixed bottom-20 right-6 z-50 bg-[#2B2D31] hover:bg-[#35373C] border border-[#1E1F22] shadow-2xl rounded-xl p-3 flex items-center space-x-3 cursor-pointer transition-all duration-200 group animate-in slide-in-from-bottom-10"
+        >
+          <div className="relative">
+            <div className="w-10 h-10 rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold">
+              {activeCall.type === 'VIDEO' ? <Video size={18} /> : <Phone size={18} />}
             </div>
-          )}
-          <DiscordCallLayout 
-            leaveCall={leaveCall} 
-            endCallForEveryone={endCallForEveryone}
-            isVideoCall={activeCall.type === 'VIDEO'} 
-          />
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#23A559] rounded-full border border-[#2B2D31] animate-pulse" />
+          </div>
+          <div className="pr-2">
+            <p className="text-white text-xs font-bold">Chamada em andamento</p>
+            <p className="text-[#949BA4] text-[10px]">Clique para expandir</p>
+          </div>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              playSound('leave');
+              leaveCall();
+            }}
+            className="bg-[#DA373C] hover:bg-[#A12828] text-white p-2 rounded-full transition-colors ml-1"
+            title="Sair da Chamada"
+          >
+            <PhoneOff size={14} />
+          </button>
+        </div>
+      )}
+
+      <div className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#111214] p-0 sm:p-4 ${!isModalOpen ? 'hidden' : ''}`}>
+        <div className="bg-[#1E1F22] w-full h-full sm:max-w-6xl sm:h-[85vh] sm:rounded-xl flex flex-col overflow-hidden shadow-2xl border border-[#2B2D31]">
+          
+          {/* Header */}
+          <div className="h-14 bg-[#1E1F22] flex items-center justify-between px-6 border-b border-[#111214] shrink-0">
+            <div className="flex items-center text-white font-semibold">
+              <div className="w-2 h-2 rounded-full bg-[#23A559] mr-3 animate-pulse" />
+              <span>Chamada de {activeCall.type === 'VIDEO' ? 'Vídeo' : 'Voz'}</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button 
+                onClick={() => setModalOpen(false)}
+                className="text-[#949BA4] hover:text-[#DBDEE1] hover:bg-[#35373C] p-2 rounded-full transition-all"
+                title="Minimizar chamada"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Area */}
+          <div className="flex-1 bg-[#111214] relative overflow-hidden">
+            {connectionState !== 'connected' && (
+              <div className="absolute inset-0 z-50 bg-[#111214]/90 flex flex-col items-center justify-center text-white">
+                <div className="w-12 h-12 border-4 border-[#5865F2] border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-lg font-medium text-[#949BA4]">Conectando à chamada...</p>
+              </div>
+            )}
+            <DiscordCallLayout 
+              leaveCall={leaveCall} 
+              endCallForEveryone={endCallForEveryone}
+              isVideoCall={activeCall.type === 'VIDEO'} 
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
