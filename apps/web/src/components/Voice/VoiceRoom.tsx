@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   LiveKitRoom,
-  RoomAudioRenderer,
   useParticipants,
   useLocalParticipant,
   useTracks,
   VideoTrack,
+  AudioTrack,
   useConnectionState,
   useTrackToggle,
 } from '@livekit/components-react';
@@ -16,6 +16,8 @@ import { useVoiceStore } from '@/store/voiceStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useAuth } from '@/contexts/AuthContext';
 import SettingsModal from '@/components/Settings/SettingsModal';
+import { VoiceDiagnostics } from './VoiceDiagnostics';
+import { useSearchParams } from 'next/navigation';
 import { socket } from '@/lib/socket';
 import {
   Mic,
@@ -33,6 +35,7 @@ import {
   UserX,
   AlertTriangle,
   Radio,
+  ChevronUp,
 } from 'lucide-react';
 
 interface VoiceRoomProps {
@@ -68,7 +71,6 @@ export default function VoiceRoom({ channelName }: VoiceRoomProps) {
       className="flex-1 bg-[#111214] flex flex-col h-full relative overflow-hidden"
     >
       <VoiceRoomInner channelName={channelName} />
-      <RoomAudioRenderer />
     </LiveKitRoom>
   );
 }
@@ -86,6 +88,15 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isInitialMicActivating, setIsInitialMicActivating] = useState(false);
   const [hasAttemptedInitialMic, setHasAttemptedInitialMic] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    participants.forEach((p) => {
+      if (localUserVolumes[p.identity] === undefined) {
+        setLocalVolume(p.identity, 1);
+      }
+    });
+  }, [participants, localUserVolumes, setLocalVolume]);
 
   // Initial Microphone State (based on joinMuted preference)
   useEffect(() => {
@@ -176,8 +187,12 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
     setIsDeafened((prev) => !prev);
   };
 
+  const showDiagnostics = process.env.NEXT_PUBLIC_VOICE_DEBUG === 'true' || searchParams.get('debug') === 'true';
+
   return (
     <div className="flex-1 flex flex-col h-full bg-[#111214] text-white relative select-none">
+      {showDiagnostics && <VoiceDiagnostics onClose={() => {}} />}
+      
       {/* Header */}
       <header className="h-12 border-b border-[#1F2023] bg-[#2B2D31] flex items-center justify-between px-4 z-10 flex-shrink-0">
         <div className="flex items-center space-x-2">
@@ -245,14 +260,17 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
                       try {
                         meta = JSON.parse(participant.metadata || '{}');
                       } catch (err) {}
+                      const displayName = meta.username || participant.name || participant.identity;
 
                       setContextMenuUser({
                         userId: participant.identity,
-                        username: meta.username || participant.name || participant.identity,
+                        username: displayName,
                         x: e.clientX,
                         y: e.clientY,
                       });
                     }}
+                    localVolume={localUserVolumes[participant.identity] ?? 1}
+                    isLocallyMuted={!!locallyMutedUserIds[participant.identity]}
                   />
                 );
               })}
@@ -263,32 +281,45 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
 
       {/* Control Bar (Bottom) */}
       <div className="h-20 bg-[#1E1F22] border-t border-[#2B2D31] flex items-center justify-center space-x-4 px-6 flex-shrink-0 z-10">
-        {/* Mic Button */}
-        <button
-          onClick={async () => {
-            if (!localParticipant) return;
-            try {
-              if (isDeafened) setIsDeafened(false);
-              await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
-              console.log('[VOICE DEBUG] Microphone toggled. New state:', !isMicrophoneEnabled);
-            } catch (err) {
-              console.error('[VOICE DEBUG] Error toggling microphone:', err);
-              const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-              alert('Erro ao acessar o microfone:\n' + errMsg + '\nVerifique se o dispositivo está conectado e não está sendo usado por outro app.');
-            }
-          }}
-          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-            isInitialMicActivating
-              ? 'bg-yellow-600 animate-pulse text-white'
-              : isMicrophoneEnabled 
+        {/* Mic Button Group */}
+        <div className="flex items-center">
+          <button
+            onClick={async () => {
+              if (!localParticipant) return;
+              try {
+                if (isDeafened) setIsDeafened(false);
+                await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
+                console.log('[VOICE DEBUG] Microphone toggled. New state:', !isMicrophoneEnabled);
+              } catch (err) {
+                console.error('[VOICE DEBUG] Error toggling microphone:', err);
+                const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+                alert('Erro ao acessar o microfone:\n' + errMsg + '\nVerifique se o dispositivo está conectado e não está sendo usado por outro app.');
+              }
+            }}
+            className={`h-12 w-12 rounded-l-full flex items-center justify-center transition-all ${
+              isInitialMicActivating
+                ? 'bg-yellow-600 animate-pulse text-white'
+                : isMicrophoneEnabled 
+                  ? 'bg-[#2B2D31] hover:bg-[#35373C] text-white' 
+                  : 'bg-[#F23F43] hover:bg-[#D83A3E] text-white'
+            }`}
+            title={isMicrophoneEnabled ? 'Mutar Microfone' : 'Desmutar Microfone'}
+            disabled={isInitialMicActivating}
+          >
+            {isMicrophoneEnabled ? <Mic size={22} /> : <MicOff size={22} />}
+          </button>
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            className={`h-12 w-6 rounded-r-full flex items-center justify-center transition-all border-l border-[#1F2023] ${
+              isMicrophoneEnabled 
                 ? 'bg-[#2B2D31] hover:bg-[#35373C] text-white' 
                 : 'bg-[#F23F43] hover:bg-[#D83A3E] text-white'
-          }`}
-          title={isMicrophoneEnabled ? 'Mutar Microfone' : 'Desmutar Microfone'}
-          disabled={isInitialMicActivating}
-        >
-          {isMicrophoneEnabled ? <Mic size={22} /> : <MicOff size={22} />}
-        </button>
+            }`}
+            title="Configurações de Voz"
+          >
+            <ChevronUp size={14} />
+          </button>
+        </div>
 
         {/* Deafen Button */}
         <button
@@ -438,16 +469,25 @@ function ParticipantCard({
   screenShareTrack,
   onFocusStream,
   onContextMenu,
+  localVolume,
+  isLocallyMuted,
 }: {
   participant: Participant;
   allTracks: any[];
   screenShareTrack?: any;
   onFocusStream: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
+  localVolume?: number;
+  isLocallyMuted?: boolean;
 }) {
   const cameraTrack = allTracks.find(
     (t) => t.participant?.identity === participant.identity && t.source === Track.Source.Camera
   );
+  
+  const audioTrack = allTracks.find(
+    (t) => t.participant?.identity === participant.identity && t.source === Track.Source.Microphone
+  );
+
   const isSpeaking = participant.isSpeaking;
   const isMuted = !participant.isMicrophoneEnabled;
 
@@ -466,6 +506,14 @@ function ParticipantCard({
         isSpeaking ? 'border-[#23A559] shadow-[0_0_15px_rgba(35,165,89,0.4)]' : 'border-transparent'
       }`}
     >
+      {audioTrack && !participant.isLocal && (
+        <AudioTrack 
+          trackRef={audioTrack} 
+          volume={isLocallyMuted ? 0 : (localVolume ?? 1)} 
+          muted={isLocallyMuted ?? false} 
+        />
+      )}
+
       {cameraTrack ? (
         <VideoTrack trackRef={cameraTrack} className="w-full h-full object-cover" />
       ) : (

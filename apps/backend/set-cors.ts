@@ -20,7 +20,10 @@ const command = new PutBucketCorsCommand({
       {
         AllowedHeaders: ['*'],
         AllowedMethods: ['GET', 'PUT', 'POST', 'DELETE', 'HEAD'],
-        AllowedOrigins: ['*'],
+        AllowedOrigins: [
+          'https://nexus-web-smoky-three.vercel.app',
+          'http://localhost:3000'
+        ],
         ExposeHeaders: ['ETag']
       }
     ]
