@@ -251,7 +251,7 @@ export default function ChatArea() {
       {/* Input */}
       <div className="px-4 pb-6 pt-1 flex-shrink-0">
         <MessageInput 
-          contextId={activeChannelId}
+          contextId={activeChannelId as string}
           contextType="SERVER_CHANNEL"
           placeholder={`Conversar em #${activeChannel.name}`}
           onSendMessage={async (content, attachmentIds) => {

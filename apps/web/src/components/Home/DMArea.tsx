@@ -85,19 +85,7 @@ export default function DMArea() {
     return null; // DIRECT without recipient somehow
   }
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!content.trim() || !activeConversationId) return;
 
-    const text = content.trim();
-    setContent('');
-    try {
-      await sendMessage(activeConversationId, text);
-    } catch (error) {
-      setContent(text);
-      console.error(error);
-    }
-  };
 
   const handleLeaveGroup = async () => {
     if (!confirm('Tem certeza que deseja sair deste grupo?')) return;
@@ -304,11 +292,11 @@ export default function DMArea() {
       {/* Input Area */}
       <div className="px-4 pb-6 pt-2 shrink-0">
         <MessageInput 
-          contextId={activeConversationId}
+          contextId={activeConversationId as string}
           contextType="DIRECT_MESSAGE"
           placeholder={isGroup ? `Conversar em ${displayName}` : `Conversar em @${friend?.username}`}
           onSendMessage={async (content, attachmentIds) => {
-            await sendMessage(activeConversationId, content, attachmentIds);
+            await sendMessage(activeConversationId as string, content, attachmentIds);
           }}
         />
       </div>

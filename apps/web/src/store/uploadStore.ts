@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { apiFetch } from '@/lib/api';
-import { AttachmentKind, AttachmentStatus } from '@/types'; // I need to create these types or infer them
+export type AttachmentKind = 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE';
+export type AttachmentStatus = 'PENDING' | 'READY' | 'ATTACHED' | 'ABANDONED';
 
 export interface UploadItem {
   id: string; // client-side generated uuid for tracking

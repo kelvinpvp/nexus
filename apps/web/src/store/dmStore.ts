@@ -19,6 +19,7 @@ export interface DirectMessage {
   createdAt: string;
   updatedAt: string;
   author: UserInfo;
+  attachments?: any[];
 }
 
 export interface DMConversation {
