@@ -77,7 +77,7 @@ export default function VoiceRoom({ channelName }: VoiceRoomProps) {
 }
 
 function VoiceRoomInner({ channelName }: VoiceRoomProps) {
-  const { disconnectFromVoice, localUserVolumes, setLocalVolume, locallyMutedUserIds, toggleLocalMute, connectedVoiceChannelId } = useVoiceStore();
+  const { disconnectFromVoice, participantAudioPreferences, setAudioPreference, connectedVoiceChannelId } = useVoiceStore();
   const participants = useParticipants();
   const { user } = useAuth();
   const { localParticipant, isMicrophoneEnabled, isCameraEnabled, isScreenShareEnabled } = useLocalParticipant();
@@ -99,11 +99,11 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
 
   useEffect(() => {
     participants.forEach((p) => {
-      if (localUserVolumes[p.identity] === undefined) {
-        setLocalVolume(p.identity, 1);
+      if (!participantAudioPreferences[p.identity]) {
+        // Initialize preferences implicitly, no need to dispatch if we just read defaults in the component
       }
     });
-  }, [participants, localUserVolumes, setLocalVolume]);
+  }, [participants, participantAudioPreferences]);
 
   // Initial Microphone State (based on joinMuted preference)
   useEffect(() => {
@@ -143,8 +143,13 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
     }
   }, [isMicrophoneEnabled, isDeafened, connectionState]);
 
-  // Tracks (Camera and Screen Share)
-  const tracks = useTracks([Track.Source.Camera, Track.Source.ScreenShare], { onlySubscribed: false });
+  // Tracks (Camera, Screen Share, Microphone, and Screen Share Audio)
+  const tracks = useTracks([
+    Track.Source.Camera, 
+    Track.Source.ScreenShare, 
+    Track.Source.Microphone, 
+    Track.Source.ScreenShareAudio
+  ], { onlySubscribed: false });
 
   const localScreenSharePub = localParticipant?.getTrackPublication(Track.Source.ScreenShare);
   const localScreenShareTrack = localScreenSharePub?.track;
@@ -279,8 +284,10 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
                         y: e.clientY,
                       });
                     }}
-                    localVolume={localUserVolumes[participant.identity] ?? 1}
-                    isLocallyMuted={!!locallyMutedUserIds[participant.identity]}
+                    localVolume={participantAudioPreferences[participant.identity]?.voiceVolume ?? 1}
+                    isLocallyMuted={!!participantAudioPreferences[participant.identity]?.voiceMuted}
+                    streamVolume={participantAudioPreferences[participant.identity]?.screenShareVolume ?? 1}
+                    isStreamMuted={!!participantAudioPreferences[participant.identity]?.screenShareMuted}
                   />
                 );
               })}
@@ -462,13 +469,9 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
 
       {/* Context Menu Modal */}
       {contextMenuUser && (
-        <ParticipantContextMenu
+        <UserContextMenu
           user={contextMenuUser}
           onClose={() => setContextMenuUser(null)}
-          localVolume={localUserVolumes[contextMenuUser.userId] ?? 1}
-          isLocallyMuted={!!locallyMutedUserIds[contextMenuUser.userId]}
-          onVolumeChange={(v) => setLocalVolume(contextMenuUser.userId, v)}
-          onMuteToggle={() => toggleLocalMute(contextMenuUser.userId)}
         />
       )}
 
@@ -491,6 +494,8 @@ function ParticipantCard({
   onContextMenu,
   localVolume,
   isLocallyMuted,
+  streamVolume,
+  isStreamMuted,
 }: {
   participant: Participant;
   allTracks: any[];
@@ -499,6 +504,8 @@ function ParticipantCard({
   onContextMenu: (e: React.MouseEvent) => void;
   localVolume?: number;
   isLocallyMuted?: boolean;
+  streamVolume?: number;
+  isStreamMuted?: boolean;
 }) {
   const cameraTrack = allTracks.find(
     (t) => t.participant?.identity === participant.identity && t.source === Track.Source.Camera
@@ -506,6 +513,10 @@ function ParticipantCard({
   
   const audioTrack = allTracks.find(
     (t) => t.participant?.identity === participant.identity && t.source === Track.Source.Microphone
+  );
+
+  const screenAudioTrack = allTracks.find(
+    (t) => t.participant?.identity === participant.identity && t.source === Track.Source.ScreenShareAudio
   );
 
   const isSpeaking = participant.isSpeaking;
@@ -521,11 +532,18 @@ function ParticipantCard({
 
   return (
     <div
-      onContextMenu={onContextMenu}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (onContextMenu) onContextMenu(e);
+      }}
       className={`relative bg-[#2B2D31] rounded-xl overflow-hidden flex flex-col items-center justify-center min-h-[220px] h-full shadow-md transition-all duration-150 border-2 ${
         isSpeaking ? 'border-[#23A559] shadow-[0_0_15px_rgba(35,165,89,0.4)]' : 'border-transparent'
       }`}
     >
+      {/* Invisible overlay to catch right clicks consistently */}
+      <div className="absolute inset-0 z-0 cursor-context-menu" />
+      
       {audioTrack && !participant.isLocal && (
         <AudioTrack 
           trackRef={audioTrack} 
@@ -534,13 +552,23 @@ function ParticipantCard({
         />
       )}
 
+      {screenAudioTrack && !participant.isLocal && (
+        <AudioTrack 
+          trackRef={screenAudioTrack} 
+          volume={isStreamMuted ? 0 : (streamVolume ?? 1)} 
+          muted={isStreamMuted ?? false} 
+        />
+      )}
+
       {cameraTrack ? (
-        <VideoTrack trackRef={cameraTrack} className="w-full h-full object-cover" />
+        <div className="w-full h-full pointer-events-none z-0">
+          <VideoTrack trackRef={cameraTrack} className="w-full h-full object-cover" />
+        </div>
       ) : (
-        <div className="flex flex-col items-center justify-center space-y-3">
+        <div className="flex flex-col items-center justify-center space-y-3 z-0 pointer-events-none">
           <div className="w-20 h-20 rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold text-2xl relative shadow-lg">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" className="w-full h-full rounded-full object-cover" />
+              <img src={avatarUrl} alt="Avatar" className="w-full h-full rounded-full object-cover pointer-events-none" />
             ) : (
               displayName.charAt(0).toUpperCase()
             )}
@@ -592,75 +620,151 @@ function ParticipantCard({
 }
 
 // Right Click Context Menu
-function ParticipantContextMenu({
+function UserContextMenu({
   user,
   onClose,
-  localVolume,
-  isLocallyMuted,
-  onVolumeChange,
-  onMuteToggle,
 }: {
   user: { userId: string; username: string; x: number; y: number };
   onClose: () => void;
-  localVolume: number;
-  isLocallyMuted: boolean;
-  onVolumeChange: (vol: number) => void;
-  onMuteToggle: () => void;
 }) {
+  const { participantAudioPreferences, setAudioPreference } = useVoiceStore();
+  const prefs = participantAudioPreferences[user.userId] || {
+    voiceVolume: 1,
+    voiceMuted: false,
+    screenShareVolume: 1,
+    screenShareMuted: false
+  };
+
+  const [position, setPosition] = useState({ x: user.x, y: user.y });
+  const menuRef = React.useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const handleClickOutside = () => onClose();
-    window.addEventListener('click', handleClickOutside);
-    return () => window.removeEventListener('click', handleClickOutside);
+    if (menuRef.current) {
+      const rect = menuRef.current.getBoundingClientRect();
+      let newX = user.x;
+      let newY = user.y;
+
+      if (newX + rect.width > window.innerWidth) {
+        newX = window.innerWidth - rect.width - 10;
+      }
+      if (newY + rect.height > window.innerHeight) {
+        newY = window.innerHeight - rect.height - 10;
+      }
+
+      setPosition({ x: Math.max(10, newX), y: Math.max(10, newY) });
+    }
+  }, [user.x, user.y]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    
+    // Add small delay to prevent immediate close on the same click that opened it
+    setTimeout(() => {
+      window.addEventListener('click', handleClickOutside);
+      window.addEventListener('keydown', handleKeyDown);
+    }, 10);
+    
+    return () => {
+      window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [onClose]);
 
   return (
     <div
-      style={{ top: `${user.y}px`, left: `${user.x}px` }}
-      className="fixed z-50 w-56 bg-[#111214] border border-[#2B2D31] rounded-lg shadow-2xl p-1.5 text-sm text-[#DBDEE1]"
+      ref={menuRef}
+      style={{ top: `${position.y}px`, left: `${position.x}px` }}
+      className="fixed z-50 w-64 bg-[#111214] border border-[#2B2D31] rounded-lg shadow-2xl p-1.5 text-sm text-[#DBDEE1]"
       onClick={(e) => e.stopPropagation()}
+      onContextMenu={(e) => e.preventDefault()}
     >
-      <div className="px-3 py-1.5 font-bold text-white border-b border-[#2B2D31] mb-1">{user.username}</div>
+      <div className="px-3 py-1.5 font-bold text-white border-b border-[#2B2D31] mb-1 truncate">{user.username}</div>
 
-      {/* Volume Slider */}
-      <div className="px-3 py-2 space-y-1">
-        <div className="flex items-center justify-between text-xs text-[#949BA4]">
-          <span>Volume do Usuário</span>
-          <span>{Math.round(localVolume * 100)}%</span>
+      <div className="max-h-[70vh] overflow-y-auto">
+        {/* Voice Audio Settings */}
+        <div className="px-3 py-2 space-y-1">
+          <div className="flex items-center justify-between text-xs font-bold text-[#949BA4] mb-2 uppercase">
+            Áudio da Voz
+          </div>
+          <div className="flex items-center justify-between text-xs text-[#B5BAC1]">
+            <span>Volume</span>
+            <span>{Math.round(prefs.voiceVolume * 100)}%</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="2"
+            step="0.05"
+            value={prefs.voiceVolume}
+            onChange={(e) => setAudioPreference(user.userId, 'voiceVolume', parseFloat(e.target.value))}
+            className="w-full accent-[#5865F2] cursor-pointer"
+          />
         </div>
-        <input
-          type="range"
-          min="0"
-          max="2"
-          step="0.05"
-          value={localVolume}
-          onChange={(e) => onVolumeChange(parseFloat(e.target.value))}
-          className="w-full accent-[#5865F2] cursor-pointer"
-        />
+
+        <button
+          onClick={() => setAudioPreference(user.userId, 'voiceMuted', !prefs.voiceMuted)}
+          className="w-full text-left px-3 py-2 rounded hover:bg-[#5865F2] hover:text-white flex items-center space-x-2 transition-colors"
+        >
+          {prefs.voiceMuted ? <Volume2 size={16} /> : <VolumeX size={16} />}
+          <span>{prefs.voiceMuted ? 'Ouvir Voz' : 'Silenciar Voz para mim'}</span>
+        </button>
+
+        <div className="my-1.5 border-t border-[#2B2D31]" />
+
+        {/* Screen Share Audio Settings */}
+        <div className="px-3 py-2 space-y-1">
+          <div className="flex items-center justify-between text-xs font-bold text-[#949BA4] mb-2 uppercase">
+            Áudio da Transmissão
+          </div>
+          <div className="flex items-center justify-between text-xs text-[#B5BAC1]">
+            <span>Volume</span>
+            <span>{Math.round(prefs.screenShareVolume * 100)}%</span>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="2"
+            step="0.05"
+            value={prefs.screenShareVolume}
+            onChange={(e) => setAudioPreference(user.userId, 'screenShareVolume', parseFloat(e.target.value))}
+            className="w-full accent-[#5865F2] cursor-pointer"
+          />
+        </div>
+
+        <button
+          onClick={() => setAudioPreference(user.userId, 'screenShareMuted', !prefs.screenShareMuted)}
+          className="w-full text-left px-3 py-2 rounded hover:bg-[#5865F2] hover:text-white flex items-center space-x-2 transition-colors"
+        >
+          {prefs.screenShareMuted ? <Monitor size={16} /> : <Monitor size={16} />}
+          <span>{prefs.screenShareMuted ? 'Ouvir Transmissão' : 'Silenciar Transmissão'}</span>
+        </button>
+
+        <div className="my-1.5 border-t border-[#2B2D31]" />
+
+        {/* Admin Actions */}
+        <div className="px-3 py-1 text-xs font-bold text-[#949BA4] uppercase">
+          Moderação
+        </div>
+        <button className="w-full text-left px-3 py-1.5 rounded hover:bg-[#F23F43] hover:text-white flex items-center space-x-2 text-[#F23F43] transition-colors mt-1">
+          <Shield size={16} />
+          <span>Mutar membro no servidor</span>
+        </button>
+        <button className="w-full text-left px-3 py-1.5 rounded hover:bg-[#F23F43] hover:text-white flex items-center space-x-2 text-[#F23F43] transition-colors">
+          <Headphones size={16} />
+          <span>Ensurdecer no servidor</span>
+        </button>
+        <button className="w-full text-left px-3 py-1.5 rounded hover:bg-[#F23F43] hover:text-white flex items-center space-x-2 text-[#F23F43] transition-colors">
+          <UserX size={16} />
+          <span>Desconectar da Voz</span>
+        </button>
       </div>
-
-      <button
-        onClick={onMuteToggle}
-        className="w-full text-left px-3 py-1.5 rounded hover:bg-[#5865F2] hover:text-white flex items-center space-x-2"
-      >
-        {isLocallyMuted ? <Volume2 size={16} /> : <VolumeX size={16} />}
-        <span>{isLocallyMuted ? 'Desmutar Localmente' : 'Silenciar Localmente'}</span>
-      </button>
-
-      <div className="my-1 border-t border-[#2B2D31]" />
-
-      {/* Admin Actions (Server Mute / Server Deafen / Move / Kick) */}
-      <button className="w-full text-left px-3 py-1.5 rounded hover:bg-[#F23F43] hover:text-white flex items-center space-x-2 text-[#F23F43]">
-        <Shield size={16} />
-        <span>Silenciar no Servidor</span>
-      </button>
-      <button className="w-full text-left px-3 py-1.5 rounded hover:bg-[#F23F43] hover:text-white flex items-center space-x-2 text-[#F23F43]">
-        <Headphones size={16} />
-        <span>Ensurdecer no Servidor</span>
-      </button>
-      <button className="w-full text-left px-3 py-1.5 rounded hover:bg-[#F23F43] hover:text-white flex items-center space-x-2 text-[#F23F43]">
-        <UserX size={16} />
-        <span>Desconectar da Voz</span>
-      </button>
     </div>
   );
 }

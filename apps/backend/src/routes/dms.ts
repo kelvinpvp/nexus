@@ -242,12 +242,17 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
   fastify.get('/:id/messages', async (request: FastifyRequest, reply: FastifyReply) => {
     const user = (request as any).user;
     const { id } = request.params as { id: string };
+    
+    console.log(`[DEBUG] GET /dms/${id}/messages for user ${user.id}`);
 
     const participant = await prisma.conversationParticipant.findUnique({
       where: { userId_conversationId: { userId: user.id, conversationId: id } }
     });
 
-    if (!participant) return reply.status(403).send({ error: 'Access denied' });
+    if (!participant) {
+      console.log(`[DEBUG] Participant not found for user ${user.id} in conv ${id}`);
+      return reply.status(403).send({ error: 'Access denied' });
+    }
 
     const messages = await prisma.directMessage.findMany({
       where: { conversationId: id },
@@ -257,6 +262,8 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
       },
       orderBy: { createdAt: 'asc' }
     });
+    
+    console.log(`[DEBUG] Found ${messages.length} messages for conv ${id}`);
 
     return reply.send(messages);
   });
@@ -266,6 +273,8 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
     const user = (request as any).user;
     const { id } = request.params as { id: string };
 
+    console.log(`[DEBUG] POST /dms/${id}/messages from user ${user.id}`);
+
     try {
       const { content, attachmentIds = [] } = messageSchema.parse(request.body);
 
@@ -274,9 +283,13 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
         include: { participants: true }
       });
 
-      if (!conversation) return reply.status(404).send({ error: 'Conversation not found' });
+      if (!conversation) {
+        console.log(`[DEBUG] Conversation ${id} not found for POST msg`);
+        return reply.status(404).send({ error: 'Conversation not found' });
+      }
 
       if (!conversation.participants.some(p => p.userId === user.id)) {
+        console.log(`[DEBUG] User ${user.id} not in conversation ${id} for POST msg`);
         return reply.status(403).send({ error: 'Access denied' });
       }
 

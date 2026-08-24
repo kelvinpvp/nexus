@@ -10,14 +10,20 @@ interface VoiceState {
   isConnecting: boolean;
   error: string | null;
   
-  // Local audio settings per participant
-  localUserVolumes: Record<string, number>; // userId -> volume (0 to 1)
-  locallyMutedUserIds: Record<string, boolean>; // userId -> isMuted
+  participantAudioPreferences: Record<string, {
+    voiceVolume: number;
+    voiceMuted: boolean;
+    screenShareVolume: number;
+    screenShareMuted: boolean;
+  }>;
 
   connectToVoice: (channelId: string, serverId: string) => Promise<void>;
   disconnectFromVoice: () => void;
-  setLocalVolume: (userId: string, volume: number) => void;
-  toggleLocalMute: (userId: string) => void;
+  setAudioPreference: (
+    userId: string, 
+    type: 'voiceVolume' | 'voiceMuted' | 'screenShareVolume' | 'screenShareMuted', 
+    value: number | boolean
+  ) => void;
   clearError: () => void;
 }
 
@@ -29,8 +35,7 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
   roomName: null,
   isConnecting: false,
   error: null,
-  localUserVolumes: {},
-  locallyMutedUserIds: {},
+  participantAudioPreferences: {},
 
   connectToVoice: async (channelId: string, serverId: string) => {
     // If already connecting or connected to the same channel, do nothing
@@ -74,22 +79,25 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
     });
   },
 
-  setLocalVolume: (userId: string, volume: number) => {
-    set((state) => ({
-      localUserVolumes: {
-        ...state.localUserVolumes,
-        [userId]: Math.max(0, Math.min(2, volume)),
-      },
-    }));
-  },
-
-  toggleLocalMute: (userId: string) => {
-    set((state) => ({
-      locallyMutedUserIds: {
-        ...state.locallyMutedUserIds,
-        [userId]: !state.locallyMutedUserIds[userId],
-      },
-    }));
+  setAudioPreference: (userId, type, value) => {
+    set(state => {
+      const currentPrefs = state.participantAudioPreferences[userId] || {
+        voiceVolume: 1,
+        voiceMuted: false,
+        screenShareVolume: 1,
+        screenShareMuted: false
+      };
+      
+      return {
+        participantAudioPreferences: {
+          ...state.participantAudioPreferences,
+          [userId]: {
+            ...currentPrefs,
+            [type]: value
+          }
+        }
+      };
+    });
   },
 
   clearError: () => set({ error: null }),

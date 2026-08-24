@@ -174,14 +174,23 @@ app.get('/api/health', async () => {
 app.post('/api/auth/register', async (request, reply) => {
   try {
     const { email, username, password } = registerSchema.parse(request.body);
+    const normalizedEmail = email.toLowerCase().trim();
+    const trimmedUsername = username.trim();
 
     const existingUser = await prisma.user.findFirst({
-      where: { OR: [{ email }, { username }] },
+      where: { 
+        OR: [
+          { email: normalizedEmail }, 
+          // Use Prisma's case-insensitive mode if possible, but for now exact match trimmed
+          { username: trimmedUsername }
+        ] 
+      },
     });
 
     if (existingUser) {
+      app.log.warn(`auth.register.failed reason=conflict email=${normalizedEmail} username=${trimmedUsername}`);
       return reply.status(400).send({
-        error: existingUser.email === email ? 'Email already in use' : 'Username already in use'
+        error: existingUser.email === normalizedEmail ? 'AUTH_EMAIL_TAKEN' : 'AUTH_USERNAME_TAKEN'
       });
     }
 
@@ -189,8 +198,8 @@ app.post('/api/auth/register', async (request, reply) => {
 
     const user = await prisma.user.create({
       data: {
-        email,
-        username,
+        email: normalizedEmail,
+        username: trimmedUsername,
         password: passwordHash,
       },
     });
@@ -201,25 +210,29 @@ app.post('/api/auth/register', async (request, reply) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return reply.status(400).send({ error: 'Invalid input', details: error.errors });
+      app.log.warn(`auth.register.failed reason=validation`);
+      return reply.status(400).send({ error: 'AUTH_VALIDATION_FAILED', details: error.errors });
     }
     app.log.error(error);
-    return reply.status(500).send({ error: 'Internal server error: ' + (error instanceof Error ? error.message : String(error)) });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
 app.post('/api/auth/login', async (request, reply) => {
   try {
     const { email, password } = loginSchema.parse(request.body);
+    const normalizedEmail = email.toLowerCase().trim();
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user) {
-      return reply.status(401).send({ error: 'Invalid email or password' });
+      app.log.warn(`auth.login.failed reason=invalid_credentials email=${normalizedEmail}`);
+      return reply.status(401).send({ error: 'AUTH_INVALID_CREDENTIALS' });
     }
 
     const validPassword = await argon2.verify(user.password, password);
     if (!validPassword) {
-      return reply.status(401).send({ error: 'Invalid email or password' });
+      app.log.warn(`auth.login.failed reason=invalid_credentials email=${normalizedEmail}`);
+      return reply.status(401).send({ error: 'AUTH_INVALID_CREDENTIALS' });
     }
 
     // Generate secure session token
@@ -248,10 +261,11 @@ app.post('/api/auth/login', async (request, reply) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return reply.status(400).send({ error: 'Invalid input', details: error.errors });
+      app.log.warn(`auth.login.failed reason=validation`);
+      return reply.status(400).send({ error: 'AUTH_VALIDATION_FAILED', details: error.errors });
     }
     app.log.error(error);
-    return reply.status(500).send({ error: 'Internal server error: ' + (error instanceof Error ? error.message : String(error)) });
+    return reply.status(500).send({ error: 'Internal server error' });
   }
 });
 
