@@ -7,6 +7,7 @@ import { apiFetch } from '@/lib/api';
 import VoiceRoom from '../Voice/VoiceRoom';
 import MessageInput from './MessageInput';
 import AttachmentViewer from './AttachmentViewer';
+import GifMessageItem from './GifMessageItem';
 
 import ProfilePopout from '../Profile/ProfilePopout';
 import ServerMemberList from '../Server/ServerMemberList';
@@ -202,9 +203,7 @@ export default function ChatArea() {
                     </div>
                     <div className="text-[#DBDEE1] text-[15px] leading-[22px] whitespace-pre-wrap break-words">
                       {message.content.match(/^https?:\/\/.+\.(gif|png|jpg|jpeg|webp)($|\?)/i) || message.content.includes('media.giphy.com') || message.content.includes('giphy.com/media') ? (
-                        <div className="mt-1 max-w-sm rounded-lg overflow-hidden border border-[#1E1F22]">
-                          <img src={message.content} alt="GIF/Imagem" className="w-full max-h-72 object-contain bg-black/20" />
-                        </div>
+                        <GifMessageItem url={message.content} />
                       ) : message.content.includes('/invite/') ? (
                         <div>
                           <span>{message.content}</span>

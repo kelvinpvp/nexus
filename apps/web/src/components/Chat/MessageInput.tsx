@@ -1,7 +1,7 @@
 import { useState, useRef, ClipboardEvent, ChangeEvent } from 'react';
 import { PlusCircle, Smile, Send, X, File as FileIcon } from 'lucide-react';
 import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
-import GiphyPicker from './GiphyPicker';
+import GifPicker from './GifPicker';
 import { useUploadStore } from '@/store/uploadStore';
 
 interface MessageInputProps {
@@ -181,9 +181,9 @@ export default function MessageInput({ placeholder, contextId, contextType, onSe
           
           {showGifPicker && (
             <div className="absolute bottom-12 right-0 z-50">
-              <GiphyPicker
-                onSelectGif={(gifUrl) => {
-                  onSendMessage(gifUrl, []);
+              <GifPicker
+                onSelectGif={(gif) => {
+                  onSendMessage(gif.url, []);
                   setShowGifPicker(false);
                 }}
                 onClose={() => setShowGifPicker(false)}

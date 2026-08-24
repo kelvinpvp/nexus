@@ -1,0 +1,26 @@
+[
+  {
+    "corsRuleName": "nexus-web",
+    "allowedOrigins": [
+      "https://nexus-web-smoky-three.vercel.app",
+      "http://localhost:3000"
+    ],
+    "allowedHeaders": [
+      "*"
+    ],
+    "allowedOperations": [
+      "s3_get",
+      "s3_put",
+      "s3_post",
+      "s3_head",
+      "b2_download_file_by_id",
+      "b2_download_file_by_name",
+      "b2_upload_file",
+      "b2_upload_part"
+    ],
+    "exposeHeaders": [
+      "ETag"
+    ],
+    "maxAgeSeconds": 86400
+  }
+]

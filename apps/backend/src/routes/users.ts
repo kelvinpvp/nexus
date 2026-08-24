@@ -22,12 +22,8 @@ const profileUpdateSchema = z.object({
   avatarUrl: z.string().url().nullable().optional(),
 });
 
-import { CloudinaryStorageProvider } from '../providers/CloudinaryStorageProvider';
-import { LocalFileStorageProvider } from '../providers/LocalFileStorageProvider';
-
-const storageProvider = process.env.CLOUDINARY_CLOUD_NAME
-  ? new CloudinaryStorageProvider()
-  : new LocalFileStorageProvider();
+import { getStorageProvider } from '../services/storage';
+import { v4 as uuidv4 } from 'uuid';
 
 export default async function userRoutes(fastify: FastifyInstance, prisma: PrismaClient) {
   
@@ -108,37 +104,74 @@ export default async function userRoutes(fastify: FastifyInstance, prisma: Prism
     }
   });
 
-  // Upload Avatar
-  fastify.post('/me/avatar', async (request: FastifyRequest, reply: FastifyReply) => {
+  // Presigned URL for Avatar
+  fastify.post('/me/avatar/presign', async (request: FastifyRequest, reply: FastifyReply) => {
     const user = (request as any).user;
-    const data = await request.file();
+    const body = request.body as { mimeType: string; sizeBytes: number };
     
-    if (!data) {
-      return reply.status(400).send({ error: 'Nenhum arquivo enviado.' });
+    if (!body || !body.mimeType || !body.sizeBytes) {
+      return reply.status(400).send({ error: 'Missing mimeType or sizeBytes' });
     }
 
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedMimes.includes(data.mimetype)) {
-      return reply.status(400).send({ error: 'Formato inválido. Apenas JPG, PNG, GIF e WEBP são aceitos.' });
-    }
-
-    const buffer = await data.toBuffer();
-    
-    if (buffer.length > 5 * 1024 * 1024) {
+    if (body.sizeBytes > 5 * 1024 * 1024) {
       return reply.status(400).send({ error: 'O tamanho do arquivo excede o limite de 5MB.' });
     }
 
     try {
-      if (user.avatarUrl) {
-        await storageProvider.deleteFile(user.avatarUrl);
-      }
-
-      const fileUrl = await storageProvider.saveFile(buffer, data.filename, data.mimetype);
+      const storage = getStorageProvider();
+      const uuid = uuidv4();
+      const ext = body.mimeType.split('/')[1] || 'webp';
+      const storageKey = `profiles/${user.id}/avatars/${uuid}.${ext}`;
       
+      const uploadUrl = await storage.createUploadUrl(storageKey, body.mimeType, body.sizeBytes);
+      const fileUrl = `${process.env.STORAGE_PUBLIC_URL}/${storageKey}`;
+
+      return reply.send({ uploadUrl, fileUrl, storageKey });
+    } catch (e) {
+      request.log.error(e);
+      return reply.status(500).send({ error: 'Erro ao gerar URL de upload.' });
+    }
+  });
+
+  // Confirm Avatar
+  fastify.post('/me/avatar/confirm', async (request: FastifyRequest, reply: FastifyReply) => {
+    const user = (request as any).user;
+    const body = request.body as { fileUrl: string, storageKey: string };
+    
+    if (!body || !body.fileUrl) {
+      return reply.status(400).send({ error: 'Missing fileUrl' });
+    }
+
+    try {
+      const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+      const oldAvatar = dbUser?.avatarUrl;
+
       const updatedUser = await prisma.user.update({
         where: { id: user.id },
-        data: { avatarUrl: fileUrl }
+        data: { avatarUrl: body.fileUrl }
       });
+
+      // Cleanup old avatar safely
+      if (oldAvatar && oldAvatar !== body.fileUrl) {
+        try {
+          const oldStorageKey = oldAvatar.split('/').slice(3).join('/');
+          const storage = getStorageProvider();
+          if ((storage as any).deleteFile) {
+             await (storage as any).deleteFile(oldStorageKey);
+          }
+        } catch (e) {
+          console.error('Failed to cleanup old avatar', e);
+        }
+      }
+
+      const io = (fastify as any).io;
+      if (io) {
+         io.emit('user:profile_updated', {
+           userId: user.id,
+           avatarUrl: updatedUser.avatarUrl,
+           bannerUrl: updatedUser.bannerUrl
+         });
+      }
 
       return reply.send({
         id: updatedUser.id,
@@ -146,41 +179,77 @@ export default async function userRoutes(fastify: FastifyInstance, prisma: Prism
       });
     } catch (e) {
       request.log.error(e);
-      return reply.status(500).send({ error: 'Erro ao processar o upload do avatar.' });
+      return reply.status(500).send({ error: 'Erro ao confirmar avatar.' });
     }
   });
 
-  // Upload Banner
-  fastify.post('/me/banner', async (request: FastifyRequest, reply: FastifyReply) => {
+  // Presigned URL for Banner
+  fastify.post('/me/banner/presign', async (request: FastifyRequest, reply: FastifyReply) => {
     const user = (request as any).user;
-    const data = await request.file();
+    const body = request.body as { mimeType: string; sizeBytes: number };
     
-    if (!data) {
-      return reply.status(400).send({ error: 'Nenhum arquivo enviado.' });
+    if (!body || !body.mimeType || !body.sizeBytes) {
+      return reply.status(400).send({ error: 'Missing mimeType or sizeBytes' });
     }
 
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedMimes.includes(data.mimetype)) {
-      return reply.status(400).send({ error: 'Formato inválido. Apenas JPG, PNG, GIF e WEBP são aceitos.' });
-    }
-
-    const buffer = await data.toBuffer();
-    
-    if (buffer.length > 10 * 1024 * 1024) {
+    if (body.sizeBytes > 10 * 1024 * 1024) {
       return reply.status(400).send({ error: 'O tamanho do arquivo excede o limite de 10MB.' });
     }
 
     try {
-      if (user.bannerUrl) {
-        await storageProvider.deleteFile(user.bannerUrl);
-      }
-
-      const fileUrl = await storageProvider.saveFile(buffer, data.filename, data.mimetype);
+      const storage = getStorageProvider();
+      const uuid = uuidv4();
+      const ext = body.mimeType.split('/')[1] || 'webp';
+      const storageKey = `profiles/${user.id}/banners/${uuid}.${ext}`;
       
+      const uploadUrl = await storage.createUploadUrl(storageKey, body.mimeType, body.sizeBytes);
+      const fileUrl = `${process.env.STORAGE_PUBLIC_URL}/${storageKey}`;
+
+      return reply.send({ uploadUrl, fileUrl, storageKey });
+    } catch (e) {
+      request.log.error(e);
+      return reply.status(500).send({ error: 'Erro ao gerar URL de upload.' });
+    }
+  });
+
+  // Confirm Banner
+  fastify.post('/me/banner/confirm', async (request: FastifyRequest, reply: FastifyReply) => {
+    const user = (request as any).user;
+    const body = request.body as { fileUrl: string, storageKey: string };
+    
+    if (!body || !body.fileUrl) {
+      return reply.status(400).send({ error: 'Missing fileUrl' });
+    }
+
+    try {
+      const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
+      const oldBanner = dbUser?.bannerUrl;
+
       const updatedUser = await prisma.user.update({
         where: { id: user.id },
-        data: { bannerUrl: fileUrl }
+        data: { bannerUrl: body.fileUrl }
       });
+
+      if (oldBanner && oldBanner !== body.fileUrl) {
+        try {
+          const oldStorageKey = oldBanner.split('/').slice(3).join('/');
+          const storage = getStorageProvider();
+          if ((storage as any).deleteFile) {
+             await (storage as any).deleteFile(oldStorageKey);
+          }
+        } catch (e) {
+          console.error('Failed to cleanup old banner', e);
+        }
+      }
+
+      const io = (fastify as any).io;
+      if (io) {
+         io.emit('user:profile_updated', {
+           userId: user.id,
+           avatarUrl: updatedUser.avatarUrl,
+           bannerUrl: updatedUser.bannerUrl
+         });
+      }
 
       return reply.send({
         id: updatedUser.id,
@@ -188,9 +257,11 @@ export default async function userRoutes(fastify: FastifyInstance, prisma: Prism
       });
     } catch (e) {
       request.log.error(e);
-      return reply.status(500).send({ error: 'Erro ao processar o upload do banner.' });
+      return reply.status(500).send({ error: 'Erro ao confirmar banner.' });
     }
   });
+
+
 
   // Get user profile by ID
   fastify.get('/:id', async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {

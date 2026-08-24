@@ -1,12 +1,16 @@
 import React, { useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Camera } from 'lucide-react';
+import ImageCropperModal from './ImageCropperModal';
 
 export default function AccountSettings() {
   const { user, setUser, logout } = useAuth();
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+
+  const [cropModalConfig, setCropModalConfig] = useState<{ isOpen: boolean; imageSrc: string; isAvatar: boolean } | null>(null);
+  const [pendingUploadFile, setPendingUploadFile] = useState<{ file: File; isAvatar: boolean } | null>(null);
 
   const [editingField, setEditingField] = useState<'displayName' | 'username' | 'email' | 'password' | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -54,87 +58,81 @@ export default function AccountSettings() {
     }
   };
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, isAvatar: boolean) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('A imagem do avatar deve ter menos que 5MB.');
-      return;
-    }
-
-    setIsUploadingAvatar(true);
-    try {
-      const formData = new FormData();
-      formData.append('avatar', file);
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      const res = await fetch(`${apiUrl}/api/users/me/avatar`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        let errorMsg = 'Erro ao enviar avatar';
-        try {
-          const err = await res.json();
-          errorMsg = err.error || errorMsg;
-        } catch (e) {
-          errorMsg = res.statusText || errorMsg;
-        }
-        throw new Error(errorMsg);
-      }
-
-      const data = await res.json();
-      setUser((prev) => prev ? { ...prev, avatarUrl: data.avatarUrl } : null);
-    } catch (error: any) {
-      alert(error.message);
-    } finally {
-      setIsUploadingAvatar(false);
-      if (avatarInputRef.current) avatarInputRef.current.value = '';
-    }
+    // We allow larger sizes here because we will crop/compress it before upload
+    const url = URL.createObjectURL(file);
+    setCropModalConfig({ isOpen: true, imageSrc: url, isAvatar });
+    setPendingUploadFile({ file, isAvatar });
+    
+    // reset input
+    e.target.value = '';
   };
 
-  const handleBannerChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadCroppedImage = async (blob: Blob) => {
+    if (!cropModalConfig || !pendingUploadFile) return;
+    const { isAvatar } = pendingUploadFile;
+    
+    // We send as webp or jpeg
+    const mimeType = blob.type;
+    const sizeBytes = blob.size;
 
-    if (file.size > 10 * 1024 * 1024) {
-      alert('A imagem do banner deve ter menos que 10MB.');
-      return;
-    }
+    if (isAvatar) setIsUploadingAvatar(true);
+    else setIsUploadingBanner(true);
+    
+    setCropModalConfig(null);
+    setPendingUploadFile(null);
 
-    setIsUploadingBanner(true);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const endpoints = {
+      presign: isAvatar ? '/api/users/me/avatar/presign' : '/api/users/me/banner/presign',
+      confirm: isAvatar ? '/api/users/me/avatar/confirm' : '/api/users/me/banner/confirm'
+    };
+
     try {
-      const formData = new FormData();
-      formData.append('banner', file);
-
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-      const res = await fetch(`${apiUrl}/api/users/me/banner`, {
+      // 1. Get Presigned URL
+      const presignRes = await fetch(`${apiUrl}${endpoints.presign}`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: formData,
+        body: JSON.stringify({ mimeType, sizeBytes })
       });
 
-      if (!res.ok) {
-        let errorMsg = 'Erro ao enviar banner';
-        try {
-          const err = await res.json();
-          errorMsg = err.error || errorMsg;
-        } catch (e) {
-          errorMsg = res.statusText || errorMsg;
-        }
-        throw new Error(errorMsg);
-      }
+      if (!presignRes.ok) throw new Error('Erro ao preparar upload.');
+      const { uploadUrl, fileUrl, storageKey } = await presignRes.json();
 
-      const data = await res.json();
-      setUser((prev) => prev ? { ...prev, bannerUrl: data.bannerUrl } : null);
-    } catch (error: any) {
-      alert(error.message);
+      // 2. Upload to Object Storage
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': mimeType },
+        body: blob
+      });
+
+      if (!uploadRes.ok) throw new Error('Erro ao enviar imagem para o storage.');
+
+      // 3. Confirm with Backend
+      const confirmRes = await fetch(`${apiUrl}${endpoints.confirm}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ fileUrl, storageKey })
+      });
+
+      if (!confirmRes.ok) throw new Error('Erro ao confirmar imagem.');
+
+      const data = await confirmRes.json();
+      if (isAvatar) {
+        setUser((prev) => prev ? { ...prev, avatarUrl: data.avatarUrl } : null);
+      } else {
+        setUser((prev) => prev ? { ...prev, bannerUrl: data.bannerUrl } : null);
+      }
+    } catch (e: any) {
+      alert(e.message || 'Erro durante o upload da imagem.');
     } finally {
-      setIsUploadingBanner(false);
-      if (bannerInputRef.current) bannerInputRef.current.value = '';
+      if (isAvatar) setIsUploadingAvatar(false);
+      else setIsUploadingBanner(false);
     }
   };
 
@@ -168,7 +166,7 @@ export default function AccountSettings() {
           ref={bannerInputRef} 
           className="hidden" 
           accept="image/png, image/jpeg, image/gif, image/webp" 
-          onChange={handleBannerChange}
+          onChange={(e) => handleFileSelect(e, false)}
         />
         
         {/* Profile Info */}
@@ -199,7 +197,7 @@ export default function AccountSettings() {
               ref={avatarInputRef} 
               className="hidden" 
               accept="image/png, image/jpeg, image/gif, image/webp" 
-              onChange={handleAvatarChange}
+              onChange={(e) => handleFileSelect(e, true)}
             />
 
             <div className="pb-1">
@@ -347,6 +345,17 @@ export default function AccountSettings() {
             </div>
           </div>
         </div>
+      )}
+      {cropModalConfig && cropModalConfig.isOpen && (
+        <ImageCropperModal
+          imageSrc={cropModalConfig.imageSrc}
+          isAvatar={cropModalConfig.isAvatar}
+          onClose={() => {
+            setCropModalConfig(null);
+            setPendingUploadFile(null);
+          }}
+          onApply={uploadCroppedImage}
+        />
       )}
     </div>
   );

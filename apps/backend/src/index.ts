@@ -6,6 +6,7 @@ import { Server } from 'socket.io';
 import argon2 from 'argon2';
 import serverRoutes from './routes/servers';
 import channelRoutes from './routes/channels';
+import gifsRoutes from './routes/gifs';
 import { z } from 'zod';
 import crypto from 'crypto';
 import multipart from '@fastify/multipart';
@@ -81,6 +82,11 @@ app.register(async (fastify) => {
   fastify.addHook('preHandler', authenticate);
   // attachmentsRoutes handles multiple prefixes (/api/uploads, /api/attachments, /api/local-storage)
   fastify.register(attachmentsRoutes);
+  
+  // GIFs
+  fastify.register(async (instance) => {
+    await gifsRoutes(instance, prisma);
+  }, { prefix: '/api/gifs' });
 });
 
 let ioServer: Server;
