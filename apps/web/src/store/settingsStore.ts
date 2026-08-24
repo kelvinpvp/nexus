@@ -43,8 +43,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   updatePreferences: async (updates) => {
     // Optimistic update
     const prev = get().preferences;
-    if (prev) {
-      set({ preferences: { ...prev, ...updates } });
+    const optimistic = prev ? { ...prev, ...updates } : null;
+    if (optimistic) {
+      set({ preferences: optimistic });
     }
 
     try {
@@ -52,7 +53,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
         method: 'PATCH',
         body: JSON.stringify(updates)
       });
-      set({ preferences: data });
+      // Merge: server is source of truth, but keep optimistic values for
+      // device IDs that the server may return as null (not yet migrated rows)
+      const merged = {
+        ...data,
+        audioInputDeviceId: data.audioInputDeviceId ?? optimistic?.audioInputDeviceId,
+        audioOutputDeviceId: data.audioOutputDeviceId ?? optimistic?.audioOutputDeviceId,
+        noiseSuppressionEnabled: data.noiseSuppressionEnabled ?? optimistic?.noiseSuppressionEnabled ?? true,
+      };
+      set({ preferences: merged });
     } catch (err) {
       console.error('Error updating preferences:', err);
       // Revert on error

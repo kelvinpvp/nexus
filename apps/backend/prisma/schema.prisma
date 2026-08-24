@@ -112,6 +112,9 @@ model UserPreference {
   desktopNotifications Boolean @default(true)
   friendRequestPolicy String   @default("EVERYONE") // EVERYONE, FRIENDS_OF_FRIENDS, SERVER_MEMBERS, NOBODY
   allowServerDMs      Boolean  @default(true)
+  audioInputDeviceId  String?
+  audioOutputDeviceId String?
+  noiseSuppressionEnabled Boolean @default(true)
   
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt

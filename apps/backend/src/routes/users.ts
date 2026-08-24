@@ -14,6 +14,9 @@ const preferenceUpdateSchema = z.object({
   desktopNotifications: z.boolean().optional(),
   friendRequestPolicy: z.enum(['EVERYONE', 'FRIENDS_OF_FRIENDS', 'SERVER_MEMBERS', 'NOBODY']).optional(),
   allowServerDMs: z.boolean().optional(),
+  audioInputDeviceId: z.string().optional().nullable(),
+  audioOutputDeviceId: z.string().optional().nullable(),
+  noiseSuppressionEnabled: z.boolean().optional(),
 });
 
 const profileUpdateSchema = z.object({
