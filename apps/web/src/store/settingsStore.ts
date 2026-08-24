@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { apiFetch } from '@/lib/api';
 
 export interface UserPreferences {
@@ -18,6 +18,49 @@ export interface UserPreferences {
   noiseSuppressionEnabled?: boolean;
 }
 
+// Keys that are local/device-specific and must persist in localStorage
+// even if the server doesn't support them yet.
+const LOCAL_PREF_KEY = 'nexus_local_prefs';
+
+function loadLocalPrefs(): Partial<UserPreferences> {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(localStorage.getItem(LOCAL_PREF_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function saveLocalPrefs(updates: Partial<UserPreferences>) {
+  if (typeof window === 'undefined') return;
+  const existing = loadLocalPrefs();
+  const localFields: (keyof UserPreferences)[] = [
+    'audioInputDeviceId',
+    'audioOutputDeviceId',
+    'noiseSuppressionEnabled',
+  ];
+  const next: Partial<UserPreferences> = { ...existing };
+  localFields.forEach((k) => {
+    const v = (updates as any)[k];
+    if (v !== undefined) (next as any)[k] = v;
+  });
+  localStorage.setItem(LOCAL_PREF_KEY, JSON.stringify(next));
+}
+
+/** Merge server prefs with localStorage fallback for local-device fields */
+function mergeWithLocal(serverData: any): UserPreferences {
+  const local = loadLocalPrefs();
+  return {
+    ...serverData,
+    audioInputDeviceId: serverData.audioInputDeviceId ?? local.audioInputDeviceId,
+    audioOutputDeviceId: serverData.audioOutputDeviceId ?? local.audioOutputDeviceId,
+    noiseSuppressionEnabled:
+      serverData.noiseSuppressionEnabled !== undefined && serverData.noiseSuppressionEnabled !== null
+        ? serverData.noiseSuppressionEnabled
+        : (local.noiseSuppressionEnabled ?? true),
+  };
+}
+
 interface SettingsState {
   preferences: UserPreferences | null;
   isLoading: boolean;
@@ -33,7 +76,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ isLoading: true });
     try {
       const data = await apiFetch('/api/users/me/preferences');
-      set({ preferences: data, isLoading: false });
+      // Always merge with localStorage so local-device fields survive
+      // even if the backend migration hasn't run yet.
+      set({ preferences: mergeWithLocal(data), isLoading: false });
     } catch (err) {
       console.error('Error fetching preferences:', err);
       set({ isLoading: false });
@@ -41,6 +86,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   updatePreferences: async (updates) => {
+    // Persist local-device fields to localStorage immediately (survives page reload)
+    saveLocalPrefs(updates);
+
     // Optimistic update
     const prev = get().preferences;
     const optimistic = prev ? { ...prev, ...updates } : null;
@@ -51,23 +99,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     try {
       const data = await apiFetch('/api/users/me/preferences', {
         method: 'PATCH',
-        body: JSON.stringify(updates)
+        body: JSON.stringify(updates),
       });
-      // Merge: server is source of truth, but keep optimistic values for
-      // device IDs that the server may return as null (not yet migrated rows)
-      const merged = {
-        ...data,
-        audioInputDeviceId: data.audioInputDeviceId ?? optimistic?.audioInputDeviceId,
-        audioOutputDeviceId: data.audioOutputDeviceId ?? optimistic?.audioOutputDeviceId,
-        noiseSuppressionEnabled: data.noiseSuppressionEnabled ?? optimistic?.noiseSuppressionEnabled ?? true,
-      };
-      set({ preferences: merged });
+      // Merge server response with localStorage so nothing resets
+      set({ preferences: mergeWithLocal(data) });
     } catch (err) {
       console.error('Error updating preferences:', err);
-      // Revert on error
       if (prev) {
         set({ preferences: prev });
       }
     }
-  }
+  },
 }));
