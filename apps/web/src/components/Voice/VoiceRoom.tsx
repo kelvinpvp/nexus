@@ -153,6 +153,9 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
 
   const localScreenSharePub = localParticipant?.getTrackPublication(Track.Source.ScreenShare);
   const localScreenShareTrack = localScreenSharePub?.track;
+  
+  const localScreenShareAudioPub = localParticipant?.getTrackPublication(Track.Source.ScreenShareAudio);
+  const isSharingSystemAudio = !!localScreenShareAudioPub;
 
   const screenShareTracks = tracks.filter((t) => t.source === Track.Source.ScreenShare);
   if (localScreenShareTrack) {
@@ -361,6 +364,14 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
           </div>
         )}
       </div>
+
+      {/* System Audio Warning Banner */}
+      {isSharingSystemAudio && (
+        <div className="bg-[#2B2D31] border-t border-[#F23F43]/30 px-6 py-2 flex items-center justify-center text-xs text-[#949BA4] z-10 shadow-[0_-5px_15px_rgba(0,0,0,0.2)]">
+          <span className="text-[#F23F43] mr-2 font-bold">Aviso do Navegador:</span>
+          Você está compartilhando o "Áudio do Sistema". A voz dos outros participantes vai vazar na sua transmissão causando eco para eles. Para evitar, compartilhe uma "Guia/Aba" ao invés da tela inteira.
+        </div>
+      )}
 
       {/* Control Bar (Bottom) */}
       <div className="h-20 bg-[#1E1F22] border-t border-[#2B2D31] flex items-center justify-center space-x-4 px-6 flex-shrink-0 z-10">
