@@ -1,0 +1,37 @@
+{
+  "productName": "Nexus",
+  "version": "0.1.0",
+  "identifier": "com.nexus.app",
+  "build": {
+    "beforeDevCommand": "npm run dev:desktop -w web",
+    "beforeBuildCommand": "npm run build:desktop -w web",
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "../web/out"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Nexus",
+        "width": 1280,
+        "height": 720,
+        "minWidth": 900,
+        "minHeight": 600,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

@@ -1,0 +1,57 @@
+name: Desktop Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            apps/desktop/src-tauri/target/
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Web App
+        run: npm run build:desktop --workspace=web
+        env:
+          TAURI_ENV: "true"
+
+      - name: Build Tauri App & Create Release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: "apps/desktop"
+          tagName: ${{ github.ref_name }}
+          releaseName: "Nexus Desktop ${{ github.ref_name }}"
+          releaseBody: "Nova atualização do Nexus Desktop."
+          releaseDraft: false
+          prerelease: false
+          args: "--target x86_64-pc-windows-msvc"
