@@ -2,18 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { useDMStore } from '@/store/dmStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCallStore } from '@/store/callStore';
-import { Phone, Video, Hash, Users, Smile, LogOut, UserPlus } from 'lucide-react';
-import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
+import { Phone, Video, Hash, Users, LogOut } from 'lucide-react';
 import ProfilePopout from '../Profile/ProfilePopout';
-import GiphyPicker from '../Chat/GiphyPicker';
+import MessageInput from '../Chat/MessageInput';
 
 export default function DMArea() {
   const { activeConversationId, conversations, messages, sendMessage, isLoadingMessages, leaveGroup } = useDMStore();
   const { user } = useAuth();
   const { initiateCall, checkActiveCall, activeGroupCalls, joinActiveCall, activeCall } = useCallStore();
-  const [content, setContent] = useState('');
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [showGifPicker, setShowGifPicker] = useState(false);
   const [isCalling, setIsCalling] = useState<'VOICE' | 'VIDEO' | null>(null);
   const [isLeaving, setIsLeaving] = useState(false);
   const [selectedUserPopout, setSelectedUserPopout] = useState<{ userId: string; top: number; left: number } | null>(null);
@@ -33,15 +29,6 @@ export default function DMArea() {
       top: rect.bottom + 5,
       left: rect.left,
     });
-  };
-
-  const handleSendGif = async (gifUrl: string) => {
-    if (!activeConversationId) return;
-    try {
-      await sendMessage(activeConversationId, gifUrl);
-    } catch (err) {
-      console.error('Error sending GIF in DM:', err);
-    }
   };
 
   const conversation = conversations.find(c => c.id === activeConversationId);
@@ -306,71 +293,16 @@ export default function DMArea() {
       </div>
 
       {/* Input Area */}
+      {/* Input Area */}
       <div className="px-4 pb-6 pt-2 shrink-0">
-        <form onSubmit={handleSend} className="bg-[#383A40] rounded-lg flex flex-col px-4 py-2.5">
-          <div className="flex items-start">
-            <textarea 
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend(e);
-                }
-              }}
-              placeholder={isGroup ? `Conversar em ${displayName}` : `Conversar em @${friend?.username}`}
-              className="bg-transparent text-[#DBDEE1] placeholder-[#949BA4] focus:outline-none flex-1 resize-none overflow-y-auto max-h-[50vh] min-h-[44px] px-3 py-1.5 custom-scrollbar text-[15px]"
-              rows={1}
-            />
-            <div className="flex items-center space-x-2 shrink-0 ml-2 relative">
-              <button 
-                type="button" 
-                onClick={() => {
-                  setShowGifPicker(!showGifPicker);
-                  setShowEmojiPicker(false);
-                }}
-                className="text-xs font-bold bg-[#4E5058] hover:bg-[#6D6F78] text-white px-2 py-1 rounded transition-colors"
-              >
-                GIF
-              </button>
-
-              <button 
-                type="button" 
-                onClick={() => {
-                  setShowEmojiPicker(!showEmojiPicker);
-                  setShowGifPicker(false);
-                }}
-                className="text-[#B5BAC1] hover:text-[#DBDEE1] p-1 transition-colors"
-              >
-                <Smile size={24} />
-              </button>
-              
-              {showGifPicker && (
-                <div className="absolute bottom-12 right-0 z-50">
-                  <GiphyPicker
-                    onSelectGif={(gifUrl) => {
-                      handleSendGif(gifUrl);
-                      setShowGifPicker(false);
-                    }}
-                    onClose={() => setShowGifPicker(false)}
-                  />
-                </div>
-              )}
-
-              {showEmojiPicker && (
-                <div className="absolute bottom-12 right-0 z-50">
-                  <EmojiPicker
-                    theme={Theme.DARK}
-                    onEmojiClick={(emoji: EmojiClickData) => {
-                      setContent(prev => prev + emoji.emoji);
-                      setShowEmojiPicker(false);
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        </form>
+        <MessageInput 
+          contextId={activeConversationId}
+          contextType="DIRECT_MESSAGE"
+          placeholder={isGroup ? `Conversar em ${displayName}` : `Conversar em @${friend?.username}`}
+          onSendMessage={async (content, attachmentIds) => {
+            await sendMessage(activeConversationId, content, attachmentIds);
+          }}
+        />
       </div>
 
       {selectedUserPopout && (

@@ -1,12 +1,11 @@
 import { useAppStore } from '@/store/appStore';
 import { useAuth } from '@/contexts/AuthContext';
-import { Hash, PlusCircle, Smile, Send, Users } from 'lucide-react';
+import { Hash, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { socket } from '@/lib/socket';
 import { apiFetch } from '@/lib/api';
 import VoiceRoom from '../Voice/VoiceRoom';
-import EmojiPicker, { Theme, EmojiClickData } from 'emoji-picker-react';
-import GiphyPicker from './GiphyPicker';
+import MessageInput from './MessageInput';
 
 import ProfilePopout from '../Profile/ProfilePopout';
 import ServerMemberList from '../Server/ServerMemberList';
@@ -242,70 +241,17 @@ export default function ChatArea() {
 
       {/* Input */}
       <div className="px-4 pb-6 pt-1 flex-shrink-0">
-        <form onSubmit={handleSendMessage} className="bg-[#383A40] rounded-lg flex items-center px-4 py-2.5">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder={`Conversar em #${activeChannel.name}`}
-            className="bg-transparent border-none outline-none text-[#DBDEE1] flex-1 text-[15px] placeholder-[#80848E]"
-          />
-          <div className="flex items-center space-x-3 ml-3 relative">
-            <button 
-              type="button" 
-              onClick={() => {
-                setShowGifPicker(!showGifPicker);
-                setShowEmojiPicker(false);
-              }}
-              className="text-xs font-bold bg-[#4E5058] hover:bg-[#6D6F78] text-white px-2 py-1 rounded transition-colors"
-            >
-              GIF
-            </button>
-
-            <button 
-              type="button" 
-              onClick={() => {
-                setShowEmojiPicker(!showEmojiPicker);
-                setShowGifPicker(false);
-              }}
-              className="text-[#B5BAC1] hover:text-[#DBDEE1] transition-colors"
-            >
-              <Smile size={22} />
-            </button>
-            
-            {showGifPicker && (
-              <div className="absolute bottom-12 right-0 z-50">
-                <GiphyPicker
-                  onSelectGif={(gifUrl) => {
-                    handleSendGif(gifUrl);
-                    setShowGifPicker(false);
-                  }}
-                  onClose={() => setShowGifPicker(false)}
-                />
-              </div>
-            )}
-
-            {showEmojiPicker && (
-              <div className="absolute bottom-12 right-0 z-50">
-                <EmojiPicker
-                  theme={Theme.DARK}
-                  onEmojiClick={(emoji: EmojiClickData) => {
-                    setInputValue(prev => prev + emoji.emoji);
-                    setShowEmojiPicker(false);
-                  }}
-                />
-              </div>
-            )}
-            
-            <button 
-              type="submit" 
-              disabled={!inputValue.trim()}
-              className={`${inputValue.trim() ? 'text-[#5865F2]' : 'text-[#80848E]'} transition-colors`}
-            >
-              <Send size={20} />
-            </button>
-          </div>
-        </form>
+        <MessageInput 
+          contextId={activeChannelId}
+          contextType="SERVER_CHANNEL"
+          placeholder={`Conversar em #${activeChannel.name}`}
+          onSendMessage={async (content, attachmentIds) => {
+            await apiFetch(`/api/channels/${activeChannelId}/messages`, {
+              method: 'POST',
+              body: JSON.stringify({ content, attachmentIds }),
+            });
+          }}
+        />
       </div>
 
       </div>

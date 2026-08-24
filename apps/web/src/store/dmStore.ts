@@ -133,12 +133,14 @@ export const useDMStore = create<DMStore>((set, get) => ({
     }
   },
 
-  sendMessage: async (conversationId: string, content: string) => {
+  sendMessage: async (conversationId: string, content: string, attachmentIds?: string[]) => {
     try {
       const msg = await apiFetch(`/api/dms/${conversationId}/messages`, {
         method: 'POST',
-        body: JSON.stringify({ content })
+        body: JSON.stringify({ content, attachmentIds: attachmentIds || [] })
       });
+      // socket event will trigger state update via addMessage
+      return msg;
     } catch (error) {
       console.error('Failed to send message', error);
       throw error;
