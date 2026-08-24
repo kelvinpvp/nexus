@@ -47,7 +47,7 @@ interface DMStore {
   leaveGroup: (groupId: string) => Promise<void>;
   setActiveConversation: (id: string | null) => void;
   fetchMessages: (conversationId: string) => Promise<void>;
-  sendMessage: (conversationId: string, content: string) => Promise<void>;
+  sendMessage: (conversationId: string, content: string, attachmentIds?: string[]) => Promise<void>;
 
   setupSocketListeners: () => void;
   cleanupSocketListeners: () => void;
