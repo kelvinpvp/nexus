@@ -180,7 +180,7 @@ export default function MessageInput({ placeholder, contextId, contextType, onSe
           </button>
           
           {showGifPicker && (
-            <div className="absolute bottom-12 right-0 z-50">
+            <div className="absolute bottom-12 right-0 z-50 w-[350px]">
               <GifPicker
                 onSelectGif={(gif) => {
                   onSendMessage(gif.url, []);
