@@ -5,9 +5,9 @@ export class GiphyGifProvider implements GifProvider {
   private apiKey: string;
   
   constructor() {
-    this.apiKey = process.env.GIPHY_API_KEY || '';
-    if (!this.apiKey) {
-      console.warn('GIPHY_API_KEY is missing');
+    this.apiKey = process.env.GIPHY_API_KEY || 'dc6zaTOxFJmzC'; // Public beta key as fallback
+    if (!process.env.GIPHY_API_KEY) {
+      console.warn('GIPHY_API_KEY is missing from .env, using public fallback key');
     }
   }
 
