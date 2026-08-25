@@ -29,32 +29,49 @@ export default function App() {
   if (!user) return null; // AuthContext handles redirect
 
   return (
-    <div className="flex h-screen bg-[#313338] overflow-hidden">
-      {/* 1. Server List (Leftmost) */}
-      <ServerList />
-
-      {/* 2. Channel List (Middle) */}
-      {activeServerId === null ? <HomeSidebar /> : <ChannelList />}
-
-      {/* 3. Main Chat Area (Right) */}
-      {isLoadingServers ? (
-        <div className="flex-1 flex items-center justify-center bg-[#313338]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5865F2]"></div>
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* Global Announcement Banner */}
+      {!process.env.NEXT_PUBLIC_TAURI_ENV && (
+        <div className="bg-[#5865F2] text-white py-2 px-4 text-center text-sm font-bold flex justify-center items-center gap-4 z-50">
+          <span>🚀 O Nexus Desktop Oficial v1.0.0 foi lançado! Tenha uma experiência muito melhor baixando o app nativo.</span>
+          <a 
+            href="https://github.com/kelvinpvp/nexus/releases/latest" 
+            target="_blank" 
+            rel="noreferrer"
+            className="bg-white text-[#5865F2] px-4 py-1 rounded-full text-xs hover:bg-gray-100 transition-colors shadow-sm"
+          >
+            Baixar Agora
+          </a>
         </div>
-      ) : activeServerId === null ? (
-        activeConversationId ? <DMArea /> : <HomeArea />
-      ) : (
-        <ChatArea />
       )}
 
-      {/* Global Voice Connections */}
-      <ServerVoiceManager />
-      <CallManager />
+      <div className="flex flex-1 bg-[#313338] overflow-hidden relative">
+        {/* 1. Server List (Leftmost) */}
+        <ServerList />
 
-      {/* Server Settings Modal */}
-      {isServerSettingsOpen && (
-        <ServerSettingsModal onClose={() => setServerSettingsOpen(false)} />
-      )}
+        {/* 2. Channel List (Middle) */}
+        {activeServerId === null ? <HomeSidebar /> : <ChannelList />}
+
+        {/* 3. Main Chat Area (Right) */}
+        {isLoadingServers ? (
+          <div className="flex-1 flex items-center justify-center bg-[#313338]">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5865F2]"></div>
+          </div>
+        ) : activeServerId === null ? (
+          activeConversationId ? <DMArea /> : <HomeArea />
+        ) : (
+          <ChatArea />
+        )}
+
+        {/* Global Voice Connections */}
+        <ServerVoiceManager />
+        <CallManager />
+
+        {/* Server Settings Modal */}
+        {isServerSettingsOpen && (
+          <ServerSettingsModal onClose={() => setServerSettingsOpen(false)} />
+        )}
+      </div>
     </div>
   );
 }
