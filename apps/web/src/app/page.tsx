@@ -31,7 +31,8 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-6 justify-center pt-4">
             <Link 
-              href="#" 
+              href="https://github.com/kelvinpvp/nexus/releases/latest" 
+              target="_blank"
               className="bg-white text-[#313338] px-8 py-4 rounded-full font-medium text-lg hover:text-[#5865F2] transition-colors shadow-lg flex items-center justify-center gap-2"
             >
               <span>Baixar para Windows</span>
