@@ -127,7 +127,6 @@ export default function CallManager() {
             dynacast: true,
             publishDefaults: {
               simulcast: true,
-              screenShareSimulcast: false,
               screenShareEncoding: { maxBitrate: 3000000, maxFramerate: 60 }
             }
           }}

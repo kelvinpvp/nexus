@@ -73,7 +73,6 @@ export default function VoiceRoom({ channelName }: VoiceRoomProps) {
         adaptiveStream: true,
         dynacast: true,
         publishDefaults: {
-          screenShareSimulcast: false,
           screenShareEncoding: { maxBitrate: 3000000, maxFramerate: 60 }
         }
       }}
