@@ -26,6 +26,8 @@ export interface CallSession {
   };
 }
 
+const isGroupCall = (call: CallSession | null | undefined) => call?.conversation?.type === 'GROUP';
+
 interface CallStore {
   incomingCall: CallSession | null;
   activeCall: CallSession | null;
@@ -109,7 +111,19 @@ export const useCallStore = create<CallStore>((set, get) => ({
         body: JSON.stringify({ conversationId, type }),
       });
 
-      set({ activeCall: call, isCallModalOpen: true });
+      set((state) => ({
+        activeCall: call,
+        isCallModalOpen: true,
+        activeGroupCalls: isGroupCall(call)
+          ? {
+              ...state.activeGroupCalls,
+              [call.conversationId]: {
+                call,
+                participantCount: state.activeGroupCalls[call.conversationId]?.participantCount ?? 0,
+              },
+            }
+          : state.activeGroupCalls,
+      }));
       await get().fetchToken(call.id);
     } catch (error: any) {
       console.error('Failed to initiate call:', error);
@@ -119,7 +133,11 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
   joinActiveCall: async (call) => {
     try {
-      set({ activeCall: call, isCallModalOpen: true });
+      set((state) => ({
+        activeCall: call,
+        isCallModalOpen: true,
+        incomingCall: state.incomingCall?.id === call.id ? null : state.incomingCall,
+      }));
       await get().fetchToken(call.id);
     } catch (error: any) {
       console.error('Failed to join call:', error);
@@ -157,7 +175,20 @@ export const useCallStore = create<CallStore>((set, get) => ({
       const call = await apiFetch(`/api/calls/${callId}/accept`, {
         method: 'POST',
       });
-      set({ incomingCall: null, activeCall: call, isCallModalOpen: true });
+      set((state) => ({
+        incomingCall: null,
+        activeCall: call,
+        isCallModalOpen: true,
+        activeGroupCalls: isGroupCall(call)
+          ? {
+              ...state.activeGroupCalls,
+              [call.conversationId]: {
+                call,
+                participantCount: state.activeGroupCalls[call.conversationId]?.participantCount ?? 0,
+              },
+            }
+          : state.activeGroupCalls,
+      }));
       await get().fetchToken(callId);
     } catch (error: any) {
       console.error('Failed to accept call:', error);
@@ -193,16 +224,51 @@ export const useCallStore = create<CallStore>((set, get) => ({
     const { socket } = require('@/lib/socket');
     
     socket.on('dm:call:incoming', (call: CallSession) => {
-      set({ incomingCall: call });
+      set((state) => ({
+        incomingCall: call,
+        activeGroupCalls: isGroupCall(call)
+          ? {
+              ...state.activeGroupCalls,
+              [call.conversationId]: {
+                call,
+                participantCount: state.activeGroupCalls[call.conversationId]?.participantCount ?? 0,
+              },
+            }
+          : state.activeGroupCalls,
+      }));
     });
     
     socket.on('dm:call:accepted', async (call: CallSession) => {
       const state = get();
       if (state.activeCall?.id === call.id) {
-        set({ activeCall: call });
+        set((prev) => ({
+          activeCall: call,
+          activeGroupCalls: isGroupCall(call)
+            ? {
+                ...prev.activeGroupCalls,
+                [call.conversationId]: {
+                  call,
+                  participantCount: prev.activeGroupCalls[call.conversationId]?.participantCount ?? 0,
+                },
+              }
+            : prev.activeGroupCalls,
+        }));
         await state.fetchToken(call.id);
       } else if (state.incomingCall?.id === call.id) {
-        set({ incomingCall: null, activeCall: call, isCallModalOpen: true });
+        set((prev) => ({
+          incomingCall: null,
+          activeCall: call,
+          isCallModalOpen: true,
+          activeGroupCalls: isGroupCall(call)
+            ? {
+                ...prev.activeGroupCalls,
+                [call.conversationId]: {
+                  call,
+                  participantCount: prev.activeGroupCalls[call.conversationId]?.participantCount ?? 0,
+                },
+              }
+            : prev.activeGroupCalls,
+        }));
         await state.fetchToken(call.id);
       }
     });
@@ -221,8 +287,18 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
     socket.on('dm:call:declined', (call: CallSession) => {
       const state = get();
-      if (state.activeCall?.id === call.id || state.incomingCall?.id === call.id) {
+      if (!isGroupCall(call) && (state.activeCall?.id === call.id || state.incomingCall?.id === call.id)) {
         state.clearCallState();
+      }
+    });
+
+    socket.on('call:participant_declined', ({ callId, conversationId }: any) => {
+      const state = get();
+      if (state.incomingCall?.id === callId) {
+        set({ incomingCall: null });
+      }
+      if (conversationId) {
+        void state.checkActiveCall(conversationId);
       }
     });
 
@@ -247,6 +323,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
     socket.off('dm:call:accepted');
     socket.off('call:participant_left');
     socket.off('dm:call:declined');
+    socket.off('call:participant_declined');
     socket.off('dm:call:ended');
   }
 }));

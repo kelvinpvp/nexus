@@ -223,7 +223,17 @@ app.post('/api/auth/register', async (request, reply) => {
 
     return reply.status(201).send({
       message: 'User registered successfully',
-      user: { id: user.id, username: user.username, email: user.email },
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+        bannerUrl: user.bannerUrl,
+        bio: user.bio,
+        customStatus: user.customStatus,
+        status: user.status,
+      },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -274,7 +284,17 @@ app.post('/api/auth/login', async (request, reply) => {
 
     return reply.send({
       message: 'Logged in successfully',
-      user: { id: user.id, username: user.username, email: user.email },
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+        bannerUrl: user.bannerUrl,
+        bio: user.bio,
+        customStatus: user.customStatus,
+        status: user.status,
+      },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

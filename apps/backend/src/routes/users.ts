@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import argon2 from 'argon2';
 
 const preferenceUpdateSchema = z.object({
   joinMuted: z.boolean().optional(),
@@ -20,9 +21,15 @@ const preferenceUpdateSchema = z.object({
 });
 
 const profileUpdateSchema = z.object({
-  displayName: z.string().max(50).nullable().optional(),
-  username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/).optional(),
+  displayName: z.string().trim().max(50).nullable().optional(),
+  username: z.string().trim().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/).optional(),
+  email: z.string().trim().email().optional(),
+  password: z.string().min(8).max(128).optional(),
+  currentPassword: z.string().optional(),
   avatarUrl: z.string().url().nullable().optional(),
+  bannerUrl: z.string().url().nullable().optional(),
+  bio: z.string().trim().max(190).nullable().optional(),
+  customStatus: z.string().trim().max(128).nullable().optional(),
 });
 
 import { getStorageProvider } from '../services/storage';
@@ -72,38 +79,79 @@ export default async function userRoutes(fastify: FastifyInstance, prisma: Prism
     }
   });
 
-  // Update profile
+  // Update profile and sensitive account fields.
   fastify.patch('/me', async (request: FastifyRequest, reply: FastifyReply) => {
-    const user = (request as any).user;
-    
+    const sessionUser = (request as any).user;
+
     try {
-      const data = profileUpdateSchema.parse(request.body);
-      
-      if (data.username && data.username !== user.username) {
-        const existing = await prisma.user.findUnique({ where: { username: data.username }});
+      const parsed = profileUpdateSchema.parse(request.body);
+      const { currentPassword, password, ...profileFields } = parsed;
+      const dbUser = await prisma.user.findUnique({ where: { id: sessionUser.id } });
+
+      if (!dbUser) {
+        return reply.status(404).send({ error: 'Usuário não encontrado.' });
+      }
+
+      if (profileFields.username && profileFields.username !== dbUser.username) {
+        const existing = await prisma.user.findUnique({ where: { username: profileFields.username } });
         if (existing) {
           return reply.status(400).send({ error: 'Esse nome de usuário já está sendo utilizado.' });
         }
       }
 
+      if (profileFields.email) {
+        profileFields.email = profileFields.email.toLowerCase();
+        if (profileFields.email !== dbUser.email) {
+          const existing = await prisma.user.findUnique({ where: { email: profileFields.email } });
+          if (existing) {
+            return reply.status(400).send({ error: 'Este e-mail já está sendo utilizado.' });
+          }
+        }
+      }
+
+      const changesSensitiveData = password !== undefined || (
+        profileFields.email !== undefined && profileFields.email !== dbUser.email
+      );
+      if (changesSensitiveData) {
+        if (!currentPassword || !(await argon2.verify(dbUser.password, currentPassword))) {
+          return reply.status(401).send({ error: 'A senha atual está incorreta.' });
+        }
+      }
+
+      const updateData: any = { ...profileFields };
+      if (password) {
+        updateData.password = await argon2.hash(password);
+      }
+
       const updatedUser = await prisma.user.update({
-        where: { id: user.id },
-        data
+        where: { id: sessionUser.id },
+        data: updateData,
       });
 
-      return reply.send({
+      const publicUser = {
         id: updatedUser.id,
         username: updatedUser.username,
         email: updatedUser.email,
         displayName: updatedUser.displayName,
         avatarUrl: updatedUser.avatarUrl,
+        bannerUrl: updatedUser.bannerUrl,
+        bio: updatedUser.bio,
+        customStatus: updatedUser.customStatus,
         status: updatedUser.status,
-      });
+      };
+
+      const io = (fastify as any).io;
+      if (io) {
+        io.emit('user:profile_updated', publicUser);
+      }
+
+      return reply.send(publicUser);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return reply.status(400).send({ error: 'Invalid input', details: error.errors });
+        return reply.status(400).send({ error: 'Dados de perfil inválidos.', details: error.errors });
       }
-      return reply.status(500).send({ error: 'Internal server error' });
+      request.log.error(error);
+      return reply.status(500).send({ error: 'Erro interno ao atualizar o perfil.' });
     }
   });
 

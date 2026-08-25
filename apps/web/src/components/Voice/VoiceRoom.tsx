@@ -1,23 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   LiveKitRoom,
   useParticipants,
   useLocalParticipant,
   useTracks,
   VideoTrack,
-  AudioTrack,
   useConnectionState,
-  useTrackToggle,
 } from '@livekit/components-react';
-import { Track, ConnectionState, Participant, LocalParticipant, RoomEvent } from 'livekit-client';
+import { Track, ConnectionState, Participant } from 'livekit-client';
 import { useVoiceStore } from '@/store/voiceStore';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useAuth } from '@/contexts/AuthContext';
 import SettingsModal from '@/components/Settings/SettingsModal';
 import { VoiceDiagnostics } from './VoiceDiagnostics';
 import { useKrispNoiseSuppression } from '@/hooks/useKrispNoiseSuppression';
+import RoomAudioEngine from './RoomAudioEngine';
 import { useSearchParams } from 'next/navigation';
 import { socket } from '@/lib/socket';
 import {
@@ -27,6 +26,7 @@ import {
   Video,
   VideoOff,
   Monitor,
+  MonitorOff,
   PhoneOff,
   Settings,
   Volume2,
@@ -96,6 +96,12 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isInitialMicActivating, setIsInitialMicActivating] = useState(false);
   const [hasAttemptedInitialMic, setHasAttemptedInitialMic] = useState(false);
+  const [isMicToggling, setIsMicToggling] = useState(false);
+  const [isScreenShareToggling, setIsScreenShareToggling] = useState(false);
+  const [isDeafenToggling, setIsDeafenToggling] = useState(false);
+  const micToggleLock = useRef(false);
+  const screenShareToggleLock = useRef(false);
+  const deafenToggleLock = useRef(false);
   const searchParams = useSearchParams();
 
   // Krisp AI noise suppression
@@ -200,16 +206,27 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
     }
   }, [screenShareTracks, focusedTrack, autoFocusedTrackIds]);
 
-  // Handle Deafen
-  useEffect(() => {
-    if (!localParticipant) return;
-    if (isDeafened && localParticipant.isMicrophoneEnabled) {
-      localParticipant.setMicrophoneEnabled(false).catch(() => {});
-    }
-  }, [isDeafened, localParticipant]);
+  const toggleDeafen = async () => {
+    if (!localParticipant || deafenToggleLock.current) return;
 
-  const toggleDeafen = () => {
-    setIsDeafened((prev) => !prev);
+    deafenToggleLock.current = true;
+    setIsDeafenToggling(true);
+    const nextDeafened = !isDeafened;
+
+    try {
+      // Discord-style deafen also mutes the microphone. Await it so the UI and
+      // Socket.IO state cannot briefly disagree about whether the user is muted.
+      if (nextDeafened && localParticipant.isMicrophoneEnabled) {
+        await localParticipant.setMicrophoneEnabled(false);
+      }
+      setIsDeafened(nextDeafened);
+    } catch (error) {
+      console.error('[VOICE] Falha ao alterar ensurdecimento:', error);
+      alert('Não foi possível alterar o áudio da chamada. Tente novamente.');
+    } finally {
+      deafenToggleLock.current = false;
+      setIsDeafenToggling(false);
+    }
   };
 
   const showDiagnostics = process.env.NEXT_PUBLIC_VOICE_DEBUG === 'true' || searchParams.get('debug') === 'true';
@@ -234,46 +251,7 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
         </div>
       </header>
 
-      {/* Permission Error Banner removed for simplification via useTrackToggle */}
-
-      {/* Audio Engine: render all audio tracks unconditionally so they don't drop when UI changes */}
-      <div className="hidden">
-        {participants.map((participant) => {
-          if (participant.isLocal) {
-            return null;
-          }
-          
-          const pAudio = tracks.find(t => t.participant?.identity === participant.identity && t.source === Track.Source.Microphone);
-          const pScreenAudio = tracks.find(t => t.participant?.identity === participant.identity && t.source === Track.Source.ScreenShareAudio);
-          
-          const isLocallyMuted = !!participantAudioPreferences[participant.identity]?.voiceMuted;
-          const localVolume = Math.min(1, Math.max(0, participantAudioPreferences[participant.identity]?.voiceVolume ?? 1));
-          
-          const isStreamMuted = !!participantAudioPreferences[participant.identity]?.screenShareMuted;
-          const streamVolume = Math.min(1, Math.max(0, participantAudioPreferences[participant.identity]?.screenShareVolume ?? 1));
-
-          return (
-            <React.Fragment key={`audio-group-${participant.identity}`}>
-              {pAudio && pAudio.publication && (
-                <AudioTrack 
-                  key={pAudio.publication.trackSid || `mic-${participant.identity}`}
-                  trackRef={pAudio} 
-                  volume={isLocallyMuted ? 0 : localVolume} 
-                  muted={isLocallyMuted} 
-                />
-              )}
-              {pScreenAudio && pScreenAudio.publication && (
-                <AudioTrack 
-                  key={pScreenAudio.publication.trackSid || `screen-audio-${participant.identity}`}
-                  trackRef={pScreenAudio} 
-                  volume={isStreamMuted ? 0 : streamVolume} 
-                  muted={isStreamMuted} 
-                />
-              )}
-            </React.Fragment>
-          );
-        })}
-      </div>
+      <RoomAudioEngine deafened={isDeafened} />
 
       {/* Main Grid / Stage */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-center items-center relative">
@@ -386,29 +364,35 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
         <div className="flex items-center">
           <button
             onClick={async () => {
-              if (!localParticipant) return;
+              if (!localParticipant || micToggleLock.current) return;
+              micToggleLock.current = true;
+              setIsMicToggling(true);
+
               try {
-                if (isDeafened) setIsDeafened(false);
+                const nextEnabled = !localParticipant.isMicrophoneEnabled;
                 const deviceId = preferences?.audioInputDeviceId && preferences.audioInputDeviceId !== 'default'
                   ? preferences.audioInputDeviceId
                   : undefined;
-                await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled, deviceId ? { deviceId } : undefined);
-                console.log('[VOICE DEBUG] Microphone toggled. New state:', !isMicrophoneEnabled, 'Device:', deviceId ?? 'default');
+                await localParticipant.setMicrophoneEnabled(nextEnabled, deviceId ? { deviceId } : undefined);
+                if (nextEnabled && isDeafened) setIsDeafened(false);
               } catch (err) {
-                console.error('[VOICE DEBUG] Error toggling microphone:', err);
+                console.error('[VOICE] Erro ao alterar o microfone:', err);
                 const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-                alert('Erro ao acessar o microfone:\n' + errMsg + '\nVerifique se o dispositivo está conectado e não está sendo usado por outro app.');
+                alert('Erro ao acessar o microfone:\n' + errMsg + '\nVerifique as permissões e o dispositivo selecionado.');
+              } finally {
+                micToggleLock.current = false;
+                setIsMicToggling(false);
               }
             }}
             className={`h-12 w-12 rounded-l-full flex items-center justify-center transition-all ${
-              isInitialMicActivating
+              isInitialMicActivating || isMicToggling
                 ? 'bg-yellow-600 animate-pulse text-white'
                 : isMicrophoneEnabled 
                   ? 'bg-[#2B2D31] hover:bg-[#35373C] text-white' 
                   : 'bg-[#F23F43] hover:bg-[#D83A3E] text-white'
             }`}
             title={isMicrophoneEnabled ? 'Mutar Microfone' : 'Desmutar Microfone'}
-            disabled={isInitialMicActivating}
+            disabled={isInitialMicActivating || isMicToggling || isDeafenToggling}
           >
             {isMicrophoneEnabled ? <Mic size={22} /> : <MicOff size={22} />}
           </button>
@@ -428,8 +412,11 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
         {/* Deafen Button */}
         <button
           onClick={toggleDeafen}
+          disabled={isDeafenToggling || isMicToggling}
           className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-            !isDeafened ? 'bg-[#2B2D31] hover:bg-[#35373C] text-white' : 'bg-[#F23F43] hover:bg-[#D83A3E] text-white'
+            isDeafenToggling
+              ? 'bg-yellow-600 animate-pulse text-white'
+              : !isDeafened ? 'bg-[#2B2D31] hover:bg-[#35373C] text-white' : 'bg-[#F23F43] hover:bg-[#D83A3E] text-white'
           }`}
           title={isDeafened ? 'Ativar Áudio (Deafen Off)' : 'Ensurdecer (Deafen On)'}
         >
@@ -477,10 +464,14 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
         {/* Screen Share Button */}
         <button
           onClick={async () => {
-            if (!localParticipant) return;
+            if (!localParticipant || screenShareToggleLock.current) return;
+            screenShareToggleLock.current = true;
+            setIsScreenShareToggling(true);
+
             try {
+              const nextEnabled = !localParticipant.isScreenShareEnabled;
               let resolution: any = undefined;
-              if (!isScreenShareEnabled && preferences?.screenShareQuality) {
+              if (nextEnabled && preferences?.screenShareQuality) {
                 switch (preferences.screenShareQuality) {
                   case 'P720_30':
                     resolution = { width: 1280, height: 720, frameRate: 30 };
@@ -494,42 +485,38 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
                   case 'MAX':
                     resolution = { width: 3840, height: 2160, frameRate: 60 };
                     break;
-                  case 'AUTO':
-                  default:
-                    // AUTO will not set a specific resolution, letting LiveKit/browser optimize
-                    resolution = undefined;
-                    break;
                 }
               }
 
-              await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, { 
-                audio: {
+              await localParticipant.setScreenShareEnabled(nextEnabled, {
+                audio: nextEnabled ? {
                   echoCancellation: false,
                   noiseSuppression: false,
                   autoGainControl: false,
                   systemAudio: 'include',
                   selfBrowserSurface: 'exclude',
-                } as any,
-                resolution
+                } as any : undefined,
+                resolution,
               });
-              console.log('[VOICE DEBUG] Screen share toggled. New state:', !isScreenShareEnabled, 'Resolution:', resolution);
             } catch (err: any) {
-              if (err.name === 'NotAllowedError') {
-                console.warn('[VOICE DEBUG] Screen share cancelled by user');
-              } else {
-                console.error('[VOICE DEBUG] Error toggling screen share:', err);
-                if (!isScreenShareEnabled) {
-                  alert('O compartilhamento de tela falhou: ' + err.message);
-                }
+              if (err.name !== 'NotAllowedError') {
+                console.error('[VOICE] Erro ao alterar compartilhamento:', err);
+                alert('O compartilhamento de tela falhou: ' + err.message);
               }
+            } finally {
+              screenShareToggleLock.current = false;
+              setIsScreenShareToggling(false);
             }
           }}
+          disabled={isScreenShareToggling}
           className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${
-            isScreenShareEnabled ? 'bg-[#23A559] hover:bg-[#1F924E] text-white' : 'bg-[#2B2D31] hover:bg-[#35373C] text-white'
+            isScreenShareToggling
+              ? 'bg-yellow-600 animate-pulse text-white'
+              : isScreenShareEnabled ? 'bg-[#23A559] hover:bg-[#1F924E] text-white' : 'bg-[#2B2D31] hover:bg-[#35373C] text-white'
           }`}
           title={isScreenShareEnabled ? 'Parar Compartilhamento' : 'Compartilhar Tela'}
         >
-          <Monitor size={22} />
+          {isScreenShareEnabled ? <MonitorOff size={22} /> : <Monitor size={22} />}
         </button>
 
         {/* Settings Button */}

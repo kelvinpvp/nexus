@@ -32,11 +32,12 @@ export default function AccountSettings() {
     try {
       const payload: any = {};
       payload[editingField!] = editValue;
-      if (editingField === 'password') {
+      if (editingField === 'password' || editingField === 'email') {
         payload.currentPassword = currentPassword;
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const res = await fetch(`${apiUrl}/api/users/me`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -49,7 +50,7 @@ export default function AccountSettings() {
       }
 
       const updatedUser = await res.json();
-      setUser(updatedUser);
+      setUser((current) => current ? { ...current, ...updatedUser } : updatedUser);
       setEditingField(null);
     } catch (error: any) {
       alert(error.message);
@@ -212,9 +213,9 @@ export default function AccountSettings() {
               <p className="text-sm text-[#DBDEE1]">@{user.username}</p>
             </div>
           </div>
-          <button className="bg-[#5865F2] hover:bg-[#4752C4] px-4 py-1.5 rounded text-sm font-medium transition-colors mt-4">
-            Editar Perfil
-          </button>
+          <span className="mt-4 rounded-full bg-[#5865F2]/15 px-3 py-1 text-xs font-semibold text-[#AEB4FF]">
+            Avatar e banner
+          </span>
         </div>
 
         {/* Details card */}
@@ -267,7 +268,7 @@ export default function AccountSettings() {
       <div>
         <h3 className="text-xs font-bold uppercase text-[#949BA4] mb-4">Senha e Autenticação</h3>
         <button 
-          onClick={() => setEditingField('password')}
+          onClick={() => openEditModal('password')}
           className="bg-[#5865F2] hover:bg-[#4752C4] px-4 py-2 rounded text-sm font-medium transition-colors mb-6"
         >
           Alterar Senha
@@ -316,8 +317,8 @@ export default function AccountSettings() {
                 />
               </div>
 
-              {/* Se for senha, precisa de senha atual */}
-              {editingField === 'password' && (
+              {/* Alterações sensíveis exigem confirmação. */}
+              {(editingField === 'password' || editingField === 'email') && (
                 <div>
                   <label className="block text-xs font-bold uppercase text-[#B5BAC1] mb-2">
                     Senha Atual
@@ -341,7 +342,7 @@ export default function AccountSettings() {
               </button>
               <button 
                 onClick={handleSaveEdit}
-                disabled={isSavingEdit || !editValue}
+                disabled={isSavingEdit || !editValue || ((editingField === 'password' || editingField === 'email') && !currentPassword)}
                 className="bg-[#5865F2] hover:bg-[#4752C4] px-4 py-2 rounded text-white text-sm font-medium transition-colors disabled:opacity-50 flex items-center"
               >
                 {isSavingEdit ? (

@@ -12,6 +12,15 @@ const callInitiateSchema = z.object({
 // In-memory or Redis-backed grace period timers map
 const emptyRoomGraceTimers: Record<string, NodeJS.Timeout> = {};
 
+const callInclude = {
+  initiator: {
+    select: { id: true, username: true, displayName: true, avatarUrl: true }
+  },
+  conversation: {
+    select: { id: true, type: true, ownerId: true }
+  }
+};
+
 export default async function callRoutes(fastify: FastifyInstance, prisma: PrismaClient, getIo: () => Server) {
   
   // Helper to query LiveKit for active room participant count
@@ -54,14 +63,7 @@ export default async function callRoutes(fastify: FastifyInstance, prisma: Prism
         conversationId,
         status: { in: ['ACTIVE', 'RINGING'] }
       },
-      include: {
-        initiator: {
-          select: { id: true, username: true, displayName: true, avatarUrl: true }
-        },
-        conversation: {
-          select: { id: true, type: true, ownerId: true }
-        }
-      },
+      include: callInclude,
       orderBy: { createdAt: 'desc' }
     });
 
@@ -101,6 +103,9 @@ export default async function callRoutes(fastify: FastifyInstance, prisma: Prism
     }
 
     const conv = participant.conversation;
+    const participants = await prisma.conversationParticipant.findMany({
+      where: { conversationId }
+    });
 
     // Check if an ACTIVE or RINGING call already exists for this conversation
     let existingCall = await prisma.callSession.findFirst({
@@ -108,11 +113,7 @@ export default async function callRoutes(fastify: FastifyInstance, prisma: Prism
         conversationId,
         status: { in: ['ACTIVE', 'RINGING'] }
       },
-      include: {
-        initiator: {
-          select: { id: true, username: true, displayName: true, avatarUrl: true }
-        }
-      },
+      include: callInclude,
       orderBy: { createdAt: 'desc' }
     });
 
@@ -128,15 +129,13 @@ export default async function callRoutes(fastify: FastifyInstance, prisma: Prism
         existingCall = await prisma.callSession.update({
           where: { id: existingCall.id },
           data: { status: 'ACTIVE', acceptedAt: new Date() },
-          include: {
-            initiator: {
-              select: { id: true, username: true, displayName: true, avatarUrl: true }
-            }
-          }
+          include: callInclude
         });
 
         const io = getIo();
-        io.to(`user_${user.id}`).emit('dm:call:accepted', existingCall);
+        for (const p of participants) {
+          io.to(`user_${p.userId}`).emit('dm:call:accepted', existingCall);
+        }
       }
 
       return reply.status(200).send(existingCall);
@@ -151,18 +150,10 @@ export default async function callRoutes(fastify: FastifyInstance, prisma: Prism
         status: conv.type === 'GROUP' ? 'ACTIVE' : 'RINGING',
         acceptedAt: conv.type === 'GROUP' ? new Date() : null,
       },
-      include: {
-        initiator: {
-          select: { id: true, username: true, displayName: true, avatarUrl: true }
-        }
-      }
+      include: callInclude
     });
 
     // Notify other participants via Socket.IO
-    const participants = await prisma.conversationParticipant.findMany({
-      where: { conversationId }
-    });
-
     const io = getIo();
     for (const p of participants) {
       if (p.userId !== user.id) {
@@ -293,7 +284,8 @@ export default async function callRoutes(fastify: FastifyInstance, prisma: Prism
       data: {
         status: 'ACTIVE',
         acceptedAt: call.acceptedAt || new Date(),
-      }
+      },
+      include: callInclude
     });
 
     const io = getIo();
@@ -319,15 +311,27 @@ export default async function callRoutes(fastify: FastifyInstance, prisma: Prism
     const isParticipant = call.conversation.participants.some(p => p.userId === user.id);
     if (!isParticipant) return reply.status(403).send({ error: 'Sem autorização.' });
 
+    const io = getIo();
+
+    if (call.conversation.type === 'GROUP') {
+      const payload = {
+        callId: call.id,
+        conversationId: call.conversationId,
+        userId: user.id,
+      };
+      io.to(`user_${user.id}`).emit('call:participant_declined', payload);
+      return reply.send({ success: true, callStatus: call.status, conversationId: call.conversationId });
+    }
+
     const updatedCall = await prisma.callSession.update({
       where: { id },
       data: {
         status: 'DECLINED',
         endedAt: new Date(),
-      }
+      },
+      include: callInclude
     });
 
-    const io = getIo();
     for (const p of call.conversation.participants) {
       io.to(`user_${p.userId}`).emit('dm:call:declined', updatedCall);
     }

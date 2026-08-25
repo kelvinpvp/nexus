@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { Bell, Monitor, Palette, Shield, User, UserRound, Volume2, X } from 'lucide-react';
 import AccountSettings from './AccountSettings';
 import VoiceSettings from './VoiceSettings';
+import ProfileSettings from './ProfileSettings';
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -13,7 +14,7 @@ const SETTINGS_SECTIONS = [
     header: 'USUÁRIO',
     items: [
       { id: 'account', label: 'Minha Conta', component: AccountSettings },
-      { id: 'profile', label: 'Perfil', component: null }, // To be implemented
+      { id: 'profile', label: 'Perfil', component: ProfileSettings },
       { id: 'privacy', label: 'Privacidade e Segurança', component: null }, // To be implemented
     ]
   },
@@ -29,6 +30,14 @@ const SETTINGS_SECTIONS = [
 
 export default function SettingsModal({ onClose, initialTab = 'account' }: SettingsModalProps) {
   const [activeTabId, setActiveTabId] = useState(initialTab);
+  const itemIcons: Record<string, React.ElementType> = {
+    account: UserRound,
+    profile: User,
+    privacy: Shield,
+    voice: Volume2,
+    appearance: Palette,
+    notifications: Bell,
+  };
 
   // Find the active component
   let ActiveComponent = null;
@@ -41,48 +50,53 @@ export default function SettingsModal({ onClose, initialTab = 'account' }: Setti
   }
 
   return (
-    <div className="fixed inset-0 bg-[#000000]/80 z-50 flex animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex animate-in fade-in duration-200 bg-[#000000]/80">
       {/* Sidebar */}
-      <div className="w-[30%] min-w-[200px] max-w-[280px] bg-[#2B2D31] flex justify-end">
-        <div className="w-full max-w-[240px] px-2 py-14 flex flex-col space-y-4">
+      <div className="flex w-[30%] min-w-[220px] max-w-[300px] justify-end bg-[#232428]">
+        <div className="flex w-full max-w-[250px] flex-col gap-5 px-3 py-12">
+          <div className="px-3">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#949BA4]">Nexus</p>
+            <h2 className="mt-1 text-lg font-bold text-white">Configurações</h2>
+          </div>
           {SETTINGS_SECTIONS.map((section, idx) => (
-            <div key={idx} className="flex flex-col space-y-1">
-              <h3 className="px-3 text-xs font-bold text-[#949BA4] mb-1">{section.header}</h3>
+            <div key={idx} className="flex flex-col gap-1">
+              <h3 className="mb-1 px-3 text-[11px] font-bold text-[#949BA4]">{section.header}</h3>
               {section.items.map(item => (
                 <button
                   key={item.id}
                   onClick={() => setActiveTabId(item.id)}
-                  className={`text-left px-3 py-1.5 mx-1 rounded-md text-[15px] font-medium transition-colors ${
+                  className={`mx-1 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-[15px] font-medium transition-colors ${
                     activeTabId === item.id 
-                      ? 'bg-[#404249] text-white' 
-                      : 'text-[#B5BAC1] hover:bg-[#35373C] hover:text-[#DBDEE1]'
+                      ? 'bg-[#404249] text-white shadow-sm'
+                      : 'text-[#B5BAC1] hover:bg-[#303136] hover:text-[#DBDEE1]'
                   }`}
                 >
+                  {React.createElement(itemIcons[item.id] || Monitor, { size: 17 })}
                   {item.label}
                 </button>
               ))}
-              {idx < SETTINGS_SECTIONS.length - 1 && <div className="h-px bg-[#3F4147] mx-3 my-2" />}
+              {idx < SETTINGS_SECTIONS.length - 1 && <div className="mx-3 my-3 h-px bg-[#3F4147]" />}
             </div>
           ))}
         </div>
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 bg-[#313338] relative flex justify-start">
-        <div className="w-full max-w-[740px] py-14 px-10 h-full overflow-y-auto">
+      <div className="relative flex flex-1 justify-start bg-[#313338]">
+        <div className="h-full w-full max-w-[840px] overflow-y-auto px-10 py-12">
           {ActiveComponent ? <ActiveComponent /> : (
-            <div className="text-[#949BA4] mt-10">
-              <h2 className="text-xl font-bold text-white mb-4">Em Construção</h2>
+            <div className="mt-10 rounded-lg border border-[#3F4147] bg-[#2B2D31] p-6 text-[#949BA4]">
+              <h2 className="mb-2 text-xl font-bold text-white">Em construção</h2>
               <p>Esta seção será implementada em breve.</p>
             </div>
           )}
         </div>
 
         {/* Close Button */}
-        <div className="absolute top-14 right-14 flex flex-col items-center">
+        <div className="absolute right-10 top-12 flex flex-col items-center">
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full border-2 border-[#949BA4] text-[#949BA4] hover:bg-[#3F4147] transition-colors flex items-center justify-center mb-2"
+            className="mb-2 flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#949BA4] text-[#949BA4] transition-colors hover:bg-[#3F4147]"
           >
             <X size={20} strokeWidth={2.5} />
           </button>

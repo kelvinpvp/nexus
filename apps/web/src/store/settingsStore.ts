@@ -16,11 +16,20 @@ export interface UserPreferences {
   audioInputDeviceId?: string;
   audioOutputDeviceId?: string;
   noiseSuppressionEnabled?: boolean;
+  monitorOwnVoice?: boolean;
+  monitorOwnScreenShareAudio?: boolean;
 }
 
 // Keys that are local/device-specific and must persist in localStorage
 // even if the server doesn't support them yet.
 const LOCAL_PREF_KEY = 'nexus_local_prefs';
+const LOCAL_PREF_FIELDS: (keyof UserPreferences)[] = [
+  'audioInputDeviceId',
+  'audioOutputDeviceId',
+  'noiseSuppressionEnabled',
+  'monitorOwnVoice',
+  'monitorOwnScreenShareAudio',
+];
 
 function loadLocalPrefs(): Partial<UserPreferences> {
   if (typeof window === 'undefined') return {};
@@ -34,13 +43,8 @@ function loadLocalPrefs(): Partial<UserPreferences> {
 function saveLocalPrefs(updates: Partial<UserPreferences>) {
   if (typeof window === 'undefined') return;
   const existing = loadLocalPrefs();
-  const localFields: (keyof UserPreferences)[] = [
-    'audioInputDeviceId',
-    'audioOutputDeviceId',
-    'noiseSuppressionEnabled',
-  ];
   const next: Partial<UserPreferences> = { ...existing };
-  localFields.forEach((k) => {
+  LOCAL_PREF_FIELDS.forEach((k) => {
     const v = (updates as any)[k];
     if (v !== undefined) (next as any)[k] = v;
   });
@@ -52,12 +56,15 @@ function mergeWithLocal(serverData: any): UserPreferences {
   const local = loadLocalPrefs();
   return {
     ...serverData,
-    audioInputDeviceId: serverData.audioInputDeviceId ?? local.audioInputDeviceId,
-    audioOutputDeviceId: serverData.audioOutputDeviceId ?? local.audioOutputDeviceId,
+    audioInputDeviceId: local.audioInputDeviceId ?? serverData.audioInputDeviceId,
+    audioOutputDeviceId: local.audioOutputDeviceId ?? serverData.audioOutputDeviceId,
     noiseSuppressionEnabled:
-      serverData.noiseSuppressionEnabled !== undefined && serverData.noiseSuppressionEnabled !== null
+      local.noiseSuppressionEnabled ??
+      (serverData.noiseSuppressionEnabled !== undefined && serverData.noiseSuppressionEnabled !== null
         ? serverData.noiseSuppressionEnabled
-        : (local.noiseSuppressionEnabled ?? true),
+        : true),
+    monitorOwnVoice: local.monitorOwnVoice ?? true,
+    monitorOwnScreenShareAudio: local.monitorOwnScreenShareAudio ?? true,
   };
 }
 
@@ -96,10 +103,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       set({ preferences: optimistic });
     }
 
+    const serverUpdates = Object.fromEntries(
+      Object.entries(updates).filter(([key]) => !LOCAL_PREF_FIELDS.includes(key as keyof UserPreferences))
+    ) as Partial<UserPreferences>;
+
+    if (Object.keys(serverUpdates).length === 0) {
+      return;
+    }
+
     try {
       const data = await apiFetch('/api/users/me/preferences', {
         method: 'PATCH',
-        body: JSON.stringify(updates),
+        body: JSON.stringify(serverUpdates),
       });
       // Merge server response with localStorage so nothing resets
       set({ preferences: mergeWithLocal(data) });

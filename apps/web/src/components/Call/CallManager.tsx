@@ -2,26 +2,26 @@ import { useCallStore } from '@/store/callStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSettingsStore } from '@/store/settingsStore';
 import { useKrispNoiseSuppression } from '@/hooks/useKrispNoiseSuppression';
-import { useVoiceStore } from '@/store/voiceStore';
 import { UserContextMenu } from '../Voice/VoiceRoom';
 import { Phone, PhoneOff, Video, VideoOff, X, PhoneCall, Mic, MicOff, Monitor, MonitorOff } from 'lucide-react';
 import { 
   LiveKitRoom, 
   useTracks, 
   VideoTrack,
-  AudioTrack,
   useConnectionState,
   useLocalParticipant,
   useParticipants,
   useTrackToggle
 } from '@livekit/components-react';
 import { Track } from 'livekit-client';
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { playSound } from '@/utils/sounds';
 import '@livekit/components-styles';
+import RoomAudioEngine from '../Voice/RoomAudioEngine';
 
 export default function CallManager() {
   const { user } = useAuth();
+  const { preferences } = useSettingsStore();
   const { 
     incomingCall, 
     activeCall, 
@@ -119,7 +119,9 @@ export default function CallManager() {
       {isActive && (
         <LiveKitRoom
           video={activeCall.type === 'VIDEO'}
-          audio={true}
+          audio={preferences?.audioInputDeviceId && preferences.audioInputDeviceId !== 'default'
+            ? { deviceId: preferences.audioInputDeviceId }
+            : true}
           token={liveKitToken}
           serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
           options={{
@@ -252,8 +254,11 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
 
   const isScreenEnabled = localParticipant?.isScreenShareEnabled ?? false;
 
-  const { participantAudioPreferences } = useVoiceStore();
   const [contextMenuUser, setContextMenuUser] = useState<{ userId: string; username: string; x: number; y: number } | null>(null);
+  const [isMicToggling, setIsMicToggling] = useState(false);
+  const [isScreenShareToggling, setIsScreenShareToggling] = useState(false);
+  const micToggleLock = useRef(false);
+  const screenShareToggleLock = useRef(false);
 
   const tracks = useTracks(
     [
@@ -376,45 +381,7 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
   return (
     <div className="flex flex-col h-full justify-between p-4 relative select-none">
       
-      {/* Audio Engine */}
-      <div className="hidden">
-        {useParticipants().map((participant) => {
-          if (participant.isLocal) {
-            // Em dev, podemos checar se acidentalmente o localParticipant está tocando
-            // Mas o return null impede qualquer renderização indevida
-            return null;
-          }
-
-          const pAudio = tracks.find(t => t.participant?.identity === participant.identity && t.source === Track.Source.Microphone);
-          const pScreenAudio = tracks.find(t => t.participant?.identity === participant.identity && t.source === Track.Source.ScreenShareAudio);
-          
-          const isLocallyMuted = !!participantAudioPreferences[participant.identity]?.voiceMuted;
-          const localVolume = Math.min(1, Math.max(0, participantAudioPreferences[participant.identity]?.voiceVolume ?? 1));
-          const isStreamMuted = !!participantAudioPreferences[participant.identity]?.screenShareMuted;
-          const streamVolume = Math.min(1, Math.max(0, participantAudioPreferences[participant.identity]?.screenShareVolume ?? 1));
-
-          return (
-            <Fragment key={`audio-group-${participant.identity}`}>
-              {pAudio && pAudio.publication && (
-                <AudioTrack 
-                  key={pAudio.publication.trackSid || `mic-${participant.identity}`} 
-                  trackRef={pAudio} 
-                  volume={isLocallyMuted ? 0 : localVolume} 
-                  muted={isLocallyMuted} 
-                />
-              )}
-              {pScreenAudio && pScreenAudio.publication && (
-                <AudioTrack 
-                  key={pScreenAudio.publication.trackSid || `screen-audio-${participant.identity}`} 
-                  trackRef={pScreenAudio} 
-                  volume={isStreamMuted ? 0 : streamVolume} 
-                  muted={isStreamMuted} 
-                />
-              )}
-            </Fragment>
-          );
-        })}
-      </div>
+      <RoomAudioEngine />
 
       {contextMenuUser && (
         <UserContextMenu
@@ -453,17 +420,26 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
         <div className="bg-[#1E1F22] px-6 py-3 rounded-full flex items-center space-x-4 border border-[#2B2D31] shadow-2xl">
           <button 
             onClick={async () => {
-              playSound(isMicEnabled ? 'mute' : 'unmute');
+              if (!localParticipant || micToggleLock.current) return;
+              micToggleLock.current = true;
+              setIsMicToggling(true);
+
               try {
+                const nextEnabled = !localParticipant.isMicrophoneEnabled;
                 const deviceId = preferences?.audioInputDeviceId && preferences.audioInputDeviceId !== 'default'
                   ? preferences.audioInputDeviceId
                   : undefined;
-                await localParticipant?.setMicrophoneEnabled(!isMicEnabled, deviceId ? { deviceId } : undefined);
+                await localParticipant.setMicrophoneEnabled(nextEnabled, deviceId ? { deviceId } : undefined);
+                playSound(nextEnabled ? 'unmute' : 'mute');
               } catch (err) {
-                console.error('[CALL] Error toggling mic:', err);
+                console.error('[CALL] Erro ao alterar microfone:', err);
+              } finally {
+                micToggleLock.current = false;
+                setIsMicToggling(false);
               }
             }}
-            className={`p-3.5 rounded-full transition-all duration-200 ${!isMicEnabled ? 'bg-[#DA373C] text-white hover:bg-[#A12828]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
+            disabled={isMicToggling}
+            className={`p-3.5 rounded-full transition-all duration-200 ${isMicToggling ? 'bg-yellow-600 text-white animate-pulse' : !isMicEnabled ? 'bg-[#DA373C] text-white hover:bg-[#A12828]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
             title={!isMicEnabled ? "Ativar Microfone" : "Mudar para Mudo"}
           >
             {!isMicEnabled ? <MicOff size={20} /> : <Mic size={20} />}
@@ -479,25 +455,32 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
 
           <button 
             onClick={async () => {
+              if (!localParticipant || screenShareToggleLock.current) return;
+              screenShareToggleLock.current = true;
+              setIsScreenShareToggling(true);
+
               try {
-                if (localParticipant) {
-                  await localParticipant.setScreenShareEnabled(!isScreenEnabled, {
-                    audio: {
-                      echoCancellation: false,
-                      noiseSuppression: false,
-                      autoGainControl: false,
-                      systemAudio: 'include',
-                      selfBrowserSurface: 'exclude',
-                    } as any,
-                  });
-                }
+                const nextEnabled = !localParticipant.isScreenShareEnabled;
+                await localParticipant.setScreenShareEnabled(nextEnabled, {
+                  audio: nextEnabled ? {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false,
+                    systemAudio: 'include',
+                    selfBrowserSurface: 'exclude',
+                  } as any : undefined,
+                });
               } catch (err: any) {
                 if (err.name !== 'NotAllowedError') {
-                  console.error('Error toggling screen share:', err);
+                  console.error('[CALL] Erro ao alterar compartilhamento:', err);
                 }
+              } finally {
+                screenShareToggleLock.current = false;
+                setIsScreenShareToggling(false);
               }
             }}
-            className={`p-3.5 rounded-full transition-all duration-200 ${isScreenEnabled ? 'bg-[#23A559] text-white hover:bg-[#1A7C43]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
+            disabled={isScreenShareToggling}
+            className={`p-3.5 rounded-full transition-all duration-200 ${isScreenShareToggling ? 'bg-yellow-600 text-white animate-pulse' : isScreenEnabled ? 'bg-[#23A559] text-white hover:bg-[#1A7C43]' : 'bg-[#313338] text-[#DBDEE1] hover:bg-[#35373C]'}`}
             title={isScreenEnabled ? "Parar Compartilhamento" : "Compartilhar Tela"}
           >
             {isScreenEnabled ? <MonitorOff size={20} /> : <Monitor size={20} />}

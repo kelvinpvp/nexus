@@ -114,12 +114,17 @@ export default function DMArea() {
         </div>
 
         {/* Active Call Banner */}
-        {activeConversationId && activeGroupCalls[activeConversationId] && activeGroupCalls[activeConversationId].participantCount > 0 && (
+        {activeConversationId && activeGroupCalls[activeConversationId] && (
           <div className="flex items-center bg-[#23A559]/20 border border-[#23A559]/50 px-3 py-1 rounded-full text-xs text-[#23A559] font-bold space-x-2">
             <span className="w-2 h-2 rounded-full bg-[#23A559] animate-pulse" />
             <span>
-              Chamada em andamento — {activeGroupCalls[activeConversationId].participantCount}{' '}
-              {activeGroupCalls[activeConversationId].participantCount === 1 ? 'participante' : 'participantes'}
+              {activeGroupCalls[activeConversationId].call.status === 'RINGING' ? 'Chamando grupo' : 'Chamada em andamento'}
+              {activeGroupCalls[activeConversationId].participantCount > 0 && (
+                <>
+                  {' '}— {activeGroupCalls[activeConversationId].participantCount}{' '}
+                  {activeGroupCalls[activeConversationId].participantCount === 1 ? 'participante' : 'participantes'}
+                </>
+              )}
             </span>
             {activeCall?.conversationId !== activeConversationId && (
               <button
