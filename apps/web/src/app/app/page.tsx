@@ -33,7 +33,7 @@ export default function App() {
       {/* Global Announcement Banner */}
       {!process.env.NEXT_PUBLIC_TAURI_ENV && (
         <div className="bg-[#5865F2] text-white py-2 px-4 text-center text-sm font-bold flex justify-center items-center gap-4 z-50">
-          <span>🚀 O Nexus Desktop Oficial v1.0.0 foi lançado! Tenha uma experiência muito melhor baixando o app nativo.</span>
+          <span>🚀 O Nexus Desktop Oficial foi lançado! Tenha uma experiência muito melhor baixando o app nativo.</span>
           <a 
             href="https://github.com/kelvinpvp/nexus/releases/latest" 
             target="_blank" 
