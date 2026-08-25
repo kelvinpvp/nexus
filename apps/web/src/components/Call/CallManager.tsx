@@ -123,9 +123,12 @@ export default function CallManager() {
           token={liveKitToken}
           serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
           options={{
+            adaptiveStream: true,
+            dynacast: true,
             publishDefaults: {
               simulcast: true,
-              screenShareEncoding: { maxBitrate: 1500000, maxFramerate: 30 }
+              screenShareSimulcast: false,
+              screenShareEncoding: { maxBitrate: 3000000, maxFramerate: 60 }
             }
           }}
           onDisconnected={() => {

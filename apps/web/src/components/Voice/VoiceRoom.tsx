@@ -69,6 +69,14 @@ export default function VoiceRoom({ channelName }: VoiceRoomProps) {
       connect={true}
       audio={false}
       video={false}
+      options={{
+        adaptiveStream: true,
+        dynacast: true,
+        publishDefaults: {
+          screenShareSimulcast: false,
+          screenShareEncoding: { maxBitrate: 3000000, maxFramerate: 60 }
+        }
+      }}
       className="flex-1 bg-[#111214] flex flex-col h-full relative overflow-hidden"
     >
       <VoiceRoomInner channelName={channelName} />
