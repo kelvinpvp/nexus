@@ -45,6 +45,8 @@ interface DMStore {
   openConversationWith: (userId: string) => Promise<string>;
   createGroupDM: (userIds: string[], name?: string, iconUrl?: string) => Promise<string>;
   leaveGroup: (groupId: string) => Promise<void>;
+  updateGroup: (groupId: string, updates: { name?: string; iconUrl?: string | null }) => Promise<void>;
+  deleteGroup: (groupId: string) => Promise<void>;
   setActiveConversation: (id: string | null) => void;
   fetchMessages: (conversationId: string) => Promise<void>;
   sendMessage: (conversationId: string, content: string, attachmentIds?: string[]) => Promise<void>;
@@ -110,6 +112,33 @@ export const useDMStore = create<DMStore>((set, get) => ({
       }
     } catch (error) {
       console.error('Failed to leave Group DM', error);
+      throw error;
+    }
+  },
+
+  updateGroup: async (groupId: string, updates: { name?: string; iconUrl?: string | null }) => {
+    try {
+      await apiFetch(`/api/dms/${groupId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates),
+      });
+      await get().fetchConversations();
+    } catch (error) {
+      console.error('Failed to update Group DM', error);
+      throw error;
+    }
+  },
+
+  deleteGroup: async (groupId: string) => {
+    try {
+      await apiFetch(`/api/dms/${groupId}`, { method: 'DELETE' });
+      const currentActive = get().activeConversationId;
+      await get().fetchConversations();
+      if (currentActive === groupId) {
+        get().setActiveConversation(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete Group DM', error);
       throw error;
     }
   },
@@ -190,6 +219,13 @@ export const useDMStore = create<DMStore>((set, get) => ({
     socket.on('dm:group:created', () => get().fetchConversations());
     socket.on('dm:group:participant_added', () => get().fetchConversations());
     socket.on('dm:group:participant_removed', () => get().fetchConversations());
+    socket.on('dm:group:updated', () => get().fetchConversations());
+    socket.on('dm:group:deleted', (data) => {
+      if (get().activeConversationId === data.conversationId) {
+        get().setActiveConversation(null);
+      }
+      get().fetchConversations();
+    });
     socket.on('dm:group:left', (data) => {
       if (get().activeConversationId === data.conversationId) {
         get().setActiveConversation(null);
@@ -215,6 +251,8 @@ export const useDMStore = create<DMStore>((set, get) => ({
     socket.off('dm:group:created');
     socket.off('dm:group:participant_added');
     socket.off('dm:group:participant_removed');
+    socket.off('dm:group:updated');
+    socket.off('dm:group:deleted');
     socket.off('dm:group:left');
     socket.off('dm:message_deleted');
   }

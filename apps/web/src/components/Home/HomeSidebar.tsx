@@ -9,12 +9,12 @@ export default function HomeSidebar() {
   const [isCreateGroupModalOpen, setCreateGroupModalOpen] = useState(false);
 
   return (
-    <div className="w-[240px] bg-[#2B2D31] flex flex-col flex-shrink-0 h-full select-none">
+    <div className="w-[252px] bg-[linear-gradient(180deg,#0e1327_0%,#11182e_45%,#0a0f1c_100%)] border-r border-white/5 flex flex-col flex-shrink-0 h-full select-none">
       {/* Search Header */}
-      <header className="h-12 border-b border-[#1F2023] flex items-center px-2.5 shadow-sm">
+      <header className="h-14 border-b border-white/5 flex items-center px-3 shadow-sm">
         <button 
           onClick={() => setCreateGroupModalOpen(true)}
-          className="w-full bg-[#1E1F22] text-[#949BA4] text-sm text-left px-2 py-1.5 rounded transition-colors hover:bg-[#1E1F22]/80 hover:text-[#DBDEE1]"
+          className="w-full rounded-2xl border border-white/8 bg-white/5 px-3 py-2 text-left text-sm text-slate-300 transition-colors hover:border-cyan-300/30 hover:bg-cyan-400/10 hover:text-white shadow-[0_10px_30px_rgba(0,0,0,0.18)]"
         >
           Encontre ou comece uma conversa
         </button>
@@ -25,20 +25,20 @@ export default function HomeSidebar() {
         <div 
           onClick={() => setActiveConversation(null)}
           className={`flex items-center px-3 py-2.5 rounded cursor-pointer group transition-colors ${
-            activeConversationId === null ? 'bg-[#404249] text-white' : 'text-[#949BA4] hover:bg-[#35373C] hover:text-[#DBDEE1]'
+            activeConversationId === null ? 'bg-cyan-400/15 text-white border border-cyan-300/20' : 'text-slate-300 hover:bg-white/6 hover:text-white'
           }`}
         >
           <Users size={24} className="mr-3" />
           <span className="font-medium text-[15px]">Amigos</span>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-[#1F2023]/30">
+        <div className="mt-4 pt-4 border-t border-white/5">
           <div className="flex items-center justify-between px-2 mb-1">
-            <span className="text-[11px] font-bold text-[#949BA4] hover:text-[#DBDEE1] uppercase tracking-wider cursor-pointer">
+            <span className="text-[11px] font-bold text-slate-400 hover:text-slate-200 uppercase tracking-wider cursor-pointer">
               Mensagens Diretas
             </span>
             <button 
-              className="text-[#949BA4] hover:text-[#DBDEE1]"
+              className="text-slate-400 hover:text-white"
               onClick={() => setCreateGroupModalOpen(true)}
               title="Criar DM em Grupo"
             >
@@ -83,14 +83,14 @@ export default function HomeSidebar() {
                 );
               }
               
-              return (
-                <div 
-                  key={conv.id}
-                  onClick={() => setActiveConversation(conv.id)}
-                  className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer group transition-colors ${
-                    isActive ? 'bg-[#404249] text-white' : 'text-[#949BA4] hover:bg-[#35373C] hover:text-[#DBDEE1]'
+                return (
+                  <div 
+                    key={conv.id}
+                    onClick={() => setActiveConversation(conv.id)}
+                    className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer group transition-colors ${
+                    isActive ? 'bg-white/8 text-white border border-white/8' : 'text-slate-300 hover:bg-white/6 hover:text-white'
                   }`}
-                >
+                  >
                   <div className="flex items-center space-x-3 overflow-hidden">
                     {avatarContent}
                     <span className="font-medium text-[15px] truncate">{displayName}</span>

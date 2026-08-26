@@ -30,19 +30,19 @@ export default function UserPanel() {
 
   return (
     <>
-      <div className="h-[52px] bg-[#232428] flex items-center px-2 flex-shrink-0 justify-between">
+      <div className="h-[56px] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] border-t border-white/5 flex items-center px-2 flex-shrink-0 justify-between backdrop-blur-md">
         <div 
           ref={profileContainerRef}
           onClick={handleProfileClick}
-          className="flex items-center hover:bg-[#3F4147] p-1 rounded cursor-pointer transition-colors w-[120px]"
+          className="flex items-center hover:bg-white/6 p-1 rounded-2xl cursor-pointer transition-colors w-[124px]"
         >
-          <div className="w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold text-sm flex-shrink-0 relative">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 relative shadow-lg">
             {user.avatarUrl ? (
               <img src={user.avatarUrl} alt="Avatar" className="w-full h-full rounded-full object-cover" />
             ) : (
               user.username.charAt(0).toUpperCase()
             )}
-            <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#23A559] rounded-full border-2 border-[#232428]"></div>
+            <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-[#0b1020]"></div>
           </div>
           <div className="ml-2 truncate flex-1">
             <div className="text-[13px] font-bold text-white truncate leading-tight">{user.username}</div>
@@ -56,7 +56,7 @@ export default function UserPanel() {
               setSettingsTab('voice');
               setSettingsModalOpen(true);
             }} 
-            className="w-8 h-8 flex items-center justify-center hover:bg-[#3F4147] rounded hover:text-[#DBDEE1] transition-colors" 
+            className="w-8 h-8 flex items-center justify-center hover:bg-white/6 rounded-full hover:text-white transition-colors" 
             title="Mudar para Mudo (Voz)"
           >
             <Mic size={20} />
@@ -66,7 +66,7 @@ export default function UserPanel() {
               setSettingsTab('voice');
               setSettingsModalOpen(true);
             }} 
-            className="w-8 h-8 flex items-center justify-center hover:bg-[#3F4147] rounded hover:text-[#DBDEE1] transition-colors" 
+            className="w-8 h-8 flex items-center justify-center hover:bg-white/6 rounded-full hover:text-white transition-colors" 
             title="Ensurdecer (Áudio)"
           >
             <Headphones size={20} />
@@ -76,7 +76,7 @@ export default function UserPanel() {
               setSettingsTab('account');
               setSettingsModalOpen(true);
             }} 
-            className="w-8 h-8 flex items-center justify-center hover:bg-[#3F4147] rounded hover:text-[#DBDEE1] transition-colors" 
+            className="w-8 h-8 flex items-center justify-center hover:bg-white/6 rounded-full hover:text-white transition-colors" 
             title="Configurações de Usuário"
           >
             <Settings size={18} />

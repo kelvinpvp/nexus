@@ -183,6 +183,50 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
     }
   });
 
+  // Update group metadata
+  fastify.patch('/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+    const user = (request as any).user;
+    const { id } = request.params as { id: string };
+    const schema = z.object({
+      name: z.string().min(1).max(100).optional(),
+      iconUrl: z.string().url().nullable().optional(),
+    });
+
+    try {
+      const updates = schema.parse(request.body);
+      const group = await prisma.conversation.findUnique({
+        where: { id },
+        include: { participants: true },
+      });
+
+      if (!group || group.type !== 'GROUP') return reply.status(404).send({ error: 'Group not found' });
+      if (group.ownerId !== user.id) return reply.status(403).send({ error: 'Only owner can update the group' });
+
+      const updated = await prisma.conversation.update({
+        where: { id },
+        data: {
+          ...(updates.name !== undefined ? { name: updates.name.trim() } : {}),
+          ...(updates.iconUrl !== undefined ? { iconUrl: updates.iconUrl } : {}),
+          updatedAt: new Date(),
+        },
+        include: { participants: { include: { user: true } } },
+      });
+
+      const io = getIo();
+      if (io) {
+        group.participants.forEach((p) => {
+          io.to(`user_${p.userId}`).emit('dm:group:updated', { conversationId: id, conversation: updated });
+        });
+      }
+
+      return reply.send(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) return reply.status(400).send({ error: 'Invalid input' });
+      console.error(error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
+
   // Leave Group
   fastify.post('/:id/leave', async (request: FastifyRequest, reply: FastifyReply) => {
     const user = (request as any).user;
@@ -475,6 +519,40 @@ export default function dmRoutes(fastify: FastifyInstance, prisma: PrismaClient,
           } else {
             io.to(`user_${p.userId}`).emit('dm:group:participant_removed', { conversationId: id, userId });
           }
+        });
+      }
+
+      return reply.send({ success: true });
+    } catch (error) {
+      console.error(error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // Delete group conversation
+  fastify.delete('/:id', async (request: FastifyRequest, reply: FastifyReply) => {
+    const user = (request as any).user;
+    const { id } = request.params as { id: string };
+
+    try {
+      const group = await prisma.conversation.findUnique({
+        where: { id },
+        include: { participants: true },
+      });
+
+      if (!group || group.type !== 'GROUP') return reply.status(404).send({ error: 'Group not found' });
+      if (group.ownerId !== user.id) return reply.status(403).send({ error: 'Only owner can delete the group' });
+
+      await prisma.$transaction([
+        prisma.conversationParticipant.deleteMany({ where: { conversationId: id } }),
+        prisma.directMessage.deleteMany({ where: { conversationId: id } }),
+        prisma.conversation.delete({ where: { id } }),
+      ]);
+
+      const io = getIo();
+      if (io) {
+        group.participants.forEach((p) => {
+          io.to(`user_${p.userId}`).emit('dm:group:deleted', { conversationId: id });
         });
       }
 

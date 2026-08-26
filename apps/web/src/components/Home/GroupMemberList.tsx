@@ -1,13 +1,15 @@
 import { UserInfo } from '@/store/dmStore';
-import { Crown } from 'lucide-react';
+import { Crown, ShieldMinus } from 'lucide-react';
 
 interface GroupMemberListProps {
   participants: UserInfo[];
   ownerId?: string | null;
+  currentUserId?: string | null;
+  onRemoveMember?: (userId: string) => void;
   onUserClick?: (e: React.MouseEvent, userId: string) => void;
 }
 
-export default function GroupMemberList({ participants, ownerId, onUserClick }: GroupMemberListProps) {
+export default function GroupMemberList({ participants, ownerId, currentUserId, onRemoveMember, onUserClick }: GroupMemberListProps) {
   // Sort participants to put owner first, then online, then offline
   const sortedParticipants = [...participants].sort((a, b) => {
     if (a.id === ownerId) return -1;
@@ -49,7 +51,7 @@ export default function GroupMemberList({ participants, ownerId, onUserClick }: 
                 }`}
               />
             </div>
-            <div className="flex-1 min-w-0 flex items-center">
+            <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
               <span
                 className={`truncate text-[15px] ${
                   participant.status === 'OFFLINE' ? 'text-[#80848E]' : 'text-[#DBDEE1]'
@@ -57,11 +59,26 @@ export default function GroupMemberList({ participants, ownerId, onUserClick }: 
               >
                 {participant.displayName || participant.username}
               </span>
-              {participant.id === ownerId && (
-                <span title="Dono do Grupo" className="ml-1.5 flex items-center">
-                  <Crown size={14} className="text-[#F0B232] shrink-0" />
-                </span>
-              )}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {participant.id === ownerId && (
+                  <span title="Dono do Grupo" className="flex items-center">
+                    <Crown size={14} className="text-[#F0B232] shrink-0" />
+                  </span>
+                )}
+                {currentUserId === ownerId && participant.id !== ownerId && onRemoveMember && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveMember(participant.id);
+                    }}
+                    className="rounded-full p-1 text-[#949BA4] hover:bg-[#F23F43]/15 hover:text-[#F23F43] transition-colors"
+                    title="Remover membro"
+                  >
+                    <ShieldMinus size={14} />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}

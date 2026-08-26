@@ -2,19 +2,20 @@ import { useState, useRef, useEffect } from 'react';
 import { useDMStore } from '@/store/dmStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCallStore } from '@/store/callStore';
-import { Phone, Video, Hash, Users, LogOut, Trash2 } from 'lucide-react';
+import { Phone, Video, Hash, Users, LogOut, Trash2, MoreHorizontal, Pencil, Trash } from 'lucide-react';
 import ProfilePopout from '../Profile/ProfilePopout';
 import MessageInput from '../Chat/MessageInput';
 import AttachmentViewer from '../Chat/AttachmentViewer';
 import GroupMemberList from './GroupMemberList';
 
 export default function DMArea() {
-  const { activeConversationId, conversations, messages, sendMessage, deleteMessage, isLoadingMessages, leaveGroup } = useDMStore();
+  const { activeConversationId, conversations, messages, sendMessage, deleteMessage, isLoadingMessages, leaveGroup, updateGroup, deleteGroup } = useDMStore();
   const { user } = useAuth();
   const { initiateCall, checkActiveCall, activeGroupCalls, joinActiveCall, activeCall } = useCallStore();
   const [isCalling, setIsCalling] = useState<'VOICE' | 'VIDEO' | null>(null);
   const [isLeaving, setIsLeaving] = useState(false);
   const [showMemberList, setShowMemberList] = useState(true);
+  const [showGroupMenu, setShowGroupMenu] = useState(false);
   const [selectedUserPopout, setSelectedUserPopout] = useState<{ userId: string; top: number; left: number } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -102,11 +103,22 @@ export default function DMArea() {
     }
   };
 
+  const handleRenameGroup = async () => {
+    const nextName = prompt('Novo nome do grupo', conversation.name || displayName);
+    if (!nextName || !nextName.trim()) return;
+    await updateGroup(conversation.id, { name: nextName.trim() });
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!confirm('Excluir este grupo para todos?')) return;
+    await deleteGroup(conversation.id);
+  };
+
   return (
     <div className="flex-1 flex flex-row h-full overflow-hidden">
     <div className="flex-1 flex flex-col bg-[#313338] h-full min-w-0">
       {/* Top Bar */}
-      <div className="h-12 border-b border-[#1F2023] flex items-center justify-between px-4 shrink-0 shadow-sm">
+      <div className="h-12 border-b border-[#1F2023] flex items-center justify-between px-4 shrink-0 shadow-sm relative">
         <div className="flex items-center text-white space-x-2">
           {isGroup ? <Users size={24} className="text-[#80848E]" /> : <Hash size={24} className="text-[#80848E]" />}
           <span className="font-bold text-[15px] truncate max-w-[400px]">{displayName}</span>
@@ -138,6 +150,15 @@ export default function DMArea() {
         )}
         
         <div className="flex items-center space-x-4 text-[#B5BAC1]">
+          {isGroup && (
+            <button
+              onClick={() => setShowGroupMenu((v) => !v)}
+              className="transition-colors hover:text-white"
+              title="Opções do grupo"
+            >
+              <MoreHorizontal size={22} />
+            </button>
+          )}
           {isGroup && (
             <button 
               onClick={handleLeaveGroup}
@@ -199,6 +220,21 @@ export default function DMArea() {
             </button>
           )}
         </div>
+
+        {showGroupMenu && isGroup && (
+          <div className="absolute right-4 top-12 z-40 w-56 overflow-hidden rounded-2xl border border-white/8 bg-[#111214] shadow-2xl">
+            <button onClick={() => { setShowGroupMenu(false); void handleRenameGroup(); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white hover:bg-white/5">
+              <Pencil size={16} /> Renomear grupo
+            </button>
+            {conversation.ownerId === user?.id && (
+              <>
+                <button onClick={() => { setShowGroupMenu(false); void handleDeleteGroup(); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-rose-300 hover:bg-rose-500/10">
+                  <Trash size={16} /> Excluir grupo
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Messages Area */}
@@ -330,13 +366,19 @@ export default function DMArea() {
     </div>
 
     {/* Sidebar Members */}
-    {isGroup && showMemberList && (
-      <GroupMemberList 
-        participants={conversation.participants} 
-        ownerId={conversation.ownerId}
-        onUserClick={handleUserClick}
-      />
-    )}
+      {isGroup && showMemberList && (
+        <GroupMemberList 
+          participants={conversation.participants} 
+          ownerId={conversation.ownerId}
+          currentUserId={user?.id}
+          onRemoveMember={conversation.ownerId === user?.id ? async (memberId) => {
+            if (!confirm('Remover este membro do grupo?')) return;
+            await fetch(`/api/dms/${conversation.id}/participants/${memberId}`, { method: 'DELETE', credentials: 'include' });
+            await useDMStore.getState().fetchConversations();
+          } : undefined}
+          onUserClick={handleUserClick}
+        />
+      )}
 
       {selectedUserPopout && (
         <ProfilePopout 

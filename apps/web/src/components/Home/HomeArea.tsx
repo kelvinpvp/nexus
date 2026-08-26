@@ -42,49 +42,49 @@ export default function HomeArea() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#313338] h-full">
+    <div className="flex-1 flex flex-col bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.08),_transparent_28%),linear-gradient(180deg,#0b1020_0%,#0f172a_55%,#090d18_100%)] h-full">
       {/* Top Bar */}
-      <div className="h-12 border-b border-[#1F2023] flex items-center px-4 shrink-0 shadow-sm">
+      <div className="h-14 border-b border-white/5 flex items-center px-4 shrink-0 shadow-sm backdrop-blur-md bg-white/3">
         <div className="flex items-center text-white mr-4">
-          <Users size={24} className="text-[#80848E] mr-2" />
+          <Users size={24} className="text-cyan-300 mr-2" />
           <span className="font-bold text-[15px]">Amigos</span>
         </div>
         
-        <div className="w-[1px] h-6 bg-[#3F4147] mx-2"></div>
+        <div className="w-[1px] h-6 bg-white/10 mx-2"></div>
 
         <div className="flex items-center space-x-4 ml-4">
           <button 
             onClick={() => setActiveTab('online')}
-            className={`px-2 py-1 rounded transition-colors text-[15px] font-medium ${activeTab === 'online' ? 'bg-[#3F4147] text-white' : 'text-[#949BA4] hover:bg-[#35373C] hover:text-[#DBDEE1]'}`}
+            className={`px-3 py-1.5 rounded-full transition-colors text-[15px] font-medium ${activeTab === 'online' ? 'bg-cyan-400/15 text-white border border-cyan-300/20' : 'text-slate-400 hover:bg-white/6 hover:text-white'}`}
           >
             Online
           </button>
           <button 
             onClick={() => setActiveTab('all')}
-            className={`px-2 py-1 rounded transition-colors text-[15px] font-medium ${activeTab === 'all' ? 'bg-[#3F4147] text-white' : 'text-[#949BA4] hover:bg-[#35373C] hover:text-[#DBDEE1]'}`}
+            className={`px-3 py-1.5 rounded-full transition-colors text-[15px] font-medium ${activeTab === 'all' ? 'bg-cyan-400/15 text-white border border-cyan-300/20' : 'text-slate-400 hover:bg-white/6 hover:text-white'}`}
           >
             Todos
           </button>
           <button 
             onClick={() => setActiveTab('pending')}
-            className={`px-2 py-1 rounded transition-colors text-[15px] font-medium flex items-center space-x-1 ${activeTab === 'pending' ? 'bg-[#3F4147] text-white' : 'text-[#949BA4] hover:bg-[#35373C] hover:text-[#DBDEE1]'}`}
+            className={`px-3 py-1.5 rounded-full transition-colors text-[15px] font-medium flex items-center space-x-1 ${activeTab === 'pending' ? 'bg-cyan-400/15 text-white border border-cyan-300/20' : 'text-slate-400 hover:bg-white/6 hover:text-white'}`}
           >
             <span>Pendentes</span>
             {pendingCount > 0 && (
-              <span className="bg-[#F23F43] text-white text-[11px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center">
+                <span className="bg-rose-500 text-white text-[11px] font-bold px-1.5 py-0.5 rounded-full min-w-[16px] text-center">
                 {pendingCount}
               </span>
             )}
           </button>
           <button 
             onClick={() => setActiveTab('blocked')}
-            className={`px-2 py-1 rounded transition-colors text-[15px] font-medium ${activeTab === 'blocked' ? 'bg-[#3F4147] text-white' : 'text-[#949BA4] hover:bg-[#35373C] hover:text-[#DBDEE1]'}`}
+            className={`px-3 py-1.5 rounded-full transition-colors text-[15px] font-medium ${activeTab === 'blocked' ? 'bg-cyan-400/15 text-white border border-cyan-300/20' : 'text-slate-400 hover:bg-white/6 hover:text-white'}`}
           >
             Bloqueados
           </button>
           <button 
             onClick={() => setActiveTab('add')}
-            className={`px-2 py-1 rounded transition-colors text-[15px] font-medium text-white ${activeTab === 'add' ? 'bg-transparent text-[#23A559]' : 'bg-[#23A559] hover:bg-[#1A7C43]'}`}
+            className={`px-3 py-1.5 rounded-full transition-colors text-[15px] font-medium text-white ${activeTab === 'add' ? 'bg-transparent text-emerald-300' : 'bg-gradient-to-r from-emerald-400 to-cyan-500 hover:from-emerald-300 hover:to-cyan-400'}`}
           >
             Adicionar Amigo
           </button>
@@ -92,44 +92,44 @@ export default function HomeArea() {
 
         <div className="flex-1"></div>
 
-        <div className="flex items-center space-x-3 text-[#B5BAC1]">
-          <button className="hover:text-[#DBDEE1] transition-colors" title="Caixa de Entrada">
+        <div className="flex items-center space-x-3 text-slate-300">
+          <button className="hover:text-white transition-colors" title="Caixa de Entrada">
             <Inbox size={24} />
           </button>
-          <button className="hover:text-[#DBDEE1] transition-colors" title="Ajuda">
+          <button className="hover:text-white transition-colors" title="Ajuda">
             <HelpCircle size={24} />
           </button>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex bg-[#313338] overflow-hidden">
+      <div className="flex-1 flex bg-transparent overflow-hidden">
         
         {/* Left Side (Friends List / Search) */}
         <div className="flex-1 flex flex-col p-4 pr-0 sm:pr-4 overflow-y-auto custom-scrollbar">
           {activeTab === 'online' && (
             <>
               {onlineFriends.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-[#949BA4]">
-                  <div className="w-[200px] h-[200px] bg-[#2B2D31] rounded-lg mb-4 flex items-center justify-center">
-                    <Users size={64} className="text-[#1E1F22]" />
-                  </div>
-                  <p className="text-[#949BA4] text-[15px]">Ninguém está jogando com você no momento.</p>
+                  <div className="flex flex-col items-center justify-center h-full text-slate-300">
+                    <div className="w-[200px] h-[200px] bg-white/5 border border-white/8 rounded-3xl mb-4 flex items-center justify-center shadow-[0_20px_60px_rgba(0,0,0,0.22)]">
+                      <Users size={64} className="text-cyan-200/50" />
+                    </div>
+                   <p className="text-slate-400 text-[15px]">Ninguém está jogando com você no momento.</p>
                 </div>
               ) : (
                 <>
-                  <div className="text-[#949BA4] text-sm uppercase font-bold tracking-wider mb-2 px-2 border-b border-[#3F4147] pb-4">
+                  <div className="text-slate-400 text-sm uppercase font-bold tracking-wider mb-2 px-2 border-b border-white/5 pb-4">
                     Online — {onlineFriends.length}
                   </div>
                   <div className="flex flex-col space-y-0.5">
                     {onlineFriends.map(friend => {
                       const fStatus = friend.status.toLowerCase();
                       return (
-                      <div key={friend.id} className="flex items-center justify-between p-2 hover:bg-[#35373C] rounded-lg cursor-pointer group border-t border-[#3F4147] first:border-t-0">
+                      <div key={friend.id} className="flex items-center justify-between p-2 hover:bg-white/6 rounded-xl cursor-pointer group border-t border-white/5 first:border-t-0">
                         <div className="flex items-center space-x-3">
-                          <div className="relative w-8 h-8 rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold shrink-0">
+                        <div className="relative w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center text-white font-bold shrink-0">
                             {friend.avatarUrl ? <img src={friend.avatarUrl} alt="" className="w-full h-full rounded-full object-cover"/> : friend.username.charAt(0).toUpperCase()}
-                            <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#313338] group-hover:border-[#35373C] ${fStatus === 'online' ? 'bg-[#23A559]' : fStatus === 'idle' ? 'bg-[#F0B232]' : 'bg-[#F23F43]'}`}></div>
+                            <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#0b1020] group-hover:border-[#0b1020] ${fStatus === 'online' ? 'bg-emerald-400' : fStatus === 'idle' ? 'bg-amber-400' : 'bg-rose-500'}`}></div>
                           </div>
                           <div>
                             <div className="font-bold text-white text-[15px]">{friend.username}</div>
@@ -143,7 +143,7 @@ export default function HomeArea() {
                                 await useDMStore.getState().openConversationWith(friend.id);
                               } catch(e) {}
                             }}
-                            className="w-9 h-9 rounded-full bg-[#2B2D31] flex items-center justify-center text-[#B5BAC1] hover:text-[#DBDEE1] transition-colors"
+                            className="w-9 h-9 rounded-full bg-white/6 flex items-center justify-center text-slate-300 hover:text-white transition-colors"
                           >
                             <MessageSquare size={20} />
                           </button>
@@ -187,7 +187,7 @@ export default function HomeArea() {
                                 await useDMStore.getState().openConversationWith(friend.id);
                               } catch(e) {}
                             }}
-                            className="w-9 h-9 rounded-full bg-[#2B2D31] flex items-center justify-center text-[#B5BAC1] hover:text-[#DBDEE1] transition-colors"
+                            className="w-9 h-9 rounded-full bg-white/6 flex items-center justify-center text-slate-300 hover:text-white transition-colors"
                             title="Enviar Mensagem"
                           >
                             <MessageSquare size={20} />
