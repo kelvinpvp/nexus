@@ -34,8 +34,7 @@ export default function DesktopUpdateBanner() {
         if (cancelled) return;
 
         if (!update) {
-          setMessage('Você já está na versão mais recente.');
-          setState('error');
+          setState('idle');
           return;
         }
 
@@ -88,12 +87,12 @@ export default function DesktopUpdateBanner() {
   };
 
   return (
-    <div className={`mx-auto mt-3 flex w-[min(100%-1rem,56rem)] items-center justify-between gap-4 rounded-2xl border px-4 py-3 text-sm shadow-xl backdrop-blur-xl ${state === 'error' ? 'border-amber-400/30 bg-amber-400/10 text-amber-100' : 'border-cyan-300/20 bg-cyan-400/10 text-cyan-50'}`}>
+    <div className={`mx-auto mt-3 flex w-[min(100%-1rem,56rem)] items-center justify-between gap-4 rounded-2xl border px-4 py-3 text-sm shadow-xl backdrop-blur-xl ${state === 'error' ? 'border-rose-400/25 bg-rose-400/10 text-rose-100' : 'border-cyan-300/20 bg-cyan-400/10 text-cyan-50'}`}>
       <div className="flex items-start gap-3">
-        {state === 'error' ? <TriangleAlert size={18} className="mt-0.5 shrink-0 text-amber-300" /> : <Download size={18} className="mt-0.5 shrink-0 text-cyan-200" />}
+        {state === 'error' ? <TriangleAlert size={18} className="mt-0.5 shrink-0 text-rose-300" /> : <Download size={18} className="mt-0.5 shrink-0 text-cyan-200" />}
         <div>
           <div className="font-semibold">
-            {state === 'error' && version ? 'Atualização instalada' : state === 'error' ? 'Nenhuma atualização disponível' : `Nova versão disponível${version ? `: ${version}` : ''}`}
+            {state === 'error' ? 'Não foi possível verificar atualizações' : `Nova versão disponível${version ? `: ${version}` : ''}`}
           </div>
           <div className="text-xs leading-5 opacity-90">{message}</div>
         </div>
