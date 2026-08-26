@@ -4,6 +4,7 @@ import { User, Copy, Edit2, UserPlus, Check, X, MessageSquare, Ban, Unlock } fro
 import { useAuth } from '@/contexts/AuthContext';
 import { useFriendStore } from '@/store/friendStore';
 import { useAppStore } from '@/store/appStore';
+import { apiFetch } from '@/lib/api';
 
 interface ProfilePopoutProps {
   userId: string;
@@ -12,7 +13,7 @@ interface ProfilePopoutProps {
 }
 
 export default function ProfilePopout({ userId, position, onClose }: ProfilePopoutProps) {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const friendStore = useFriendStore();
   const popoutRef = useRef<HTMLDivElement>(null);
   const [profileData, setProfileData] = useState<any>(null);
@@ -89,6 +90,23 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
     }
   };
 
+  const cycleStatus = async () => {
+    if (!isCurrentUser) return;
+    const order = ['ONLINE', 'IDLE', 'DND', 'INVISIBLE'] as const;
+    const current = (profileData?.status || user?.status || 'ONLINE').toUpperCase();
+    const next = order[(Math.max(0, order.indexOf(current as any)) + 1) % order.length];
+    try {
+      const updated = await apiFetch('/api/users/me/status', {
+        method: 'PATCH',
+        body: JSON.stringify({ status: next }),
+      });
+      setProfileData(updated);
+      setUser((currentUser) => currentUser ? { ...currentUser, status: updated.status } : updated);
+    } catch (error) {
+      console.error('Failed to cycle status', error);
+    }
+  };
+
   const popoutContent = (
     <div 
       ref={popoutRef}
@@ -116,7 +134,7 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
 
           <div className="px-4 pb-4 relative pt-7">
             {/* Avatar */}
-            <div className="w-[80px] h-[80px] rounded-full border-[6px] border-[#0b1020] bg-[#0f172a] flex items-center justify-center overflow-hidden absolute -top-10 left-4 shadow-lg">
+            <div className="w-[80px] h-[80px] rounded-full border-[6px] border-[#0b1020] bg-[#0f172a] flex items-center justify-center overflow-hidden absolute -top-10 left-4 shadow-lg relative">
               {profileData.avatarUrl ? (
                 <img src={profileData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
@@ -124,9 +142,20 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
                   {profileData.displayName?.charAt(0) || profileData.username.charAt(0).toUpperCase()}
                 </span>
               )}
+              <button
+                type="button"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  await cycleStatus();
+                }}
+                className="absolute -bottom-1 -right-1 z-20 flex h-5 w-5 items-center justify-center"
+                aria-label="Alterar status"
+                title="Alterar status"
+              >
+                <span className={`h-3.5 w-3.5 rounded-full border-2 border-[#0b1020] ${getStatusColor(profileData.status || 'ONLINE')} shadow-md`} />
+              </button>
             </div>
-            {/* Status badge outside the avatar so it doesn't cover the image */}
-            <div className={`absolute top-[42px] left-[74px] w-5 h-5 rounded-full border-[3px] border-[#0b1020] ${getStatusColor(profileData.status || 'ONLINE')} shadow-md`} />
 
             {/* Buttons (Right aligned) */}
             <div className="flex justify-end pt-3 pb-2 h-12 space-x-2">

@@ -81,7 +81,6 @@ export default function UserPanel() {
             ) : (
               user.username.charAt(0).toUpperCase()
             )}
-            <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 ${statusColorMap[currentStatus]} rounded-full border-2 border-[#0b1020]`}></div>
           </div>
           <div className="ml-2 truncate flex-1">
             <div className="text-[13px] font-bold text-white truncate leading-tight">{user.username}</div>
@@ -90,10 +89,10 @@ export default function UserPanel() {
           <button
             type="button"
             onClick={handleStatusClick}
-            className="ml-1 rounded-full p-1 text-slate-400 hover:bg-white/6 hover:text-white shrink-0"
+            className="relative ml-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
             title="Alterar status"
           >
-            <ChevronDown size={14} />
+            <span className={`h-3.5 w-3.5 rounded-full border-2 border-[#0b1020] ${statusColorMap[currentStatus]} shadow-sm`} />
           </button>
         </div>
         
