@@ -20,6 +20,9 @@ export default function App() {
   const { fetchServers, isLoadingServers, activeServerId, isServerSettingsOpen, setServerSettingsOpen } = useAppStore();
   const { activeConversationId } = useDMStore();
   const { user } = useAuth();
+  const isDesktopRuntime =
+    typeof window !== 'undefined' &&
+    (Boolean((window as any).__TAURI_INTERNALS) || window.location.hostname === 'tauri.localhost' || window.location.protocol === 'tauri:');
 
   useEffect(() => {
     if (user) {
@@ -33,7 +36,7 @@ export default function App() {
     <div className="flex h-screen flex-col overflow-hidden bg-slate-950 text-slate-50">
       {/* Global Announcement Banner */}
       <DesktopUpdateBanner />
-      {!process.env.NEXT_PUBLIC_TAURI_ENV && (
+      {!isDesktopRuntime && (
         <div className="z-50 flex items-center justify-center gap-4 border-b border-cyan-300/20 bg-cyan-400/15 px-4 py-2 text-center text-sm font-semibold text-cyan-50">
           <span>🚀 O Nexus Desktop Oficial foi lançado! Tenha uma experiência muito melhor baixando o app nativo.</span>
           <a 
