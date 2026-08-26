@@ -15,6 +15,8 @@ jobs:
       NEXT_PUBLIC_API_URL: "https://nexus-jbj5.onrender.com"
       NEXT_PUBLIC_SOCKET_URL: "https://nexus-jbj5.onrender.com"
       NEXT_PUBLIC_LIVEKIT_URL: "wss://nexus-2xur1gve.livekit.cloud"
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
     steps:
       - name: Checkout repository
