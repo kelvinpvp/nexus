@@ -12,9 +12,9 @@ interface RoomAudioEngineProps {
 }
 
 /**
- * Keeps every room audio element mounted in one place. Remote microphone and
- * stream audio remain independently controllable, while local monitoring is
- * limited to screen-sharing sessions to avoid permanent microphone feedback.
+ * Keeps every room audio element mounted in one place. We never play the local
+ * microphone back into the speakers, which avoids self-echo during calls and
+ * screen-sharing sessions.
  */
 export default function RoomAudioEngine({ deafened = false }: RoomAudioEngineProps) {
   const room = useRoomContext();
@@ -80,10 +80,10 @@ export default function RoomAudioEngine({ deafened = false }: RoomAudioEnginePro
           const isScreenAudio = trackRef.source === Track.Source.ScreenShareAudio;
 
           if (isLocal) {
+            if (isMicrophone) return null;
             if (!room.localParticipant.isScreenShareEnabled) return null;
-            if (isMicrophone && !preferences?.monitorOwnVoice) return null;
             if (isScreenAudio && !preferences?.monitorOwnScreenShareAudio) return null;
-            if (!isMicrophone && !isScreenAudio) return null;
+            if (!isScreenAudio) return null;
           }
 
           const participantPreferences = participantAudioPreferences[trackRef.participant.identity];

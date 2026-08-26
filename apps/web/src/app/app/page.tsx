@@ -29,23 +29,23 @@ export default function App() {
   if (!user) return null; // AuthContext handles redirect
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex h-screen flex-col overflow-hidden bg-slate-950 text-slate-50">
       {/* Global Announcement Banner */}
       {!process.env.NEXT_PUBLIC_TAURI_ENV && (
-        <div className="bg-[#5865F2] text-white py-2 px-4 text-center text-sm font-bold flex justify-center items-center gap-4 z-50">
+        <div className="z-50 flex items-center justify-center gap-4 border-b border-cyan-300/20 bg-cyan-400/15 px-4 py-2 text-center text-sm font-semibold text-cyan-50">
           <span>🚀 O Nexus Desktop Oficial foi lançado! Tenha uma experiência muito melhor baixando o app nativo.</span>
           <a 
             href="https://github.com/kelvinpvp/nexus/releases/latest" 
             target="_blank" 
             rel="noreferrer"
-            className="bg-white text-[#5865F2] px-4 py-1 rounded-full text-xs hover:bg-gray-100 transition-colors shadow-sm"
+            className="rounded-full bg-white px-4 py-1 text-xs font-bold text-cyan-700 transition-colors hover:bg-cyan-50"
           >
             Baixar Agora
           </a>
         </div>
       )}
 
-      <div className="flex flex-1 bg-[#313338] overflow-hidden relative">
+      <div className="relative flex flex-1 overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(99,102,241,0.12),_transparent_30%),linear-gradient(180deg,_#070a12_0%,_#0b1020_100%)]">
         {/* 1. Server List (Leftmost) */}
         <ServerList />
 
@@ -54,8 +54,8 @@ export default function App() {
 
         {/* 3. Main Chat Area (Right) */}
         {isLoadingServers ? (
-          <div className="flex-1 flex items-center justify-center bg-[#313338]">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5865F2]"></div>
+          <div className="flex flex-1 items-center justify-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-cyan-300"></div>
           </div>
         ) : activeServerId === null ? (
           activeConversationId ? <DMArea /> : <HomeArea />
