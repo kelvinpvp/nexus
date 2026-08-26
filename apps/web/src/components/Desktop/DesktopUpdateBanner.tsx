@@ -68,6 +68,10 @@ export default function DesktopUpdateBanner() {
     );
   }
 
+  if (state === 'error') {
+    return null;
+  }
+
   const handleInstall = async () => {
     try {
       setState('downloading');
@@ -87,29 +91,25 @@ export default function DesktopUpdateBanner() {
   };
 
   return (
-    <div className={`mx-auto mt-3 flex w-[min(100%-1rem,56rem)] items-center justify-between gap-4 rounded-2xl border px-4 py-3 text-sm shadow-xl backdrop-blur-xl ${state === 'error' ? 'border-rose-400/25 bg-rose-400/10 text-rose-100' : 'border-cyan-300/20 bg-cyan-400/10 text-cyan-50'}`}>
+    <div className="mx-auto mt-3 flex w-[min(100%-1rem,56rem)] items-center justify-between gap-4 rounded-2xl border border-cyan-300/20 bg-cyan-400/10 px-4 py-3 text-sm text-cyan-50 shadow-xl backdrop-blur-xl">
       <div className="flex items-start gap-3">
-        {state === 'error' ? <TriangleAlert size={18} className="mt-0.5 shrink-0 text-rose-300" /> : <Download size={18} className="mt-0.5 shrink-0 text-cyan-200" />}
+        <Download size={18} className="mt-0.5 shrink-0 text-cyan-200" />
         <div>
-          <div className="font-semibold">
-            {state === 'error' ? 'Não foi possível verificar atualizações' : `Nova versão disponível${version ? `: ${version}` : ''}`}
-          </div>
+          <div className="font-semibold">{`Nova versão disponível${version ? `: ${version}` : ''}`}</div>
           <div className="text-xs leading-5 opacity-90">{message}</div>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        {state !== 'error' && (
-          <button
-            type="button"
-            onClick={handleInstall}
-            disabled={state === 'downloading'}
-            className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-950 transition hover:bg-cyan-100 disabled:opacity-60"
-          >
-            {state === 'downloading' ? <RefreshCw size={14} className="animate-spin" /> : null}
-            Atualizar agora
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleInstall}
+          disabled={state === 'downloading'}
+          className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-950 transition hover:bg-cyan-100 disabled:opacity-60"
+        >
+          {state === 'downloading' ? <RefreshCw size={14} className="animate-spin" /> : null}
+          Atualizar agora
+        </button>
         <button
           type="button"
           onClick={() => setState('idle')}

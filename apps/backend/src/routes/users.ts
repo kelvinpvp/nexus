@@ -32,6 +32,10 @@ const profileUpdateSchema = z.object({
   customStatus: z.string().trim().max(128).nullable().optional(),
 });
 
+const presenceStatusSchema = z.object({
+  status: z.enum(['ONLINE', 'IDLE', 'DND', 'INVISIBLE', 'OFFLINE']),
+});
+
 import { getStorageProvider } from '../services/storage';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -152,6 +156,46 @@ export default async function userRoutes(fastify: FastifyInstance, prisma: Prism
       }
       request.log.error(error);
       return reply.status(500).send({ error: 'Erro interno ao atualizar o perfil.' });
+    }
+  });
+
+  fastify.patch('/me/status', async (request: FastifyRequest, reply: FastifyReply) => {
+    const sessionUser = (request as any).user;
+
+    try {
+      const { status } = presenceStatusSchema.parse(request.body);
+      const updatedUser = await prisma.user.update({
+        where: { id: sessionUser.id },
+        data: { status },
+      });
+
+      const publicUser = {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        displayName: updatedUser.displayName,
+        avatarUrl: updatedUser.avatarUrl,
+        bannerUrl: updatedUser.bannerUrl,
+        bio: updatedUser.bio,
+        customStatus: updatedUser.customStatus,
+        status: updatedUser.status,
+      };
+
+      const io = (fastify as any).io;
+      if (io) {
+        io.emit('presence:update', {
+          userId: updatedUser.id,
+          status: status === 'INVISIBLE' ? 'OFFLINE' : status.toLowerCase(),
+        });
+        io.emit('user:profile_updated', publicUser);
+      }
+
+      return reply.send(publicUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return reply.status(400).send({ error: 'Invalid input', details: error.errors });
+      }
+      return reply.status(500).send({ error: 'Failed to update status' });
     }
   });
 

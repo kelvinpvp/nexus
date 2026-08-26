@@ -1,20 +1,52 @@
-import { Mic, Headphones, Settings } from 'lucide-react';
+import { Mic, Headphones, Settings, ChevronDown, Circle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useRef } from 'react';
 import SettingsModal from '@/components/Settings/SettingsModal';
 import ProfilePopout from '@/components/Profile/ProfilePopout';
+import { apiFetch } from '@/lib/api';
 
 import { useAppStore } from '@/store/appStore';
 
 export default function UserPanel() {
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
   const { isSettingsModalOpen, setSettingsModalOpen } = useAppStore();
   const [settingsTab, setSettingsTab] = useState<'account' | 'voice'>('account');
   const [showProfilePopout, setShowProfilePopout] = useState(false);
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [popoutPos, setPopoutPos] = useState({ bottom: 0, left: 0 });
   const profileContainerRef = useRef<HTMLDivElement>(null);
 
   if (!user) return null;
+
+  const currentStatus = (user.status || 'ONLINE').toUpperCase();
+  const statusLabelMap: Record<string, string> = {
+    ONLINE: 'Online',
+    IDLE: 'Ausente',
+    DND: 'Não perturbe',
+    INVISIBLE: 'Invisível',
+    OFFLINE: 'Offline',
+  };
+
+  const statusColorMap: Record<string, string> = {
+    ONLINE: 'bg-emerald-400',
+    IDLE: 'bg-amber-400',
+    DND: 'bg-rose-500',
+    INVISIBLE: 'bg-slate-500',
+    OFFLINE: 'bg-slate-500',
+  };
+
+  const setPresenceStatus = async (status: string) => {
+    try {
+      const updated = await apiFetch('/api/users/me/status', {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+      setUser((current) => current ? { ...current, status: updated.status } : updated);
+      setShowStatusMenu(false);
+    } catch (error) {
+      console.error('Failed to update status', error);
+    }
+  };
 
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -42,12 +74,23 @@ export default function UserPanel() {
             ) : (
               user.username.charAt(0).toUpperCase()
             )}
-            <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-[#0b1020]"></div>
+            <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 ${statusColorMap[currentStatus]} rounded-full border-2 border-[#0b1020]`}></div>
           </div>
           <div className="ml-2 truncate flex-1">
             <div className="text-[13px] font-bold text-white truncate leading-tight">{user.username}</div>
-            <div className="text-[11px] text-[#949BA4] truncate leading-tight">Online</div>
+            <div className="text-[11px] text-slate-400 truncate leading-tight">{statusLabelMap[currentStatus] || 'Online'}</div>
           </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowStatusMenu((v) => !v);
+            }}
+            className="ml-1 rounded-full p-1 text-slate-400 hover:bg-white/6 hover:text-white shrink-0"
+            title="Alterar status"
+          >
+            <ChevronDown size={14} />
+          </button>
         </div>
         
         <div className="flex text-[#B5BAC1]">
@@ -94,6 +137,22 @@ export default function UserPanel() {
           position={popoutPos} 
           onClose={() => setShowProfilePopout(false)} 
         />
+      )}
+
+      {showStatusMenu && (
+        <div className="fixed left-2 bottom-[72px] z-[120] w-56 overflow-hidden rounded-2xl border border-white/10 bg-[#0D1630] shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+          {(['ONLINE', 'IDLE', 'DND', 'INVISIBLE', 'OFFLINE'] as const).map((status) => (
+            <button
+              key={status}
+              onClick={() => void setPresenceStatus(status)}
+              className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/6"
+            >
+              <Circle size={10} className={`fill-current ${statusColorMap[status]} text-current`} />
+              <span>{statusLabelMap[status]}</span>
+              {currentStatus === status && <span className="ml-auto text-xs text-cyan-300">Ativo</span>}
+            </button>
+          ))}
+        </div>
       )}
     </>
   );

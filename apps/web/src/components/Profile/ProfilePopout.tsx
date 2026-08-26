@@ -114,7 +114,7 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
             )}
           </div>
 
-          <div className="px-4 pb-4 relative">
+          <div className="px-4 pb-4 relative pt-7">
             {/* Avatar */}
             <div className="w-[80px] h-[80px] rounded-full border-[6px] border-[#0b1020] bg-[#0f172a] flex items-center justify-center overflow-hidden absolute -top-10 left-4 shadow-lg">
               {profileData.avatarUrl ? (
@@ -124,9 +124,9 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
                   {profileData.displayName?.charAt(0) || profileData.username.charAt(0).toUpperCase()}
                 </span>
               )}
-              {/* Status badge */}
-              <div className={`absolute bottom-0 right-0 w-5 h-5 rounded-full border-[3px] border-[#0b1020] ${getStatusColor(profileData.status || 'ONLINE')}`}></div>
             </div>
+            {/* Status badge outside the avatar so it doesn't cover the image */}
+            <div className={`absolute top-[42px] left-[74px] w-5 h-5 rounded-full border-[3px] border-[#0b1020] ${getStatusColor(profileData.status || 'ONLINE')} shadow-md`} />
 
             {/* Buttons (Right aligned) */}
             <div className="flex justify-end pt-3 pb-2 h-12 space-x-2">

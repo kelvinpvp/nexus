@@ -442,10 +442,17 @@ const start = async () => {
       userSockets.add(socket.id);
       activeUsers.set(user.id, userSockets);
 
-      // If this is the first connection for this user, broadcast presence ONLINE
+      // If this is the first connection for this user, bring them online unless they chose a persistent status.
       if (userSockets.size === 1) {
-        await prisma.user.update({ where: { id: user.id }, data: { status: 'ONLINE' } });
-        ioServer.emit('presence:update', { userId: user.id, status: 'ONLINE' });
+        const currentUser = await prisma.user.findUnique({ where: { id: user.id }, select: { status: true } });
+        if (currentUser?.status === 'OFFLINE') {
+          await prisma.user.update({ where: { id: user.id }, data: { status: 'ONLINE' } });
+          ioServer.emit('presence:update', { userId: user.id, status: 'online' });
+        } else if (currentUser?.status === 'INVISIBLE') {
+          ioServer.emit('presence:update', { userId: user.id, status: 'offline' });
+        } else if (currentUser?.status) {
+          ioServer.emit('presence:update', { userId: user.id, status: currentUser.status.toLowerCase() });
+        }
       }
 
       // Voice logic
@@ -503,9 +510,14 @@ const start = async () => {
           uSockets.delete(socket.id);
           if (uSockets.size === 0) {
             activeUsers.delete(user.id);
-            // Grace period could be implemented here with Redis/setTimeout
-            await prisma.user.update({ where: { id: user.id }, data: { status: 'OFFLINE' } });
-            ioServer.emit('presence:update', { userId: user.id, status: 'OFFLINE' });
+            const currentUser = await prisma.user.findUnique({ where: { id: user.id }, select: { status: true } });
+            // Preserve invisible mode so it keeps looking offline to everyone else.
+            if (currentUser?.status !== 'INVISIBLE') {
+              await prisma.user.update({ where: { id: user.id }, data: { status: 'OFFLINE' } });
+              ioServer.emit('presence:update', { userId: user.id, status: 'offline' });
+            } else {
+              ioServer.emit('presence:update', { userId: user.id, status: 'offline' });
+            }
           }
         }
       });
