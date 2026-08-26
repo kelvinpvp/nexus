@@ -1,6 +1,6 @@
 {
   "productName": "Nexus",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "identifier": "com.nexus.desktop",
   "build": {
     "beforeDevCommand": "npm run dev:desktop -w web",
@@ -25,6 +25,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": "all",
     "icon": [
       "icons/32x32.png",
@@ -33,5 +34,16 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDcxMERBMTg2NTM5QjdDNDgKUldSSWZKdFRocUVOY2Z6TFMvWXllWnNjOTRuTk9HcmVOc3Y4WC8zWFBBUk92WGpMYmRkV0lSZmsK",
+      "endpoints": [
+        "https://github.com/kelvinpvp/nexus/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

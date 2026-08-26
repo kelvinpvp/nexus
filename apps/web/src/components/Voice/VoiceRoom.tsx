@@ -354,7 +354,7 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
       {isSharingSystemAudio && (
         <div className="bg-[#2B2D31] border-t border-[#F23F43]/30 px-6 py-2 flex items-center justify-center text-xs text-[#949BA4] z-10 shadow-[0_-5px_15px_rgba(0,0,0,0.2)]">
           <span className="text-[#F23F43] mr-2 font-bold">Aviso do Navegador:</span>
-          Você está compartilhando o "Áudio do Sistema". A voz dos outros participantes vai vazar na sua transmissão causando eco para eles. Para evitar, compartilhe uma "Guia/Aba" ao invés da tela inteira.
+          O áudio do sistema foi desativado no compartilhamento para reduzir eco e retorno de voz.
         </div>
       )}
 
@@ -489,13 +489,7 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
               }
 
               await localParticipant.setScreenShareEnabled(nextEnabled, {
-                audio: nextEnabled ? {
-                  echoCancellation: false,
-                  noiseSuppression: false,
-                  autoGainControl: false,
-                  systemAudio: 'include',
-                  selfBrowserSurface: 'exclude',
-                } as any : undefined,
+                audio: true,
                 resolution,
               });
             } catch (err: any) {
@@ -824,5 +818,3 @@ export function UserContextMenu({
     </div>
   );
 }
-
-

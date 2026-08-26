@@ -461,15 +461,9 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
 
               try {
                 const nextEnabled = !localParticipant.isScreenShareEnabled;
-                await localParticipant.setScreenShareEnabled(nextEnabled, {
-                  audio: nextEnabled ? {
-                    echoCancellation: false,
-                    noiseSuppression: false,
-                    autoGainControl: false,
-                    systemAudio: 'include',
-                    selfBrowserSurface: 'exclude',
-                  } as any : undefined,
-                });
+              await localParticipant.setScreenShareEnabled(nextEnabled, {
+                audio: true,
+              });
               } catch (err: any) {
                 if (err.name !== 'NotAllowedError') {
                   console.error('[CALL] Erro ao alterar compartilhamento:', err);

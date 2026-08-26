@@ -23,9 +23,10 @@ export default function RoomAudioEngine({ deafened = false }: RoomAudioEnginePro
   const [canPlayAudio, setCanPlayAudio] = useState(room.canPlaybackAudio);
 
   const tracks = useTracks(
-    [Track.Source.Microphone, Track.Source.ScreenShareAudio, Track.Source.Unknown],
+    [Track.Source.Microphone, Track.Source.ScreenShareAudio],
     { onlySubscribed: false },
   );
+  const localScreenShareAudioActive = !!room.localParticipant.getTrackPublication(Track.Source.ScreenShareAudio)?.track;
 
   useEffect(() => {
     const syncPlaybackState = () => setCanPlayAudio(room.canPlaybackAudio);
@@ -54,7 +55,6 @@ export default function RoomAudioEngine({ deafened = false }: RoomAudioEnginePro
       byId.set(key, trackRef);
     }
 
-    // useTracks may briefly omit local publications while a share is starting.
     for (const source of [Track.Source.Microphone, Track.Source.ScreenShareAudio]) {
       const publication = room.localParticipant.getTrackPublication(source);
       if (!publication?.track) continue;
@@ -76,15 +76,9 @@ export default function RoomAudioEngine({ deafened = false }: RoomAudioEnginePro
       <div className="hidden" aria-hidden="true">
         {audioTracks.map((trackRef) => {
           const isLocal = trackRef.participant.isLocal;
-          const isMicrophone = trackRef.source === Track.Source.Microphone;
           const isScreenAudio = trackRef.source === Track.Source.ScreenShareAudio;
 
-          if (isLocal) {
-            if (isMicrophone) return null;
-            if (!room.localParticipant.isScreenShareEnabled) return null;
-            if (isScreenAudio && !preferences?.monitorOwnScreenShareAudio) return null;
-            if (!isScreenAudio) return null;
-          }
+          if (isLocal) return null;
 
           const participantPreferences = participantAudioPreferences[trackRef.participant.identity];
           const locallyMuted = isScreenAudio
@@ -93,7 +87,7 @@ export default function RoomAudioEngine({ deafened = false }: RoomAudioEnginePro
           const volume = isScreenAudio
             ? participantPreferences?.screenShareVolume ?? 1
             : participantPreferences?.voiceVolume ?? 1;
-          const muted = deafened || locallyMuted;
+          const muted = deafened || locallyMuted || (localScreenShareAudioActive && !isScreenAudio);
 
           return (
             <AudioTrack

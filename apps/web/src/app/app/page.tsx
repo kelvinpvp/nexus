@@ -12,6 +12,7 @@ import DMArea from '@/components/Home/DMArea';
 import CallManager from '@/components/Call/CallManager';
 import ServerVoiceManager from '@/components/Voice/ServerVoiceManager';
 import { useAuth } from '@/contexts/AuthContext';
+import DesktopUpdateBanner from '@/components/Desktop/DesktopUpdateBanner';
 
 import ServerSettingsModal from '@/components/Modals/ServerSettingsModal';
 
@@ -31,6 +32,7 @@ export default function App() {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-slate-950 text-slate-50">
       {/* Global Announcement Banner */}
+      <DesktopUpdateBanner />
       {!process.env.NEXT_PUBLIC_TAURI_ENV && (
         <div className="z-50 flex items-center justify-center gap-4 border-b border-cyan-300/20 bg-cyan-400/15 px-4 py-2 text-center text-sm font-semibold text-cyan-50">
           <span>🚀 O Nexus Desktop Oficial foi lançado! Tenha uma experiência muito melhor baixando o app nativo.</span>
