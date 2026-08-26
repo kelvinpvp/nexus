@@ -53,39 +53,39 @@ export default function SettingsModal({ onClose, initialTab = 'account' }: Setti
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex animate-in fade-in duration-200 bg-[#000000]/80">
+    <div className="fixed inset-0 z-50 flex animate-in fade-in duration-200 bg-slate-950/80 backdrop-blur-md">
       {/* Sidebar */}
-      <div className="flex w-[30%] min-w-[220px] max-w-[300px] justify-end bg-[#232428]">
-        <div className="flex w-full max-w-[250px] flex-col gap-5 px-3 py-12">
+      <div className="flex w-[30%] min-w-[240px] max-w-[320px] justify-end border-r border-cyan-400/10 bg-gradient-to-b from-[#07101E] via-[#0B1222] to-[#070B14]">
+        <div className="flex w-full max-w-[270px] flex-col gap-5 px-4 py-12">
           <div className="px-3">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#949BA4]">Nexus</p>
-            <h2 className="mt-1 text-lg font-bold text-white">Configurações</h2>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-300/70">Nexus</p>
+            <h2 className="mt-2 text-[20px] font-black tracking-[-0.03em] text-white">Configurações</h2>
           </div>
           {SETTINGS_SECTIONS.map((section, idx) => (
             <div key={idx} className="flex flex-col gap-1">
-              <h3 className="mb-1 px-3 text-[11px] font-bold text-[#949BA4]">{section.header}</h3>
+              <h3 className="mb-1 px-3 text-[11px] font-semibold tracking-[0.2em] text-slate-500">{section.header}</h3>
               {section.items.map(item => (
                 <button
                   key={item.id}
                   onClick={() => setActiveTabId(item.id)}
-                  className={`mx-1 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-[15px] font-medium transition-colors ${
+                  className={`mx-1 flex items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-[15px] font-semibold transition-all ${
                     activeTabId === item.id
-                      ? 'bg-[#404249] text-white shadow-sm'
-                      : 'text-[#B5BAC1] hover:bg-[#303136] hover:text-[#DBDEE1]'
+                      ? 'border border-cyan-400/20 bg-cyan-400/10 text-white shadow-[0_8px_30px_rgba(34,211,238,0.12)]'
+                      : 'text-slate-300 hover:border hover:border-white/5 hover:bg-white/5 hover:text-white'
                   }`}
                 >
                   {React.createElement(itemIcons[item.id] || Monitor, { size: 17 })}
                   {item.label}
                 </button>
               ))}
-              {idx < SETTINGS_SECTIONS.length - 1 && <div className="mx-3 my-3 h-px bg-[#3F4147]" />}
+              {idx < SETTINGS_SECTIONS.length - 1 && <div className="mx-3 my-3 h-px bg-white/8" />}
             </div>
           ))}
         </div>
       </div>
 
       {/* Content Area */}
-      <div className="relative flex flex-1 justify-start bg-[#313338]">
+      <div className="relative flex flex-1 justify-start bg-gradient-to-br from-[#0B1020] via-[#10162A] to-[#070B14]">
         <div className="h-full w-full max-w-[840px] overflow-y-auto px-10 py-12">
           {ActiveComponent ? <ActiveComponent /> : null}
         </div>
@@ -94,11 +94,11 @@ export default function SettingsModal({ onClose, initialTab = 'account' }: Setti
         <div className="absolute right-10 top-12 flex flex-col items-center">
           <button
             onClick={onClose}
-            className="mb-2 flex h-9 w-9 items-center justify-center rounded-full border-2 border-[#949BA4] text-[#949BA4] transition-colors hover:bg-[#3F4147]"
+            className="mb-2 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-300 transition-colors hover:border-cyan-400/30 hover:bg-cyan-400/10 hover:text-white"
           >
             <X size={20} strokeWidth={2.5} />
           </button>
-          <span className="text-[13px] font-bold text-[#949BA4]">ESC</span>
+          <span className="text-[13px] font-semibold tracking-[0.2em] text-slate-500">ESC</span>
         </div>
       </div>
     </div>

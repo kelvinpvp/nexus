@@ -144,9 +144,9 @@ export default function GifPicker({ onSelectGif, onClose }: GifPickerProps) {
   };
 
   return (
-    <div className="flex flex-col w-full h-[400px] bg-[#2B2D31] rounded-lg shadow-lg border border-[#1E1F22]">
+    <div className="flex flex-col w-full h-[400px] rounded-2xl shadow-2xl border border-white/8 bg-[linear-gradient(180deg,#0c1426_0%,#0b1020_100%)]">
       {/* Search Input */}
-      <div className="p-3 border-b border-[#1E1F22]">
+      <div className="p-3 border-b border-white/6">
         <div className="relative">
           <input
             type="text"
@@ -156,23 +156,23 @@ export default function GifPicker({ onSelectGif, onClose }: GifPickerProps) {
               setQuery(e.target.value);
               setActiveTab('search');
             }}
-            className="w-full bg-[#1E1F22] text-[#DBDEE1] rounded px-3 py-2 pl-9 focus:outline-none focus:ring-1 focus:ring-[#5865F2] text-sm"
+            className="w-full bg-[#09111f] text-white rounded-xl px-3 py-2 pl-9 focus:outline-none focus:ring-1 focus:ring-cyan-300/50 text-sm border border-white/8"
           />
-          <Search size={16} className="absolute left-3 top-2.5 text-[#949BA4]" />
+          <Search size={16} className="absolute left-3 top-2.5 text-slate-400" />
         </div>
       </div>
       
       {/* Tabs */}
-      <div className="flex px-3 border-b border-[#1E1F22]">
+      <div className="flex px-3 border-b border-white/6">
         <button 
           onClick={() => { setActiveTab('trending'); setQuery(''); }} 
-          className={`flex-1 text-xs py-2 uppercase font-bold transition-colors ${activeTab === 'trending' ? 'text-white border-b-2 border-[#5865F2]' : 'text-[#949BA4] hover:text-[#DBDEE1]'}`}
+          className={`flex-1 text-xs py-2 uppercase font-bold transition-colors ${activeTab === 'trending' ? 'text-cyan-200 border-b-2 border-cyan-300' : 'text-slate-400 hover:text-slate-100'}`}
         >
           Em Alta
         </button>
         <button 
           onClick={() => { setActiveTab('favorites'); setQuery(''); }} 
-          className={`flex-1 text-xs py-2 uppercase font-bold transition-colors ${activeTab === 'favorites' ? 'text-white border-b-2 border-[#5865F2]' : 'text-[#949BA4] hover:text-[#DBDEE1]'}`}
+          className={`flex-1 text-xs py-2 uppercase font-bold transition-colors ${activeTab === 'favorites' ? 'text-cyan-200 border-b-2 border-cyan-300' : 'text-slate-400 hover:text-slate-100'}`}
         >
           Favoritos
         </button>
@@ -182,18 +182,18 @@ export default function GifPicker({ onSelectGif, onClose }: GifPickerProps) {
       <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
         {isLoading && (
           <div className="flex items-center justify-center h-full">
-            <Loader2 className="animate-spin text-[#949BA4]" size={24} />
+            <Loader2 className="animate-spin text-slate-400" size={24} />
           </div>
         )}
 
         {!isLoading && error && (
-          <div className="flex items-center justify-center h-full text-[#F23F42] text-sm font-medium">
+          <div className="flex items-center justify-center h-full text-rose-300 text-sm font-medium">
             {error}
           </div>
         )}
 
         {!isLoading && !error && gifs.length === 0 && (
-          <div className="flex items-center justify-center h-full text-[#949BA4] text-sm">
+          <div className="flex items-center justify-center h-full text-slate-400 text-sm">
             Nenhum GIF encontrado.
           </div>
         )}
@@ -206,7 +206,7 @@ export default function GifPicker({ onSelectGif, onClose }: GifPickerProps) {
               return (
                 <div 
                   key={`${gif.id}-${index}`}
-                  className="relative group cursor-pointer overflow-hidden rounded bg-[#1E1F22]"
+                  className="relative group cursor-pointer overflow-hidden rounded-xl bg-[#09111f] border border-white/6"
                   onClick={() => {
                     onSelectGif({
                       url: gif.mediaUrl || gif.url || '', // Favorites API returns .url

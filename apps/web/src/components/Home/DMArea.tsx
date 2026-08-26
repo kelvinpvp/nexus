@@ -44,7 +44,7 @@ export default function DMArea() {
 
   if (!conversation) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-[#313338] text-[#949BA4]">
+      <div className="flex-1 flex flex-col items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.08),_transparent_30%),linear-gradient(180deg,#0b1020_0%,#0f172a_55%,#090d18_100%)] text-slate-400">
         Selecione uma conversa.
       </div>
     );
@@ -116,9 +116,9 @@ export default function DMArea() {
 
   return (
     <div className="flex-1 flex flex-row h-full overflow-hidden">
-    <div className="flex-1 flex flex-col bg-[#313338] h-full min-w-0">
+    <div className="flex-1 flex flex-col bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.06),_transparent_28%),linear-gradient(180deg,#0b1020_0%,#10182c_58%,#090d18_100%)] h-full min-w-0">
       {/* Top Bar */}
-      <div className="h-12 border-b border-[#1F2023] flex items-center justify-between px-4 shrink-0 shadow-sm relative">
+      <div className="h-12 border-b border-white/5 flex items-center justify-between px-4 shrink-0 shadow-sm relative backdrop-blur-md bg-white/3">
         <div className="flex items-center text-white space-x-2">
           {isGroup ? <Users size={24} className="text-[#80848E]" /> : <Hash size={24} className="text-[#80848E]" />}
           <span className="font-bold text-[15px] truncate max-w-[400px]">{displayName}</span>
@@ -149,7 +149,7 @@ export default function DMArea() {
           </div>
         )}
         
-        <div className="flex items-center space-x-4 text-[#B5BAC1]">
+        <div className="flex items-center space-x-4 text-slate-300">
           {isGroup && (
             <button
               onClick={() => setShowGroupMenu((v) => !v)}
@@ -222,7 +222,7 @@ export default function DMArea() {
         </div>
 
         {showGroupMenu && isGroup && (
-          <div className="absolute right-4 top-12 z-40 w-56 overflow-hidden rounded-2xl border border-white/8 bg-[#111214] shadow-2xl">
+          <div className="absolute right-4 top-12 z-40 w-56 overflow-hidden rounded-2xl border border-cyan-400/10 bg-[#0D1630] shadow-2xl">
             <button onClick={() => { setShowGroupMenu(false); void handleRenameGroup(); }} className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-white hover:bg-white/5">
               <Pencil size={16} /> Renomear grupo
             </button>
@@ -238,19 +238,19 @@ export default function DMArea() {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 custom-scrollbar flex flex-col">
-        {isLoadingMessages ? (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5865F2]"></div>
-          </div>
-        ) : (
-          <>
+        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar flex flex-col">
+          {isLoadingMessages ? (
+            <div className="flex-1 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-300"></div>
+            </div>
+          ) : (
+            <>
             <div className="mt-auto">
               <div className="mb-8">
                 {avatarContent}
                 <h1 className="text-white text-3xl font-bold mb-2 break-words">{displayName}</h1>
-                {!isGroup && friend && <h2 className="text-[#DBDEE1] text-lg font-medium mb-1">{friend.username}</h2>}
-                <p className="text-[#949BA4] text-[15px]">
+                {!isGroup && friend && <h2 className="text-slate-200 text-lg font-medium mb-1">{friend.username}</h2>}
+                <p className="text-slate-400 text-[15px]">
                   {isGroup ? 'Este é o começo do seu histórico de mensagens com este grupo.' : `Este é o começo do seu histórico de mensagens diretas com @${friend?.username}.`}
                 </p>
               </div>
@@ -262,12 +262,12 @@ export default function DMArea() {
                     (new Date(msg.createdAt).getTime() - new Date(currentMessages[idx - 1].createdAt).getTime() > 5 * 60 * 1000);
 
                   return (
-                    <div key={msg.id} className={`flex items-start group hover:bg-[#2E3035] -mx-4 px-4 py-0.5 relative ${showHeader ? 'mt-4' : 'mt-0'}`}>
+                    <div key={msg.id} className={`flex items-start group hover:bg-white/5 -mx-4 px-4 py-0.5 relative ${showHeader ? 'mt-4' : 'mt-0'}`}>
                       {/* Delete button — shown on hover for own messages */}
                       {(msg.authorId === user?.id) && (
                         <button
                           onClick={() => deleteMessage(activeConversationId!, msg.id)}
-                          className="absolute right-2 top-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-[#DA373C] text-[#949BA4] hover:text-white"
+                          className="absolute right-2 top-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-rose-500/15 text-slate-400 hover:text-white"
                           title="Deletar mensagem"
                         >
                           <Trash2 size={14} />
@@ -300,21 +300,21 @@ export default function DMArea() {
                             </span>
                           </div>
                         )}
-                        <div className="text-[#DBDEE1] text-[15px] whitespace-pre-wrap leading-[1.375rem] break-words font-normal">
+                        <div className="text-slate-100 text-[15px] whitespace-pre-wrap leading-[1.375rem] break-words font-normal">
                           {msg.content.match(/^https?:\/\/.+\.(gif|png|jpg|jpeg|webp)($|\?)/i) || msg.content.includes('media.giphy.com') || msg.content.includes('giphy.com/media') ? (
-                            <div className="mt-1 max-w-sm rounded-lg overflow-hidden border border-[#1E1F22]">
+                            <div className="mt-1 max-w-sm rounded-2xl overflow-hidden border border-white/8">
                               <img src={msg.content} alt="GIF/Imagem" className="w-full max-h-72 object-contain bg-black/20" />
                             </div>
                           ) : msg.content.includes('/invite/') ? (
                             <div>
                               <span>{msg.content}</span>
-                              <div className="mt-2 p-3 bg-[#2B2D31] border border-[#1E1F22] rounded-lg max-w-sm flex items-center justify-between">
+                              <div className="mt-2 p-3 bg-slate-950/35 border border-white/8 rounded-2xl max-w-sm flex items-center justify-between">
                                 <div className="flex items-center space-x-3">
-                                  <div className="w-10 h-10 rounded-xl bg-[#5865F2] flex items-center justify-center text-white font-bold">
+                                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center text-white font-bold">
                                     🚀
                                   </div>
                                   <div>
-                                    <p className="text-xs font-bold text-[#949BA4] uppercase">CONVITE PARA SERVIDOR</p>
+                                    <p className="text-xs font-bold text-slate-400 uppercase">CONVITE PARA SERVIDOR</p>
                                     <p className="text-sm font-semibold text-white">Clique para entrar no Servidor</p>
                                   </div>
                                 </div>
@@ -322,7 +322,7 @@ export default function DMArea() {
                                   href={msg.content.match(/https?:\/\/[^\s]+/)?.[0] || '#'} 
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="bg-[#23A559] hover:bg-[#1A7C43] text-white text-xs font-bold px-3 py-1.5 rounded transition-colors"
+                                  className="bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors"
                                 >
                                   Entrar
                                 </a>

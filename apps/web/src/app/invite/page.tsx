@@ -61,28 +61,27 @@ function InviteContent() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-[#313338] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5865F2]"></div>
+      <div className="min-h-screen bg-gradient-to-br from-[#0B1020] via-[#0F172A] to-[#090D18] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-300"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-cover bg-center flex items-center justify-center relative" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop')" }}>
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.15),_transparent_32%),linear-gradient(180deg,#050816_0%,#0b1020_45%,#090d18_100%)] flex items-center justify-center relative overflow-hidden">
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(59,130,246,0.14),transparent_35%,rgba(168,85,247,0.12)_70%,transparent_100%)] backdrop-blur-sm"></div>
       
-      <div className="bg-[#313338] w-[480px] rounded-lg shadow-2xl p-8 relative z-10 flex flex-col items-center text-center">
+      <div className="w-[500px] rounded-[30px] border border-cyan-400/10 bg-[#0D1630]/95 shadow-[0_30px_100px_rgba(0,0,0,0.55)] p-8 relative z-10 flex flex-col items-center text-center">
         {error ? (
           <>
-            <div className="w-16 h-16 rounded-full bg-[#F23F43]/20 flex items-center justify-center mb-4">
-              <Users size={32} className="text-[#F23F43]" />
+            <div className="w-16 h-16 rounded-full bg-rose-500/15 flex items-center justify-center mb-4">
+              <Users size={32} className="text-rose-300" />
             </div>
             <h1 className="text-white text-2xl font-bold mb-2">Ops! Algo deu errado.</h1>
-            <p className="text-[#B5BAC1] mb-6">{error}</p>
+            <p className="text-slate-400 mb-6">{error}</p>
             <button
               onClick={() => router.push('/')}
-              className="bg-[#5865F2] hover:bg-[#4752C4] text-white px-8 py-3 rounded-[3px] font-medium transition-colors w-full"
+              className="w-full rounded-2xl bg-cyan-400 px-8 py-3 font-semibold text-slate-950 transition-colors hover:bg-cyan-300"
             >
               Voltar ao Início
             </button>
@@ -90,21 +89,21 @@ function InviteContent() {
         ) : invite ? (
           <>
             {invite.server.iconUrl ? (
-              <img src={invite.server.iconUrl} alt={invite.server.name} className="w-20 h-20 rounded-2xl shadow-lg mb-4 object-cover bg-[#2B2D31]" />
+              <img src={invite.server.iconUrl} alt={invite.server.name} className="w-20 h-20 rounded-3xl shadow-lg mb-4 object-cover bg-slate-900 ring-1 ring-white/10" />
             ) : (
-              <div className="w-20 h-20 rounded-2xl bg-[#2B2D31] flex items-center justify-center mb-4 shadow-lg text-white font-bold text-3xl">
+              <div className="w-20 h-20 rounded-3xl bg-slate-900 flex items-center justify-center mb-4 shadow-lg text-white font-bold text-3xl ring-1 ring-white/10">
                 {invite.server.name.charAt(0).toUpperCase()}
               </div>
             )}
             
-            <p className="text-[#B5BAC1] text-sm uppercase font-bold tracking-wider mb-2">
+            <p className="text-slate-400 text-sm uppercase font-semibold tracking-[0.22em] mb-2">
               Você foi convidado a entrar no servidor
             </p>
             <h1 className="text-white text-3xl font-bold mb-2">{invite.server.name}</h1>
             
-            <div className="flex items-center space-x-4 text-[#B5BAC1] mb-8 mt-2">
+            <div className="flex items-center space-x-4 text-slate-400 mb-8 mt-2">
               <div className="flex items-center">
-                <div className="w-2.5 h-2.5 rounded-full bg-[#B5BAC1] mr-2"></div>
+                <div className="w-2.5 h-2.5 rounded-full bg-cyan-300 mr-2"></div>
                 <span>{invite.server.memberCount} Membros</span>
               </div>
             </div>
@@ -112,7 +111,7 @@ function InviteContent() {
             <button
               onClick={handleJoin}
               disabled={isJoining}
-              className="bg-[#5865F2] hover:bg-[#4752C4] text-white px-8 py-3.5 rounded-[3px] font-bold text-lg transition-colors w-full disabled:opacity-50"
+              className="w-full rounded-2xl bg-cyan-400 px-8 py-3.5 text-lg font-bold text-slate-950 transition-colors hover:bg-cyan-300 disabled:opacity-50"
             >
               {isJoining ? 'Entrando...' : 'Aceitar Convite'}
             </button>
@@ -125,7 +124,7 @@ function InviteContent() {
 
 export default function InvitePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#313338] flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5865F2]"></div></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-[#0B1020] via-[#0F172A] to-[#090D18] flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-300"></div></div>}>
       <InviteContent />
     </Suspense>
   );

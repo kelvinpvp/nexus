@@ -144,27 +144,38 @@ export default function AccountSettings() {
     }
   };
 
-  return (
-    <div className="text-white max-w-2xl">
-      <h2 className="text-[20px] font-bold mb-6">Minha Conta</h2>
+  const fieldLabelClass = 'text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400';
+  const fieldValueClass = 'text-[15px] text-slate-100';
+  const primaryButtonClass = 'bg-cyan-500/90 hover:bg-cyan-400 text-slate-950 shadow-[0_10px_30px_rgba(34,211,238,0.18)]';
+  const secondaryButtonClass = 'bg-white/6 hover:bg-white/12 text-slate-100 border border-white/10';
+  const destructiveButtonClass = 'text-rose-300 border border-rose-500/70 hover:bg-rose-500/12';
 
-      <div className="bg-[#1E1F22] rounded-lg mb-6 relative">
+  return (
+    <div className="text-white max-w-2xl pb-8">
+      <div className="mb-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-cyan-300/80 mb-2">Configurações</p>
+        <h2 className="text-[24px] font-black tracking-[-0.04em] text-white">Minha Conta</h2>
+        <p className="text-sm text-slate-400 mt-1">Seu perfil, segurança e identidade no Nexus.</p>
+      </div>
+
+      <div className="relative overflow-hidden rounded-[28px] border border-cyan-400/10 bg-gradient-to-b from-[#0D1630] via-[#111827] to-[#0B1020] shadow-[0_24px_90px_rgba(0,0,0,0.35)]">
         {/* Banner */}
         <div 
-          className="h-24 bg-[#5865F2] rounded-t-lg w-full relative group cursor-pointer overflow-hidden"
+          className="h-28 bg-gradient-to-r from-cyan-500 via-indigo-500 to-violet-500 w-full relative group cursor-pointer overflow-hidden"
           onClick={() => bannerInputRef.current?.click()}
         >
           {user.bannerUrl && (
             <img src={user.bannerUrl} alt="Banner" className="w-full h-full object-cover group-hover:opacity-60 transition-opacity" />
           )}
           
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/15 via-transparent to-slate-950/55" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/35 opacity-0 group-hover:opacity-100 transition-opacity">
             {isUploadingBanner ? (
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
             ) : (
               <>
                 <Camera size={24} className="text-white mb-1" />
-                <span className="text-[10px] font-bold text-white uppercase">Mudar Banner</span>
+                <span className="text-[10px] font-bold text-white uppercase tracking-[0.2em]">Mudar banner</span>
               </>
             )}
           </div>
@@ -178,11 +189,11 @@ export default function AccountSettings() {
         />
         
         {/* Profile Info */}
-        <div className="px-4 pb-4 flex justify-between items-start">
+        <div className="px-5 pb-5 flex justify-between items-start gap-4">
           <div className="flex items-end space-x-4">
             {/* Avatar overlapping banner */}
             <div 
-              className="w-[92px] h-[92px] rounded-full border-[6px] border-[#1E1F22] bg-[#313338] flex items-center justify-center overflow-hidden -mt-[46px] relative z-10 group cursor-pointer transition-opacity"
+              className="w-[96px] h-[96px] rounded-full border-[6px] border-[#0D1630] bg-[#111827] flex items-center justify-center overflow-hidden -mt-[48px] relative z-10 group cursor-pointer transition-all shadow-[0_18px_50px_rgba(0,0,0,0.35)] ring-1 ring-white/10"
               onClick={() => avatarInputRef.current?.click()}
             >
               {isUploadingAvatar ? (
@@ -196,7 +207,7 @@ export default function AccountSettings() {
               {!isUploadingAvatar && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Camera size={24} className="text-white mb-1" />
-                  <span className="text-[10px] font-bold text-white uppercase">Mudar</span>
+                  <span className="text-[10px] font-bold text-white uppercase tracking-[0.2em]">Mudar</span>
                 </div>
               )}
             </div>
@@ -209,52 +220,52 @@ export default function AccountSettings() {
             />
 
             <div className="pb-1">
-              <h3 className="text-xl font-bold leading-tight">{user.displayName || user.username}</h3>
-              <p className="text-sm text-[#DBDEE1]">@{user.username}</p>
+              <h3 className="text-[22px] font-black leading-tight tracking-[-0.03em]">{user.displayName || user.username}</h3>
+              <p className="text-sm text-cyan-200/80">@{user.username}</p>
             </div>
           </div>
-          <span className="mt-4 rounded-full bg-[#5865F2]/15 px-3 py-1 text-xs font-semibold text-[#AEB4FF]">
+          <span className="mt-4 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-200">
             Avatar e banner
           </span>
         </div>
 
         {/* Details card */}
-        <div className="px-4 pb-4">
-          <div className="bg-[#2B2D31] rounded-lg p-4 space-y-4">
-            <div className="flex justify-between items-center">
+        <div className="px-5 pb-5">
+          <div className="rounded-2xl border border-white/6 bg-white/[0.03] p-4 space-y-4 backdrop-blur-sm">
+            <div className="flex justify-between items-center gap-4 rounded-2xl border border-white/5 bg-slate-950/20 px-4 py-4">
               <div>
-                <div className="text-xs font-bold uppercase text-[#949BA4] mb-1">Nome de Exibição</div>
-                <div className="text-[15px]">{user.displayName || user.username}</div>
+                <div className={fieldLabelClass}>Nome de exibição</div>
+                <div className={fieldValueClass}>{user.displayName || user.username}</div>
               </div>
               <button 
                 onClick={() => openEditModal('displayName')}
-                className="bg-[#4E5058] hover:bg-[#6D6F78] px-4 py-1.5 rounded text-sm font-medium transition-colors"
+                className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${secondaryButtonClass}`}
               >
                 Editar
               </button>
             </div>
             
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center gap-4 rounded-2xl border border-white/5 bg-slate-950/20 px-4 py-4">
               <div>
-                <div className="text-xs font-bold uppercase text-[#949BA4] mb-1">Nome de Usuário</div>
-                <div className="text-[15px]">{user.username}</div>
+                <div className={fieldLabelClass}>Nome de usuário</div>
+                <div className={fieldValueClass}>{user.username}</div>
               </div>
               <button 
                 onClick={() => openEditModal('username')}
-                className="bg-[#4E5058] hover:bg-[#6D6F78] px-4 py-1.5 rounded text-sm font-medium transition-colors"
+                className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${secondaryButtonClass}`}
               >
                 Editar
               </button>
             </div>
 
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center gap-4 rounded-2xl border border-white/5 bg-slate-950/20 px-4 py-4">
               <div>
-                <div className="text-xs font-bold uppercase text-[#949BA4] mb-1">E-mail</div>
-                <div className="text-[15px]">{user.email.replace(/(.{2})(.*)(@.*)/, '$1***$3')}</div>
+                <div className={fieldLabelClass}>E-mail</div>
+                <div className={fieldValueClass}>{user.email.replace(/(.{2})(.*)(@.*)/, '$1***$3')}</div>
               </div>
               <button 
                 onClick={() => openEditModal('email')}
-                className="bg-[#4E5058] hover:bg-[#6D6F78] px-4 py-1.5 rounded text-sm font-medium transition-colors"
+                className={`rounded-xl px-4 py-2 text-sm font-semibold transition-all ${secondaryButtonClass}`}
               >
                 Editar
               </button>
@@ -263,44 +274,44 @@ export default function AccountSettings() {
         </div>
       </div>
 
-      <div className="h-px bg-[#3F4147] my-6" />
+      <div className="my-6 h-px bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent" />
 
-      <div>
-        <h3 className="text-xs font-bold uppercase text-[#949BA4] mb-4">Senha e Autenticação</h3>
+      <div className="rounded-[24px] border border-white/6 bg-white/[0.03] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-4">Senha e autenticação</h3>
         <button 
           onClick={() => openEditModal('password')}
-          className="bg-[#5865F2] hover:bg-[#4752C4] px-4 py-2 rounded text-sm font-medium transition-colors mb-6"
+          className={`mb-6 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all ${primaryButtonClass}`}
         >
           Alterar Senha
         </button>
 
-        <div className="h-px bg-[#3F4147] my-6" />
+        <div className="my-6 h-px bg-white/8" />
 
-        <h3 className="text-xs font-bold uppercase text-[#949BA4] mb-4">Gerenciamento de Conta</h3>
+        <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-4">Gerenciamento de conta</h3>
         <button 
           onClick={logout}
-          className="text-[#F23F43] border border-[#F23F43] hover:bg-[#F23F43]/10 px-4 py-2 rounded text-sm font-medium transition-colors"
+          className={`rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all ${destructiveButtonClass}`}
         >
           Sair da Conta
         </button>
       </div>
 
       {editingField && (
-        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center animate-in fade-in duration-200">
-          <div className="bg-[#313338] w-full max-w-md rounded-lg shadow-xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col">
-            <div className="p-4 flex flex-col items-center text-center pb-2">
-              <h2 className="text-2xl font-bold text-white mb-2">Alterar {
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200 px-4">
+          <div className="flex w-full max-w-md flex-col overflow-hidden rounded-[24px] border border-white/10 bg-[#0D1630] shadow-[0_30px_120px_rgba(0,0,0,0.55)] animate-in zoom-in-95 duration-200">
+            <div className="p-5 flex flex-col items-center text-center pb-3">
+              <h2 className="text-2xl font-black tracking-[-0.03em] text-white mb-2">Alterar {
                 editingField === 'displayName' ? 'Nome de Exibição' :
                 editingField === 'username' ? 'Nome de Usuário' :
                 editingField === 'email' ? 'E-mail' :
                 'Senha'
               }</h2>
-              <p className="text-[#DBDEE1] text-[15px]">Insira o novo valor desejado abaixo.</p>
+              <p className="text-slate-400 text-[15px]">Insira o novo valor desejado abaixo.</p>
             </div>
             
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase text-[#B5BAC1] mb-2">
+                <label className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 mb-2">
                   Novo {
                     editingField === 'displayName' ? 'Nome de Exibição' :
                     editingField === 'username' ? 'Nome de Usuário' :
@@ -312,7 +323,7 @@ export default function AccountSettings() {
                   type={editingField === 'password' ? 'password' : editingField === 'email' ? 'email' : 'text'}
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  className="w-full bg-[#1E1F22] text-[#DBDEE1] p-2.5 rounded focus:outline-none focus:ring-1 focus:ring-[#5865F2]"
+                  className="w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/20"
                   placeholder={`Digite ${editingField === 'password' ? 'a nova senha' : 'o novo valor'}`}
                 />
               </div>
@@ -320,30 +331,30 @@ export default function AccountSettings() {
               {/* Alterações sensíveis exigem confirmação. */}
               {(editingField === 'password' || editingField === 'email') && (
                 <div>
-                  <label className="block text-xs font-bold uppercase text-[#B5BAC1] mb-2">
+                  <label className="block text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 mb-2">
                     Senha Atual
                   </label>
                   <input 
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full bg-[#1E1F22] text-[#DBDEE1] p-2.5 rounded focus:outline-none focus:ring-1 focus:ring-[#5865F2]"
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-400/20"
                   />
                 </div>
               )}
             </div>
 
-            <div className="p-4 bg-[#2B2D31] flex justify-end space-x-3 mt-2">
+            <div className="mt-2 flex justify-end space-x-3 border-t border-white/6 bg-black/10 p-4">
               <button 
                 onClick={() => setEditingField(null)}
-                className="text-white hover:underline px-4 py-2 text-sm font-medium"
+                className="rounded-2xl px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/8"
               >
                 Cancelar
               </button>
               <button 
                 onClick={handleSaveEdit}
                 disabled={isSavingEdit || !editValue || ((editingField === 'password' || editingField === 'email') && !currentPassword)}
-                className="bg-[#5865F2] hover:bg-[#4752C4] px-4 py-2 rounded text-white text-sm font-medium transition-colors disabled:opacity-50 flex items-center"
+                className={`flex items-center rounded-2xl px-4 py-2 text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed ${primaryButtonClass}`}
               >
                 {isSavingEdit ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>

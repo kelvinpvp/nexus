@@ -38,43 +38,43 @@ export default function CreateServerModal({ isOpen, onClose }: CreateServerModal
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="bg-[#313338] w-[440px] rounded-lg shadow-2xl flex flex-col transform transition-all">
-        <div className="p-6 text-center">
-          <h2 className="text-2xl font-bold text-[#F2F3F5] mb-2">Personalize seu servidor</h2>
-          <p className="text-[#B5BAC1] text-[15px] leading-relaxed">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md">
+      <div className="w-[460px] overflow-hidden rounded-[28px] border border-cyan-400/10 bg-gradient-to-b from-[#0D1630] via-[#111827] to-[#090D18] shadow-[0_30px_120px_rgba(0,0,0,0.5)] flex flex-col transform transition-all">
+        <div className="p-7 text-center">
+          <h2 className="mb-2 text-[28px] font-black tracking-[-0.03em] text-white">Personalize seu servidor</h2>
+          <p className="text-slate-400 text-[15px] leading-relaxed">
             Dê uma identidade ao seu novo servidor com um nome e um ícone. Você pode mudar isso depois.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 flex flex-col flex-1">
-          <label className="text-xs font-bold text-[#B5BAC1] uppercase mb-2">Nome do servidor <span className="text-[#F23F42]">*</span></label>
+          <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 mb-2">Nome do servidor <span className="text-rose-300">*</span></label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="bg-[#1E1F22] text-[#DBDEE1] rounded-[3px] p-2.5 focus:outline-none focus:ring-1 focus:ring-[#00A8FC] mb-2"
+            className="mb-2 rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-white outline-none focus:border-cyan-400/30"
             maxLength={100}
             autoFocus
           />
-          {error && <p className="text-[#F23F42] text-xs font-medium">{error}</p>}
+          {error && <p className="text-rose-300 text-xs font-medium">{error}</p>}
           
-          <div className="mt-8 mb-4 text-xs text-[#949BA4]">
+          <div className="mt-8 mb-4 text-xs text-slate-500">
             Ao criar um servidor, você concorda com as Diretrizes da Comunidade do Nexus.
           </div>
 
-          <div className="bg-[#2B2D31] -mx-6 px-6 py-4 flex justify-between items-center rounded-b-lg">
+          <div className="border-t border-white/6 bg-black/10 -mx-6 px-6 py-4 flex justify-between items-center">
             <button
               type="button"
               onClick={onClose}
-              className="text-sm font-medium text-[#F2F3F5] hover:underline"
+              className="rounded-2xl px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/6"
             >
               Voltar
             </button>
             <button
               type="submit"
               disabled={isLoading || !name.trim()}
-              className="bg-[#5865F2] hover:bg-[#4752C4] text-white px-6 py-2.5 rounded-[3px] text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-2xl bg-cyan-400 px-6 py-2.5 text-sm font-semibold text-slate-950 transition-colors hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Criando...' : 'Criar'}
             </button>

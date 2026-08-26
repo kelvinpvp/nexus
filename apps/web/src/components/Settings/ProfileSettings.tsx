@@ -56,59 +56,59 @@ export default function ProfileSettings() {
   return (
     <div className="max-w-3xl pb-12 text-white">
       <div className="mb-7">
-        <p className="mb-1 text-xs font-bold uppercase tracking-[0.14em] text-[#5865F2]">Identidade</p>
-        <h2 className="text-2xl font-bold">Perfil</h2>
-        <p className="mt-2 text-sm leading-6 text-[#B5BAC1]">Defina como você aparece em conversas, servidores e chamadas.</p>
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-300/80">Identidade</p>
+        <h2 className="text-2xl font-black tracking-[-0.03em]">Perfil</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-400">Defina como você aparece em conversas, servidores e chamadas.</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <section className="space-y-5 rounded-xl border border-[#3F4147] bg-[#2B2D31] p-5">
+        <section className="space-y-5 rounded-[24px] border border-cyan-400/10 bg-white/[0.03] p-5">
           <label className="block">
-            <span className="text-xs font-bold uppercase tracking-wide text-[#B5BAC1]">Nome de exibição</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Nome de exibição</span>
             <input
               value={displayName}
               maxLength={50}
               onChange={(event) => setDisplayName(event.target.value)}
               placeholder={user.username}
-              className="mt-2 w-full rounded-lg border border-[#111214] bg-[#1E1F22] p-3 text-[#F2F3F5] outline-none focus:border-[#5865F2]"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/35 p-3 text-white outline-none focus:border-cyan-400/30"
             />
-            <span className="mt-1 block text-right text-xs text-[#949BA4]">{displayName.length}/50</span>
+            <span className="mt-1 block text-right text-xs text-slate-500">{displayName.length}/50</span>
           </label>
 
           <label className="block">
-            <span className="text-xs font-bold uppercase tracking-wide text-[#B5BAC1]">Status personalizado</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Status personalizado</span>
             <input
               value={customStatus}
               maxLength={128}
               onChange={(event) => setCustomStatus(event.target.value)}
               placeholder="O que está acontecendo?"
-              className="mt-2 w-full rounded-lg border border-[#111214] bg-[#1E1F22] p-3 text-[#F2F3F5] outline-none focus:border-[#5865F2]"
+              className="mt-2 w-full rounded-2xl border border-white/10 bg-slate-950/35 p-3 text-white outline-none focus:border-cyan-400/30"
             />
-            <span className="mt-1 block text-right text-xs text-[#949BA4]">{customStatus.length}/128</span>
+            <span className="mt-1 block text-right text-xs text-slate-500">{customStatus.length}/128</span>
           </label>
 
           <label className="block">
-            <span className="text-xs font-bold uppercase tracking-wide text-[#B5BAC1]">Sobre mim</span>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Sobre mim</span>
             <textarea
               value={bio}
               maxLength={190}
               rows={5}
               onChange={(event) => setBio(event.target.value)}
               placeholder="Conte um pouco sobre você."
-              className="mt-2 w-full resize-none rounded-lg border border-[#111214] bg-[#1E1F22] p-3 text-[#F2F3F5] outline-none focus:border-[#5865F2]"
+              className="mt-2 w-full resize-none rounded-2xl border border-white/10 bg-slate-950/35 p-3 text-white outline-none focus:border-cyan-400/30"
             />
-            <span className="mt-1 block text-right text-xs text-[#949BA4]">{bio.length}/190</span>
+            <span className="mt-1 block text-right text-xs text-slate-500">{bio.length}/190</span>
           </label>
 
-          {error && <p className="rounded-lg bg-[#F23F43]/10 p-3 text-sm text-[#FF8A8D]">{error}</p>}
+          {error && <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-200">{error}</p>}
 
           <div className="flex items-center justify-end gap-3">
-            {saved && <span className="flex items-center gap-1.5 text-sm text-[#23A559]"><CheckCircle2 size={16} /> Salvo</span>}
+            {saved && <span className="flex items-center gap-1.5 text-sm text-emerald-300"><CheckCircle2 size={16} /> Salvo</span>}
             <button
               type="button"
               onClick={saveProfile}
               disabled={isSaving}
-              className="flex items-center gap-2 rounded-lg bg-[#5865F2] px-4 py-2 text-sm font-semibold hover:bg-[#4752C4] disabled:opacity-60"
+              className="flex items-center gap-2 rounded-2xl bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-60"
             >
               {isSaving ? <Loader2 size={17} className="animate-spin" /> : <Save size={17} />}
               Salvar alterações
@@ -117,13 +117,13 @@ export default function ProfileSettings() {
         </section>
 
         <aside>
-          <p className="mb-2 text-xs font-bold uppercase tracking-wide text-[#B5BAC1]">Prévia</p>
-          <div className="overflow-hidden rounded-xl border border-[#3F4147] bg-[#111214] shadow-xl">
-            <div className="h-24 bg-[#5865F2]">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Prévia</p>
+          <div className="overflow-hidden rounded-[24px] border border-cyan-400/10 bg-slate-950/35 shadow-xl">
+            <div className="h-24 bg-gradient-to-r from-cyan-500 via-indigo-500 to-violet-500">
               {user.bannerUrl && <img src={user.bannerUrl} alt="" className="h-full w-full object-cover" />}
             </div>
             <div className="relative px-4 pb-5 pt-12">
-              <div className="absolute -top-10 left-4 h-20 w-20 overflow-hidden rounded-full border-[5px] border-[#111214] bg-[#313338]">
+              <div className="absolute -top-10 left-4 h-20 w-20 overflow-hidden rounded-full border-[5px] border-[#070B14] bg-slate-900">
                 {user.avatarUrl ? (
                   <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
@@ -131,11 +131,11 @@ export default function ProfileSettings() {
                 )}
               </div>
               <h3 className="truncate text-xl font-bold">{previewName}</h3>
-              <p className="text-sm text-[#B5BAC1]">@{user.username}</p>
+              <p className="text-sm text-slate-400">@{user.username}</p>
               {previewStatus && <p className="mt-3 flex items-start gap-2 text-sm"><Sparkles size={15} className="mt-0.5 shrink-0 text-[#F0B232]" />{previewStatus}</p>}
-              <div className="my-4 h-px bg-[#3F4147]" />
-              <p className="text-xs font-bold uppercase text-[#F2F3F5]">Sobre mim</p>
-              <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-5 text-[#DBDEE1]">{bio.trim() || 'Adicione uma apresentação ao seu perfil.'}</p>
+              <div className="my-4 h-px bg-white/8" />
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Sobre mim</p>
+              <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-5 text-slate-200">{bio.trim() || 'Adicione uma apresentação ao seu perfil.'}</p>
             </div>
           </div>
         </aside>
