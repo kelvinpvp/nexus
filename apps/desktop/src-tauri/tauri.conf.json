@@ -1,6 +1,6 @@
 {
   "productName": "Nexus",
-  "version": "0.1.0",
+  "version": "1.0.2",
   "identifier": "com.nexus.desktop",
   "build": {
     "beforeDevCommand": "npm run dev:desktop -w web",
