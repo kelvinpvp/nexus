@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Bell, Monitor, Palette, Shield, User, UserRound, Volume2, X } from 'lucide-react';
 import AccountSettings from './AccountSettings';
+import AppearanceSettings from './AppearanceSettings';
+import NotificationSettings from './NotificationSettings';
+import PrivacySettings from './PrivacySettings';
 import VoiceSettings from './VoiceSettings';
 import ProfileSettings from './ProfileSettings';
 
@@ -15,15 +18,15 @@ const SETTINGS_SECTIONS = [
     items: [
       { id: 'account', label: 'Minha Conta', component: AccountSettings },
       { id: 'profile', label: 'Perfil', component: ProfileSettings },
-      { id: 'privacy', label: 'Privacidade e Segurança', component: null }, // To be implemented
+      { id: 'privacy', label: 'Privacidade e Segurança', component: PrivacySettings },
     ]
   },
   {
     header: 'APLICATIVO',
     items: [
       { id: 'voice', label: 'Voz e Vídeo', component: VoiceSettings },
-      { id: 'appearance', label: 'Aparência', component: null }, // To be implemented
-      { id: 'notifications', label: 'Notificações', component: null }, // To be implemented
+      { id: 'appearance', label: 'Aparência', component: AppearanceSettings },
+      { id: 'notifications', label: 'Notificações', component: NotificationSettings },
     ]
   }
 ];
@@ -66,7 +69,7 @@ export default function SettingsModal({ onClose, initialTab = 'account' }: Setti
                   key={item.id}
                   onClick={() => setActiveTabId(item.id)}
                   className={`mx-1 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-[15px] font-medium transition-colors ${
-                    activeTabId === item.id 
+                    activeTabId === item.id
                       ? 'bg-[#404249] text-white shadow-sm'
                       : 'text-[#B5BAC1] hover:bg-[#303136] hover:text-[#DBDEE1]'
                   }`}
@@ -84,12 +87,7 @@ export default function SettingsModal({ onClose, initialTab = 'account' }: Setti
       {/* Content Area */}
       <div className="relative flex flex-1 justify-start bg-[#313338]">
         <div className="h-full w-full max-w-[840px] overflow-y-auto px-10 py-12">
-          {ActiveComponent ? <ActiveComponent /> : (
-            <div className="mt-10 rounded-lg border border-[#3F4147] bg-[#2B2D31] p-6 text-[#949BA4]">
-              <h2 className="mb-2 text-xl font-bold text-white">Em construção</h2>
-              <p>Esta seção será implementada em breve.</p>
-            </div>
-          )}
+          {ActiveComponent ? <ActiveComponent /> : null}
         </div>
 
         {/* Close Button */}

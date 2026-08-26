@@ -9,6 +9,7 @@ import { useAppStore } from '@/store/appStore';
 export default function UserPanel() {
   const { user } = useAuth();
   const { isSettingsModalOpen, setSettingsModalOpen } = useAppStore();
+  const [settingsTab, setSettingsTab] = useState<'account' | 'voice'>('account');
   const [showProfilePopout, setShowProfilePopout] = useState(false);
   const [popoutPos, setPopoutPos] = useState({ bottom: 0, left: 0 });
   const profileContainerRef = useRef<HTMLDivElement>(null);
@@ -51,21 +52,30 @@ export default function UserPanel() {
         
         <div className="flex text-[#B5BAC1]">
           <button 
-            onClick={() => setSettingsModalOpen(true)} 
+            onClick={() => {
+              setSettingsTab('voice');
+              setSettingsModalOpen(true);
+            }} 
             className="w-8 h-8 flex items-center justify-center hover:bg-[#3F4147] rounded hover:text-[#DBDEE1] transition-colors" 
             title="Mudar para Mudo (Voz)"
           >
             <Mic size={20} />
           </button>
           <button 
-            onClick={() => setSettingsModalOpen(true)} 
+            onClick={() => {
+              setSettingsTab('voice');
+              setSettingsModalOpen(true);
+            }} 
             className="w-8 h-8 flex items-center justify-center hover:bg-[#3F4147] rounded hover:text-[#DBDEE1] transition-colors" 
             title="Ensurdecer (Áudio)"
           >
             <Headphones size={20} />
           </button>
           <button 
-            onClick={() => setSettingsModalOpen(true)} 
+            onClick={() => {
+              setSettingsTab('account');
+              setSettingsModalOpen(true);
+            }} 
             className="w-8 h-8 flex items-center justify-center hover:bg-[#3F4147] rounded hover:text-[#DBDEE1] transition-colors" 
             title="Configurações de Usuário"
           >
@@ -75,7 +85,7 @@ export default function UserPanel() {
       </div>
 
       {isSettingsModalOpen && (
-        <SettingsModal onClose={() => setSettingsModalOpen(false)} initialTab="account" />
+        <SettingsModal onClose={() => setSettingsModalOpen(false)} initialTab={settingsTab} />
       )}
 
       {showProfilePopout && (

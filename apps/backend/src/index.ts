@@ -15,24 +15,35 @@ import fastifyStatic from '@fastify/static';
 import path from 'path';
 import { execSync } from 'child_process';
 
-// Run migrations automatically before anything else
-// Step 1: Baseline the 0_init migration (marks it as already applied for existing DBs)
-try {
-  console.log('Baselining initial migration...');
-  execSync('npx prisma migrate resolve --applied "0_init"', { stdio: 'inherit' });
-  console.log('Baseline complete.');
-} catch (e) {
-  // Already baselined or not needed - ignore
-  console.log('Baseline skipped (already applied or not needed).');
+function isDatabaseUnavailableError(error: unknown) {
+  return error instanceof Error && (
+    error.name === 'PrismaClientInitializationError' ||
+    error.message.includes('P1001') ||
+    error.message.includes("Can\\'t reach database server")
+  );
 }
 
-// Step 2: Apply any pending new migrations (e.g. group DM columns)
+// Run migrations automatically before anything else.
+// The baseline step is only needed once for existing databases, so we keep it
+// opt-in to avoid noisy startup failures when the database is temporarily down.
+const shouldBaseline = process.env.PRISMA_BASELINE_ON_START === 'true';
+
+if (shouldBaseline) {
+  try {
+    console.log('Baselining initial migration...');
+    execSync('npx prisma migrate resolve --applied "0_init"', { stdio: 'inherit' });
+    console.log('Baseline complete.');
+  } catch {
+    console.log('Baseline skipped (already applied, not needed, or database unavailable).');
+  }
+}
+
 try {
   console.log('Running database migrations...');
   execSync('npx prisma migrate deploy', { stdio: 'inherit' });
   console.log('Migrations completed successfully.');
-} catch (error) {
-  console.error('Error running migrations, server will still try to start:', error);
+} catch {
+  console.error('Database migrations could not run right now. The server will still start, but data routes may fail until the database is reachable.');
 }
 
 export const prisma = new PrismaClient();
@@ -168,10 +179,18 @@ const authenticate = async (request: FastifyRequest, reply: FastifyReply) => {
     return reply.status(401).send({ error: 'Unauthorized' });
   }
 
-  const sessionRecord = await prisma.session.findUnique({
-    where: { token: sessionId },
-    include: { user: true },
-  });
+  let sessionRecord;
+  try {
+    sessionRecord = await prisma.session.findUnique({
+      where: { token: sessionId },
+      include: { user: true },
+    });
+  } catch (error) {
+    if (isDatabaseUnavailableError(error)) {
+      return reply.status(503).send({ error: 'DATABASE_UNAVAILABLE' });
+    }
+    throw error;
+  }
 
   if (!sessionRecord || sessionRecord.expiresAt < new Date()) {
     reply.clearCookie('nexus_session');
@@ -240,6 +259,9 @@ app.post('/api/auth/register', async (request, reply) => {
       app.log.warn(`auth.register.failed reason=validation`);
       return reply.status(400).send({ error: 'AUTH_VALIDATION_FAILED', details: error.errors });
     }
+    if (isDatabaseUnavailableError(error)) {
+      return reply.status(503).send({ error: 'DATABASE_UNAVAILABLE' });
+    }
     app.log.error(error);
     return reply.status(500).send({ error: 'Internal server error' });
   }
@@ -301,6 +323,9 @@ app.post('/api/auth/login', async (request, reply) => {
       app.log.warn(`auth.login.failed reason=validation`);
       return reply.status(400).send({ error: 'AUTH_VALIDATION_FAILED', details: error.errors });
     }
+    if (isDatabaseUnavailableError(error)) {
+      return reply.status(503).send({ error: 'DATABASE_UNAVAILABLE' });
+    }
     app.log.error(error);
     return reply.status(500).send({ error: 'Internal server error' });
   }
@@ -310,9 +335,15 @@ app.post('/api/auth/logout', async (request, reply) => {
   const sessionId = request.cookies.nexus_session;
   
   if (sessionId) {
-    await prisma.session.deleteMany({
-      where: { token: sessionId },
-    });
+    try {
+      await prisma.session.deleteMany({
+        where: { token: sessionId },
+      });
+    } catch (error) {
+      if (!isDatabaseUnavailableError(error)) {
+        throw error;
+      }
+    }
     reply.clearCookie('nexus_session');
   }
 

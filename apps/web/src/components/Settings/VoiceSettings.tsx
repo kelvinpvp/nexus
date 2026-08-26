@@ -187,14 +187,14 @@ export default function VoiceSettings() {
           </div>
         </div>
         <Toggle
-          checked={preferences.monitorOwnVoice ?? true}
-          onChange={() => update({ monitorOwnVoice: !(preferences.monitorOwnVoice ?? true) })}
+          checked={preferences.monitorOwnVoice ?? false}
+          onChange={() => update({ monitorOwnVoice: !(preferences.monitorOwnVoice ?? false) })}
           label="Ouvir minha própria voz"
-          description="Reproduz o retorno do seu microfone enquanto você compartilha a tela."
+          description="Mantém desligado por padrão para evitar eco e repetição."
         />
         <Toggle
-          checked={preferences.monitorOwnScreenShareAudio ?? true}
-          onChange={() => update({ monitorOwnScreenShareAudio: !(preferences.monitorOwnScreenShareAudio ?? true) })}
+          checked={preferences.monitorOwnScreenShareAudio ?? false}
+          onChange={() => update({ monitorOwnScreenShareAudio: !(preferences.monitorOwnScreenShareAudio ?? false) })}
           label="Ouvir o áudio que estou transmitindo"
           description="Monitora a faixa de áudio da tela ou janela compartilhada."
         />

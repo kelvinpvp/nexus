@@ -63,8 +63,8 @@ function mergeWithLocal(serverData: any): UserPreferences {
       (serverData.noiseSuppressionEnabled !== undefined && serverData.noiseSuppressionEnabled !== null
         ? serverData.noiseSuppressionEnabled
         : true),
-    monitorOwnVoice: local.monitorOwnVoice ?? true,
-    monitorOwnScreenShareAudio: local.monitorOwnScreenShareAudio ?? true,
+    monitorOwnVoice: local.monitorOwnVoice ?? false,
+    monitorOwnScreenShareAudio: local.monitorOwnScreenShareAudio ?? false,
   };
 }
 
