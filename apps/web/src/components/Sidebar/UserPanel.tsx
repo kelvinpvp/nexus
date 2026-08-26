@@ -57,7 +57,14 @@ export default function UserPanel() {
         left: rect.left
       });
       setShowProfilePopout(prev => !prev);
+      setShowStatusMenu(false);
     }
+  };
+
+  const handleStatusClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowStatusMenu((v) => !v);
+    setShowProfilePopout(false);
   };
 
   return (
@@ -82,10 +89,7 @@ export default function UserPanel() {
           </div>
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowStatusMenu((v) => !v);
-            }}
+            onClick={handleStatusClick}
             className="ml-1 rounded-full p-1 text-slate-400 hover:bg-white/6 hover:text-white shrink-0"
             title="Alterar status"
           >

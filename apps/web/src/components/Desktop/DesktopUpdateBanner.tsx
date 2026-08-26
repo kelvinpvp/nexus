@@ -10,6 +10,7 @@ export default function DesktopUpdateBanner() {
   const [message, setMessage] = useState('');
   const [version, setVersion] = useState('');
   const [isDesktop, setIsDesktop] = useState(false);
+  const releaseUrl = 'https://github.com/kelvinpvp/nexus/releases/latest';
 
   useEffect(() => {
     const desktopRuntime =
@@ -78,6 +79,7 @@ export default function DesktopUpdateBanner() {
       const { check } = await import('@tauri-apps/plugin-updater');
       const update = await check();
       if (!update) {
+        window.open(releaseUrl, '_blank', 'noreferrer');
         setState('idle');
         return;
       }
@@ -85,8 +87,9 @@ export default function DesktopUpdateBanner() {
       await update.downloadAndInstall();
       window.location.reload();
     } catch {
+      window.open(releaseUrl, '_blank', 'noreferrer');
       setState('error');
-      setMessage('Falha ao instalar a atualização.');
+      setMessage('Não foi possível atualizar por dentro do app. Abrindo a página de download.');
     }
   };
 
