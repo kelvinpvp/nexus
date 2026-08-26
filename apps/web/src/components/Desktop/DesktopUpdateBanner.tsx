@@ -9,21 +9,33 @@ export default function DesktopUpdateBanner() {
   const [state, setState] = useState<UpdateState>('idle');
   const [message, setMessage] = useState('');
   const [version, setVersion] = useState('');
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_TAURI_ENV !== 'true') return;
+    const desktopRuntime =
+      typeof window !== 'undefined' &&
+      (
+        Boolean((window as any).__TAURI_INTERNALS) ||
+        window.location.hostname === 'tauri.localhost' ||
+        window.location.protocol === 'tauri:'
+      );
+
+    setIsDesktop(desktopRuntime);
+    if (!desktopRuntime) return;
 
     let cancelled = false;
 
     (async () => {
       try {
         setState('checking');
+        setMessage('Verificando se existe uma versão mais nova...');
         const { check } = await import('@tauri-apps/plugin-updater');
         const update = await check();
         if (cancelled) return;
 
         if (!update) {
-          setState('idle');
+          setMessage('Você já está na versão mais recente.');
+          setState('error');
           return;
         }
 
@@ -42,7 +54,20 @@ export default function DesktopUpdateBanner() {
     };
   }, []);
 
-  if (state === 'idle' || state === 'checking') return null;
+  if (!isDesktop) return null;
+  if (state === 'idle' || state === 'checking') {
+    return (
+      <div className="mx-auto mt-3 flex w-[min(100%-1rem,56rem)] items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200 shadow-xl backdrop-blur-xl">
+        <div className="flex items-start gap-3">
+          <RefreshCw size={18} className="mt-0.5 shrink-0 animate-spin text-cyan-200" />
+          <div>
+            <div className="font-semibold">Atualizações do Nexus Desktop</div>
+            <div className="text-xs leading-5 opacity-90">{message || 'Verificando atualizações...'}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleInstall = async () => {
     try {
@@ -68,7 +93,7 @@ export default function DesktopUpdateBanner() {
         {state === 'error' ? <TriangleAlert size={18} className="mt-0.5 shrink-0 text-amber-300" /> : <Download size={18} className="mt-0.5 shrink-0 text-cyan-200" />}
         <div>
           <div className="font-semibold">
-            {state === 'error' ? 'Atualização indisponível' : `Nova versão disponível${version ? `: ${version}` : ''}`}
+            {state === 'error' && version ? 'Atualização instalada' : state === 'error' ? 'Nenhuma atualização disponível' : `Nova versão disponível${version ? `: ${version}` : ''}`}
           </div>
           <div className="text-xs leading-5 opacity-90">{message}</div>
         </div>

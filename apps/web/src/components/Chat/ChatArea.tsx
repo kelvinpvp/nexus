@@ -142,7 +142,7 @@ export default function ChatArea() {
 
   if (!activeChannel) {
     return (
-      <div className="flex-1 bg-[#313338] flex flex-col items-center justify-center text-[#949BA4]">
+      <div className="flex-1 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_28%),linear-gradient(180deg,#09111f_0%,#0b1324_100%)] flex flex-col items-center justify-center text-slate-300">
         <Hash size={48} className="mb-4 opacity-20" />
         <p className="text-lg">Selecione um canal de texto para começar a conversar.</p>
       </div>
@@ -154,19 +154,19 @@ export default function ChatArea() {
   }
 
   return (
-    <div className="flex-1 bg-[#313338] flex h-full min-w-0">
+    <div className="flex-1 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.08),_transparent_24%),linear-gradient(180deg,#09111f_0%,#0b1324_100%)] flex h-full min-w-0">
       {/* Main Chat Column */}
       <div className="flex-1 flex flex-col h-full min-w-0">
         {/* Header */}
-        <header className="h-12 border-b border-[#1F2023] flex items-center justify-between px-4 shadow-sm flex-shrink-0">
+        <header className="h-12 border-b border-white/5 flex items-center justify-between px-4 shadow-sm flex-shrink-0 backdrop-blur-md bg-white/3">
           <div className="flex items-center">
-            <Hash size={24} className="text-[#80848E] mr-2" />
+            <Hash size={24} className="text-cyan-300 mr-2" />
             <h2 className="font-bold text-white text-[15px]">{activeChannel.name}</h2>
           </div>
-          <div className="flex items-center space-x-3 text-[#B5BAC1]">
+          <div className="flex items-center space-x-3 text-slate-300">
             <button
               onClick={() => setShowMembersList(!showMembersList)}
-              className={`p-1 rounded hover:text-[#DBDEE1] hover:bg-[#35373C] transition-colors ${showMembersList ? 'text-white bg-[#35373C]' : ''}`}
+              className={`p-1 rounded hover:text-white hover:bg-white/6 transition-colors ${showMembersList ? 'text-white bg-cyan-400/10' : ''}`}
               title="Lista de Membros"
             >
               <Users size={20} />
@@ -178,14 +178,14 @@ export default function ChatArea() {
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col">
         {isLoading ? (
           <div className="flex-1 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5865F2]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-300"></div>
           </div>
         ) : (
           <>
             <div className="mt-auto flex flex-col justify-end pt-10 pb-4">
               <div className="mb-4">
-                <div className="w-[68px] h-[68px] bg-[#41434A] rounded-full flex items-center justify-center mb-4">
-                  <Hash size={40} className="text-white" />
+                <div className="w-[68px] h-[68px] bg-white/6 border border-white/8 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                  <Hash size={40} className="text-cyan-200" />
                 </div>
                 <h1 className="text-3xl font-bold text-white mb-2">Bem-vindo ao #{activeChannel.name}!</h1>
                 <p className="text-[#949BA4]">Este é o começo do canal #{activeChannel.name}.</p>

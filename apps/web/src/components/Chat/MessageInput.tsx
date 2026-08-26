@@ -76,12 +76,12 @@ export default function MessageInput({ placeholder, contextId, contextType, onSe
   };
 
   return (
-    <div className="flex flex-col bg-[#383A40] rounded-lg w-full">
+    <div className="flex flex-col rounded-2xl w-full border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))] shadow-[0_16px_50px_rgba(0,0,0,0.25)]">
       {/* Upload Preview Area */}
       {currentUploads.length > 0 && (
-        <div className="p-4 flex gap-4 overflow-x-auto border-b border-[#2B2D31]">
+        <div className="p-4 flex gap-4 overflow-x-auto border-b border-white/6">
           {currentUploads.map(upload => (
-            <div key={upload.id} className="relative group w-48 h-48 bg-[#2B2D31] rounded-lg flex-shrink-0 flex flex-col overflow-hidden">
+            <div key={upload.id} className="relative group w-48 h-48 rounded-2xl flex-shrink-0 flex flex-col overflow-hidden border border-white/8 bg-[#0f172a]">
               <button 
                 type="button"
                 onClick={() => removeUpload(contextId, upload.id)}
@@ -90,7 +90,7 @@ export default function MessageInput({ placeholder, contextId, contextType, onSe
                 <X size={16} />
               </button>
               
-              <div className="flex-1 flex items-center justify-center bg-[#1E1F22] overflow-hidden">
+              <div className="flex-1 flex items-center justify-center bg-[#09111f] overflow-hidden">
                 {upload.previewUrl ? (
                   upload.file.type.startsWith('video/') ? (
                     <video src={upload.previewUrl} className="w-full h-full object-cover opacity-80" />
@@ -106,14 +106,14 @@ export default function MessageInput({ placeholder, contextId, contextType, onSe
               </div>
 
               {/* Progress/Status Bar */}
-              <div className="h-6 bg-[#2B2D31] flex items-center px-2">
+              <div className="h-6 bg-white/4 flex items-center px-2">
                 {upload.status === 'ERROR' ? (
                   <span className="text-xs text-red-400 truncate">{upload.error || 'Erro'}</span>
                 ) : upload.status === 'UPLOADING' ? (
                   <div className="w-full">
                     <div className="h-1.5 w-full bg-[#1E1F22] rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-[#5865F2] transition-all duration-300"
+                        className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300"
                         style={{ width: `${upload.progress}%` }}
                       />
                     </div>
@@ -132,7 +132,7 @@ export default function MessageInput({ placeholder, contextId, contextType, onSe
         <button 
           type="button" 
           onClick={() => fileInputRef.current?.click()}
-          className="bg-[#B5BAC1] text-[#383A40] hover:bg-[#DBDEE1] rounded-full p-0.5 transition-colors flex-shrink-0"
+        className="bg-cyan-200 text-slate-950 hover:bg-white rounded-full p-0.5 transition-colors flex-shrink-0 shadow-lg"
         >
           <PlusCircle size={20} className="fill-current text-transparent" />
         </button>
@@ -151,7 +151,7 @@ export default function MessageInput({ placeholder, contextId, contextType, onSe
           onPaste={handlePaste}
           placeholder={placeholder}
           disabled={isSending}
-          className="bg-transparent border-none outline-none text-[#DBDEE1] flex-1 text-[15px] placeholder-[#80848E] ml-4"
+          className="bg-transparent border-none outline-none text-white flex-1 text-[15px] placeholder-slate-500 ml-4"
         />
 
         <div className="flex items-center space-x-3 ml-3 relative flex-shrink-0">
@@ -162,7 +162,7 @@ export default function MessageInput({ placeholder, contextId, contextType, onSe
               setShowEmojiPicker(false);
             }}
             disabled={isSending}
-            className="text-xs font-bold bg-[#4E5058] hover:bg-[#6D6F78] text-white px-2 py-1 rounded transition-colors"
+            className="text-xs font-bold bg-cyan-400/15 hover:bg-cyan-400/25 text-cyan-100 px-2 py-1 rounded-full transition-colors"
           >
             GIF
           </button>
@@ -174,7 +174,7 @@ export default function MessageInput({ placeholder, contextId, contextType, onSe
               setShowGifPicker(false);
             }}
             disabled={isSending}
-            className="text-[#B5BAC1] hover:text-[#DBDEE1] transition-colors"
+            className="text-slate-300 hover:text-white transition-colors"
           >
             <Smile size={22} />
           </button>
@@ -206,7 +206,7 @@ export default function MessageInput({ placeholder, contextId, contextType, onSe
           <button 
             type="submit" 
             disabled={(!inputValue.trim() && currentUploads.length === 0) || isSending}
-            className={`${(inputValue.trim() || currentUploads.length > 0) && !isSending ? 'text-[#5865F2]' : 'text-[#80848E]'} transition-colors`}
+            className={`${(inputValue.trim() || currentUploads.length > 0) && !isSending ? 'text-cyan-300' : 'text-slate-500'} transition-colors`}
           >
             <Send size={20} />
           </button>

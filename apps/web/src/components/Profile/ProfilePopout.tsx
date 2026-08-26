@@ -92,7 +92,7 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
   const popoutContent = (
     <div 
       ref={popoutRef}
-      className="fixed z-[100] w-[340px] bg-[#111214] rounded-lg shadow-xl overflow-hidden animate-in zoom-in-95 duration-100"
+      className="fixed z-[100] w-[340px] rounded-3xl shadow-[0_24px_80px_rgba(0,0,0,0.45)] overflow-hidden animate-in zoom-in-95 duration-100 border border-white/8 bg-[linear-gradient(180deg,#0c1426_0%,#0b1020_100%)]"
       style={{
         ...(position.top !== undefined ? { top: Math.min(position.top, window.innerHeight - 380) } : { bottom: position.bottom }),
         left: Math.min(position.left, window.innerWidth - 360),
@@ -100,15 +100,15 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
       onClick={(e) => e.stopPropagation()}
     >
       {isLoading ? (
-        <div className="h-64 flex items-center justify-center text-[#949BA4]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5865F2]"></div>
+        <div className="h-64 flex items-center justify-center text-slate-300">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-300"></div>
         </div>
       ) : error ? (
-        <div className="h-32 flex items-center justify-center text-[#F23F43] font-medium">{error}</div>
+          <div className="h-32 flex items-center justify-center text-rose-300 font-medium">{error}</div>
       ) : (
         <>
           {/* Banner */}
-          <div className="h-[120px] bg-[#5865F2] w-full relative">
+          <div className="h-[120px] bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 w-full relative">
             {profileData.bannerUrl && (
               <img src={profileData.bannerUrl} alt="Banner" className="w-full h-full object-cover" />
             )}
@@ -116,7 +116,7 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
 
           <div className="px-4 pb-4 relative">
             {/* Avatar */}
-            <div className="w-[80px] h-[80px] rounded-full border-[6px] border-[#111214] bg-[#313338] flex items-center justify-center overflow-hidden absolute -top-10 left-4">
+            <div className="w-[80px] h-[80px] rounded-full border-[6px] border-[#0b1020] bg-[#0f172a] flex items-center justify-center overflow-hidden absolute -top-10 left-4 shadow-lg">
               {profileData.avatarUrl ? (
                 <img src={profileData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
@@ -125,7 +125,7 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
                 </span>
               )}
               {/* Status badge */}
-              <div className={`absolute bottom-0 right-0 w-5 h-5 rounded-full border-[3px] border-[#111214] ${getStatusColor(profileData.status || 'ONLINE')}`}></div>
+              <div className={`absolute bottom-0 right-0 w-5 h-5 rounded-full border-[3px] border-[#0b1020] ${getStatusColor(profileData.status || 'ONLINE')}`}></div>
             </div>
 
             {/* Buttons (Right aligned) */}
@@ -136,7 +136,7 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
                     useAppStore.getState().setSettingsModalOpen(true);
                     onClose();
                   }}
-                  className="bg-[#4E5058] hover:bg-[#6D6F78] px-3 py-1 rounded text-[13px] font-medium text-white transition-colors h-7 flex items-center"
+                className="bg-white/8 hover:bg-white/15 px-3 py-1 rounded-full text-[13px] font-medium text-white transition-colors h-7 flex items-center"
                 >
                   <Edit2 size={14} className="mr-1.5" />
                   Editar Perfil
@@ -197,11 +197,11 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
             </div>
 
             {/* User Info */}
-            <div className="bg-[#111214] mt-2">
+        <div className="bg-[#0b1020] mt-2">
               <h2 className="text-xl font-bold text-white leading-tight">
                 {profileData.displayName || profileData.username}
               </h2>
-              <p className="text-[14px] text-[#DBDEE1]">@{profileData.username}</p>
+          <p className="text-[14px] text-slate-200">@{profileData.username}</p>
             </div>
 
             {/* Custom Status */}
@@ -212,18 +212,18 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
             )}
 
             {/* Divider */}
-            <div className="h-px bg-[#3F4147] my-3 w-full" />
+        <div className="h-px bg-white/8 my-3 w-full" />
 
             {/* Bio Section */}
             <div className="mb-3">
-              <h3 className="text-xs font-bold uppercase text-[#F2F3F5] mb-1">Sobre Mim</h3>
-              <p className="text-[14px] text-[#DBDEE1] whitespace-pre-wrap">
+              <h3 className="text-xs font-bold uppercase text-slate-100 mb-1">Sobre Mim</h3>
+              <p className="text-[14px] text-slate-300 whitespace-pre-wrap">
                  {profileData.bio || 'Membro da comunidade Nexus!'}
               </p>
             </div>
 
             {/* ID Section */}
-            <div className="h-px bg-[#3F4147] my-3 w-full" />
+        <div className="h-px bg-white/8 my-3 w-full" />
             <div className="flex flex-col space-y-1">
               <button 
                 onClick={() => {

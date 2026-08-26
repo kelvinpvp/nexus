@@ -18,15 +18,15 @@ function Toggle({ checked, onChange, label, description, disabled = false }: Tog
       aria-checked={checked}
       disabled={disabled}
       onClick={onChange}
-      className="flex w-full items-center justify-between gap-5 rounded-lg px-3 py-3 text-left transition-colors hover:bg-[#35373C] disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex w-full items-center justify-between gap-5 rounded-xl px-3 py-3 text-left transition-colors hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-50"
     >
       <span>
-        <span className="block text-[15px] font-medium text-[#F2F3F5]">{label}</span>
-        <span className="mt-0.5 block text-sm leading-5 text-[#949BA4]">{description}</span>
+        <span className="block text-[15px] font-medium text-white">{label}</span>
+        <span className="mt-0.5 block text-sm leading-5 text-slate-400">{description}</span>
       </span>
-      <span className={'relative h-6 w-11 shrink-0 rounded-full transition-colors ' + (checked ? 'bg-[#23A559]' : 'bg-[#4E5058]')}>
+      <span className={'relative h-6 w-11 shrink-0 rounded-full transition-colors ' + (checked ? 'bg-emerald-400' : 'bg-slate-600')}>
         <span className={'absolute top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white transition-all ' + (checked ? 'left-6' : 'left-1')}>
-          {checked && <Check size={11} className="text-[#23A559]" />}
+          {checked && <Check size={11} className="text-emerald-500" />}
         </span>
       </span>
     </button>
@@ -91,7 +91,7 @@ export default function VoiceSettings() {
 
   if (!preferences) {
     return (
-      <div className="flex min-h-60 items-center justify-center text-[#949BA4]">
+      <div className="flex min-h-60 items-center justify-center text-slate-400">
         <RefreshCw size={20} className="mr-3 animate-spin" />
         Carregando preferências de voz…
       </div>
@@ -105,19 +105,19 @@ export default function VoiceSettings() {
   return (
     <div className="max-w-3xl pb-12 text-white">
       <div className="mb-7">
-        <p className="mb-1 text-xs font-bold uppercase tracking-[0.14em] text-[#5865F2]">Áudio e vídeo</p>
+        <p className="mb-1 text-xs font-bold uppercase tracking-[0.14em] text-cyan-300">Áudio e vídeo</p>
         <h2 className="text-2xl font-bold">Voz, câmera e transmissão</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-[#B5BAC1]">
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
           Escolha os dispositivos usados no Nexus e controle como sua voz e o áudio compartilhado retornam para você.
         </p>
       </div>
 
-      <section className="mb-5 rounded-xl border border-[#3F4147] bg-[#2B2D31] p-5 shadow-sm">
+      <section className="mb-5 rounded-2xl border border-white/8 bg-white/5 p-5 shadow-sm">
         <div className="mb-4 flex items-center gap-3">
-          <div className="rounded-lg bg-[#5865F2]/15 p-2 text-[#8B95FF]"><Headphones size={20} /></div>
+          <div className="rounded-lg bg-cyan-400/15 p-2 text-cyan-300"><Headphones size={20} /></div>
           <div>
-            <h3 className="font-semibold text-[#F2F3F5]">Dispositivos</h3>
-            <p className="text-sm text-[#949BA4]">As mudanças são aplicadas às salas conectadas sem precisar recarregar.</p>
+            <h3 className="font-semibold text-white">Dispositivos</h3>
+            <p className="text-sm text-slate-400">As mudanças são aplicadas às salas conectadas sem precisar recarregar.</p>
           </div>
         </div>
 
@@ -127,7 +127,7 @@ export default function VoiceSettings() {
             <select
               value={preferences.audioInputDeviceId || 'default'}
               onChange={(event) => update({ audioInputDeviceId: event.target.value })}
-              className="mt-2 w-full rounded-lg border border-[#111214] bg-[#1E1F22] p-3 text-sm font-normal normal-case text-[#F2F3F5] outline-none focus:border-[#5865F2]"
+              className="mt-2 w-full rounded-xl border border-white/8 bg-[#09111f] p-3 text-sm font-normal normal-case text-white outline-none focus:border-cyan-300/50"
             >
               <option value="default">Padrão do sistema</option>
               {audioInputs.filter((device) => device.deviceId !== 'default').map((device, index) => (
@@ -144,7 +144,7 @@ export default function VoiceSettings() {
               value={preferences.audioOutputDeviceId || 'default'}
               disabled={!outputSelectionSupported}
               onChange={(event) => update({ audioOutputDeviceId: event.target.value })}
-              className="mt-2 w-full rounded-lg border border-[#111214] bg-[#1E1F22] p-3 text-sm font-normal normal-case text-[#F2F3F5] outline-none focus:border-[#5865F2] disabled:opacity-50"
+              className="mt-2 w-full rounded-xl border border-white/8 bg-[#09111f] p-3 text-sm font-normal normal-case text-white outline-none focus:border-cyan-300/50 disabled:opacity-50"
             >
               <option value="default">Padrão do sistema</option>
               {audioOutputs.filter((device) => device.deviceId !== 'default').map((device, index) => (
@@ -161,29 +161,29 @@ export default function VoiceSettings() {
             type="button"
             onClick={() => refreshDevices(true)}
             disabled={isRefreshingDevices}
-            className="inline-flex items-center gap-2 rounded-lg bg-[#4E5058] px-3 py-2 text-sm font-semibold text-[#F2F3F5] transition-colors hover:bg-[#5C5F66] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full bg-cyan-400/15 px-3 py-2 text-sm font-semibold text-cyan-100 transition-colors hover:bg-cyan-400/25 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <RefreshCw size={15} className={isRefreshingDevices ? 'animate-spin' : ''} />
             Detectar dispositivos
           </button>
-          <p className="text-xs leading-5 text-[#949BA4]">
+          <p className="text-xs leading-5 text-slate-400">
             O Nexus nao mantem uma captura aberta apenas para preencher esta lista.
           </p>
         </div>
 
-        {deviceError && <p className="mt-3 text-sm text-[#F23F43]">{deviceError}</p>}
+        {deviceError && <p className="mt-3 text-sm text-rose-300">{deviceError}</p>}
         {!outputSelectionSupported && (
-          <p className="mt-3 text-sm text-[#F0B232]">A seleção de saída não é suportada por este navegador; será usada a saída do sistema.</p>
+          <p className="mt-3 text-sm text-amber-300">A seleção de saída não é suportada por este navegador; será usada a saída do sistema.</p>
         )}
-        {isRefreshingDevices && <p className="mt-3 text-xs text-[#949BA4]">Atualizando dispositivos…</p>}
+        {isRefreshingDevices && <p className="mt-3 text-xs text-slate-400">Atualizando dispositivos…</p>}
       </section>
 
-      <section className="mb-5 rounded-xl border border-[#3F4147] bg-[#2B2D31] p-2">
+      <section className="mb-5 rounded-2xl border border-white/8 bg-white/5 p-2">
         <div className="flex items-center gap-3 px-3 pb-2 pt-3">
-          <div className="rounded-lg bg-[#23A559]/15 p-2 text-[#23A559]"><Volume2 size={20} /></div>
+          <div className="rounded-lg bg-emerald-400/15 p-2 text-emerald-300"><Volume2 size={20} /></div>
           <div>
-            <h3 className="font-semibold text-[#F2F3F5]">Retorno durante transmissões</h3>
-            <p className="text-sm text-[#949BA4]">Use fones de ouvido para evitar microfonia.</p>
+            <h3 className="font-semibold text-white">Retorno durante transmissões</h3>
+            <p className="text-sm text-slate-400">Use fones de ouvido para evitar microfonia.</p>
           </div>
         </div>
         <Toggle
@@ -200,10 +200,10 @@ export default function VoiceSettings() {
         />
       </section>
 
-      <section className="mb-5 rounded-xl border border-[#3F4147] bg-[#2B2D31] p-2">
+      <section className="mb-5 rounded-2xl border border-white/8 bg-white/5 p-2">
         <div className="flex items-center gap-3 px-3 pb-2 pt-3">
-          <div className="rounded-lg bg-[#5865F2]/15 p-2 text-[#8B95FF]"><Mic2 size={20} /></div>
-          <h3 className="font-semibold text-[#F2F3F5]">Comportamento ao entrar</h3>
+          <div className="rounded-lg bg-cyan-400/15 p-2 text-cyan-300"><Mic2 size={20} /></div>
+          <h3 className="font-semibold text-white">Comportamento ao entrar</h3>
         </div>
         <Toggle
           checked={preferences.joinMuted}
@@ -226,12 +226,12 @@ export default function VoiceSettings() {
         />
       </section>
 
-      <section className="rounded-xl border border-[#3F4147] bg-[#2B2D31] p-5">
+      <section className="rounded-2xl border border-white/8 bg-white/5 p-5">
         <div className="mb-4 flex items-center gap-3">
-          <div className="rounded-lg bg-[#F0B232]/15 p-2 text-[#F0B232]"><MonitorUp size={20} /></div>
+          <div className="rounded-lg bg-amber-400/15 p-2 text-amber-300"><MonitorUp size={20} /></div>
           <div>
-            <h3 className="font-semibold text-[#F2F3F5]">Qualidade de vídeo</h3>
-            <p className="text-sm text-[#949BA4]">Resoluções maiores exigem mais upload e processamento.</p>
+            <h3 className="font-semibold text-white">Qualidade de vídeo</h3>
+            <p className="text-sm text-slate-400">Resoluções maiores exigem mais upload e processamento.</p>
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
@@ -262,8 +262,8 @@ export default function VoiceSettings() {
             </select>
           </label>
         </div>
-        <div className="mt-4 flex items-start gap-2 rounded-lg bg-[#1E1F22] p-3 text-xs leading-5 text-[#949BA4]">
-          <ShieldCheck size={16} className="mt-0.5 shrink-0 text-[#23A559]" />
+        <div className="mt-4 flex items-start gap-2 rounded-xl bg-[#09111f] p-3 text-xs leading-5 text-slate-300">
+          <ShieldCheck size={16} className="mt-0.5 shrink-0 text-emerald-300" />
           O Nexus solicita áudio do sistema quando o navegador ou WebView oferece essa opção. Compartilhar uma guia costuma evitar eco de outros participantes.
         </div>
       </section>
