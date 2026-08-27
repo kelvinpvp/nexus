@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Camera } from 'lucide-react';
+import { Camera, RefreshCw } from 'lucide-react';
 import ImageCropperModal from './ImageCropperModal';
 
 export default function AccountSettings() {
@@ -8,6 +8,7 @@ export default function AccountSettings() {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
   const [cropModalConfig, setCropModalConfig] = useState<{ isOpen: boolean; imageSrc: string; isAvatar: boolean } | null>(null);
   const [pendingUploadFile, setPendingUploadFile] = useState<{ file: File; isAvatar: boolean } | null>(null);
@@ -18,6 +19,7 @@ export default function AccountSettings() {
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  const releaseUrl = 'https://github.com/kelvinpvp/nexus/releases/latest';
 
   if (!user) return null;
 
@@ -77,6 +79,43 @@ export default function AccountSettings() {
     
     // reset input
     e.target.value = '';
+  };
+
+  const handleCheckUpdate = async () => {
+    if (isCheckingUpdate) return;
+    setIsCheckingUpdate(true);
+    try {
+      const isDesktopRuntime =
+        typeof window !== 'undefined' &&
+        (
+          Boolean((window as any).__TAURI_INTERNALS) ||
+          window.location.hostname === 'tauri.localhost' ||
+          window.location.protocol === 'tauri:'
+        );
+
+      if (!isDesktopRuntime) {
+        window.open(releaseUrl, '_blank', 'noreferrer');
+        return;
+      }
+
+      const { check } = await import('@tauri-apps/plugin-updater');
+      const update = await check();
+      if (!update) {
+        alert('Você já está na versão mais recente.');
+        return;
+      }
+
+      const confirmed = window.confirm(`Atualização encontrada: ${update.version}\n\nQuer instalar agora?`);
+      if (!confirmed) return;
+
+      await update.downloadAndInstall();
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to check/apply update', error);
+      window.open(releaseUrl, '_blank', 'noreferrer');
+    } finally {
+      setIsCheckingUpdate(false);
+    }
   };
 
   const uploadCroppedImage = async (blob: Blob, overrideIsAvatar?: boolean) => {
@@ -278,12 +317,23 @@ export default function AccountSettings() {
 
       <div className="rounded-[24px] border border-white/6 bg-white/[0.03] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.18)]">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 mb-4">Senha e autenticação</h3>
-        <button 
-          onClick={() => openEditModal('password')}
-          className={`mb-6 rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all ${primaryButtonClass}`}
-        >
-          Alterar Senha
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button 
+            onClick={() => openEditModal('password')}
+            className={`rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all ${primaryButtonClass}`}
+          >
+            Alterar Senha
+          </button>
+
+          <button
+            onClick={handleCheckUpdate}
+            disabled={isCheckingUpdate}
+            className="inline-flex items-center gap-2 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition-all hover:bg-cyan-400/15 disabled:opacity-60"
+          >
+            {isCheckingUpdate ? <RefreshCw size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+            Buscar atualização
+          </button>
+        </div>
 
         <div className="my-6 h-px bg-white/8" />
 
