@@ -9,6 +9,7 @@ export default function AccountSettings() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+  const [updateCheckMessage, setUpdateCheckMessage] = useState<string | null>(null);
 
   const [cropModalConfig, setCropModalConfig] = useState<{ isOpen: boolean; imageSrc: string; isAvatar: boolean } | null>(null);
   const [pendingUploadFile, setPendingUploadFile] = useState<{ file: File; isAvatar: boolean } | null>(null);
@@ -84,6 +85,7 @@ export default function AccountSettings() {
   const handleCheckUpdate = async () => {
     if (isCheckingUpdate) return;
     setIsCheckingUpdate(true);
+    setUpdateCheckMessage('Verificando atualização...');
     try {
       const isDesktopRuntime =
         typeof window !== 'undefined' &&
@@ -94,6 +96,7 @@ export default function AccountSettings() {
         );
 
       if (!isDesktopRuntime) {
+        setUpdateCheckMessage('Abrindo a página de releases...');
         window.open(releaseUrl, '_blank', 'noreferrer');
         return;
       }
@@ -101,17 +104,23 @@ export default function AccountSettings() {
       const { check } = await import('@tauri-apps/plugin-updater');
       const update = await check();
       if (!update) {
-        alert('Você já está na versão mais recente.');
+        setUpdateCheckMessage('Você já está na versão mais recente.');
         return;
       }
 
       const confirmed = window.confirm(`Atualização encontrada: ${update.version}\n\nQuer instalar agora?`);
-      if (!confirmed) return;
+      if (!confirmed) {
+        setUpdateCheckMessage(`Atualização encontrada (${update.version}), mas a instalação foi cancelada.`);
+        return;
+      }
 
+      setUpdateCheckMessage(`Baixando e instalando ${update.version}...`);
       await update.downloadAndInstall();
+      setUpdateCheckMessage(`Atualização ${update.version} instalada. Recarregando...`);
       window.location.reload();
     } catch (error) {
       console.error('Failed to check/apply update', error);
+      setUpdateCheckMessage('Não consegui verificar no app. Abrindo a página de releases.');
       window.open(releaseUrl, '_blank', 'noreferrer');
     } finally {
       setIsCheckingUpdate(false);
@@ -334,6 +343,12 @@ export default function AccountSettings() {
             Buscar atualização
           </button>
         </div>
+
+        {updateCheckMessage && (
+          <p className="mt-3 rounded-2xl border border-cyan-400/10 bg-cyan-400/5 px-4 py-3 text-sm text-cyan-100">
+            {updateCheckMessage}
+          </p>
+        )}
 
         <div className="my-6 h-px bg-white/8" />
 

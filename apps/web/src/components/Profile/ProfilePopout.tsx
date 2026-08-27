@@ -19,6 +19,7 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   const isCurrentUser = user?.id === userId;
 
@@ -90,20 +91,18 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
     }
   };
 
-  const cycleStatus = async () => {
+  const setPresenceStatus = async (status: string) => {
     if (!isCurrentUser) return;
-    const order = ['ONLINE', 'IDLE', 'DND', 'INVISIBLE'] as const;
-    const current = (profileData?.status || user?.status || 'ONLINE').toUpperCase();
-    const next = order[(Math.max(0, order.indexOf(current as any)) + 1) % order.length];
     try {
       const updated = await apiFetch('/api/users/me/status', {
         method: 'PATCH',
-        body: JSON.stringify({ status: next }),
+        body: JSON.stringify({ status }),
       });
       setProfileData(updated);
       setUser((currentUser) => currentUser ? { ...currentUser, status: updated.status } : updated);
+      setShowStatusMenu(false);
     } catch (error) {
-      console.error('Failed to cycle status', error);
+      console.error('Failed to update status', error);
     }
   };
 
@@ -149,7 +148,9 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
                 onClick={async (e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  await cycleStatus();
+                  if (isCurrentUser) {
+                    setShowStatusMenu((v) => !v);
+                  }
                 }}
                 className="absolute -bottom-0.5 -right-0.5 z-20 flex h-5 w-5 items-center justify-center rounded-full"
                 aria-label="Alterar status"
@@ -157,6 +158,24 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
               >
                 <span className={`h-4 w-4 rounded-full border-[3px] border-[#0b1020] ${getStatusColor(profileData.status || 'ONLINE')} shadow-md`} />
               </button>
+              {showStatusMenu && isCurrentUser && (
+                <div className="absolute left-0 top-[90px] z-30 w-56 overflow-hidden rounded-2xl border border-white/10 bg-[#0D1630] shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+                  {(['ONLINE', 'IDLE', 'DND', 'INVISIBLE', 'OFFLINE'] as const).map((status) => {
+                    const current = (profileData?.status || user?.status || 'ONLINE').toUpperCase();
+                    return (
+                      <button
+                        key={status}
+                        onClick={() => void setPresenceStatus(status)}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-slate-200 hover:bg-white/6"
+                      >
+                        <span className={`h-2.5 w-2.5 rounded-full ${getStatusColor(status)} border border-[#0b1020]`} />
+                        <span>{status === 'ONLINE' ? 'Online' : status === 'IDLE' ? 'Ausente' : status === 'DND' ? 'Não perturbe' : status === 'INVISIBLE' ? 'Invisível' : 'Offline'}</span>
+                        {current === status && <span className="ml-auto text-xs text-cyan-300">Ativo</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Buttons (Right aligned) */}
