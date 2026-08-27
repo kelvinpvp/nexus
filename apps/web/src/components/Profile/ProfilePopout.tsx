@@ -149,11 +149,11 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
                   e.preventDefault();
                   await cycleStatus();
                 }}
-                className="absolute -bottom-1 -right-1 z-20 flex h-5 w-5 items-center justify-center"
+                className="absolute -bottom-0.5 -right-0.5 z-20 flex h-5 w-5 items-center justify-center"
                 aria-label="Alterar status"
                 title="Alterar status"
               >
-                <span className={`h-3.5 w-3.5 rounded-full border-2 border-[#0b1020] ${getStatusColor(profileData.status || 'ONLINE')} shadow-md`} />
+                <span className={`h-4 w-4 rounded-full border-[3px] border-[#0b1020] ${getStatusColor(profileData.status || 'ONLINE')} shadow-md`} />
               </button>
             </div>
 
