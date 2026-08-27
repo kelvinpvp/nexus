@@ -12,6 +12,28 @@ export default function DesktopUpdateBanner() {
   const [isDesktop, setIsDesktop] = useState(false);
   const releaseUrl = 'https://github.com/kelvinpvp/nexus/releases/latest';
 
+  const openReleaseUrl = async () => {
+    if (typeof window === 'undefined') return;
+
+    const isDesktopRuntime =
+      Boolean((window as any).__TAURI_INTERNALS) ||
+      window.location.hostname === 'tauri.localhost' ||
+      window.location.protocol === 'tauri:';
+
+    if (!isDesktopRuntime) {
+      window.open(releaseUrl, '_blank', 'noreferrer');
+      return;
+    }
+
+    try {
+      const { open } = await import('@tauri-apps/plugin-shell');
+      await open(releaseUrl);
+    } catch (error) {
+      console.error('Failed to open release URL natively', error);
+      window.open(releaseUrl, '_blank', 'noreferrer');
+    }
+  };
+
   useEffect(() => {
     const desktopRuntime =
       typeof window !== 'undefined' &&
@@ -79,7 +101,7 @@ export default function DesktopUpdateBanner() {
       const { check } = await import('@tauri-apps/plugin-updater');
       const update = await check();
       if (!update) {
-        window.open(releaseUrl, '_blank', 'noreferrer');
+        await openReleaseUrl();
         setState('idle');
         return;
       }
@@ -87,7 +109,7 @@ export default function DesktopUpdateBanner() {
       await update.downloadAndInstall();
       window.location.reload();
     } catch {
-      window.open(releaseUrl, '_blank', 'noreferrer');
+      await openReleaseUrl();
       setState('error');
       setMessage('Não foi possível atualizar por dentro do app. Abrindo a página de download.');
     }

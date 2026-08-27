@@ -22,6 +22,28 @@ export default function AccountSettings() {
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const releaseUrl = 'https://github.com/kelvinpvp/nexus/releases/latest';
 
+  const openReleaseUrl = async () => {
+    if (typeof window === 'undefined') return;
+
+    const isDesktopRuntime =
+      Boolean((window as any).__TAURI_INTERNALS) ||
+      window.location.hostname === 'tauri.localhost' ||
+      window.location.protocol === 'tauri:';
+
+    if (!isDesktopRuntime) {
+      window.open(releaseUrl, '_blank', 'noreferrer');
+      return;
+    }
+
+    try {
+      const { open } = await import('@tauri-apps/plugin-shell');
+      await open(releaseUrl);
+    } catch (error) {
+      console.error('Failed to open release URL natively', error);
+      window.open(releaseUrl, '_blank', 'noreferrer');
+    }
+  };
+
   if (!user) return null;
 
   const openEditModal = (field: 'displayName' | 'username' | 'email' | 'password') => {
@@ -97,7 +119,7 @@ export default function AccountSettings() {
 
       if (!isDesktopRuntime) {
         setUpdateCheckMessage('Abrindo a página de releases...');
-        window.open(releaseUrl, '_blank', 'noreferrer');
+        await openReleaseUrl();
         return;
       }
 
@@ -121,7 +143,7 @@ export default function AccountSettings() {
     } catch (error) {
       console.error('Failed to check/apply update', error);
       setUpdateCheckMessage('Não consegui verificar no app. Abrindo a página de releases.');
-      window.open(releaseUrl, '_blank', 'noreferrer');
+      await openReleaseUrl();
     } finally {
       setIsCheckingUpdate(false);
     }
