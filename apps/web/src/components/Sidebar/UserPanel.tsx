@@ -1,6 +1,6 @@
 import { Mic, Headphones, Settings, ChevronDown, Circle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import SettingsModal from '@/components/Settings/SettingsModal';
 import ProfilePopout from '@/components/Profile/ProfilePopout';
 import { apiFetch } from '@/lib/api';
@@ -67,6 +67,13 @@ export default function UserPanel() {
     setShowProfilePopout(false);
   };
 
+  useEffect(() => {
+    if (isSettingsModalOpen) {
+      setShowStatusMenu(false);
+      setShowProfilePopout(false);
+    }
+  }, [isSettingsModalOpen]);
+
   return (
     <>
       <div className="h-[56px] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] border-t border-white/5 flex items-center px-2 flex-shrink-0 justify-between backdrop-blur-md">
@@ -100,6 +107,7 @@ export default function UserPanel() {
           <button 
             onClick={() => {
               setSettingsTab('voice');
+              setShowStatusMenu(false);
               setSettingsModalOpen(true);
             }} 
             className="w-8 h-8 flex items-center justify-center hover:bg-white/6 rounded-full hover:text-white transition-colors" 
@@ -110,6 +118,7 @@ export default function UserPanel() {
           <button 
             onClick={() => {
               setSettingsTab('voice');
+              setShowStatusMenu(false);
               setSettingsModalOpen(true);
             }} 
             className="w-8 h-8 flex items-center justify-center hover:bg-white/6 rounded-full hover:text-white transition-colors" 
@@ -120,6 +129,7 @@ export default function UserPanel() {
           <button 
             onClick={() => {
               setSettingsTab('account');
+              setShowStatusMenu(false);
               setSettingsModalOpen(true);
             }} 
             className="w-8 h-8 flex items-center justify-center hover:bg-white/6 rounded-full hover:text-white transition-colors" 
