@@ -134,14 +134,16 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
 
           <div className="px-4 pb-4 relative pt-7">
             {/* Avatar */}
-            <div className="w-[80px] h-[80px] rounded-full border-[6px] border-[#0b1020] bg-[#0f172a] flex items-center justify-center overflow-hidden absolute -top-10 left-4 shadow-lg relative">
-              {profileData.avatarUrl ? (
-                <img src={profileData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-3xl font-bold text-white">
-                  {profileData.displayName?.charAt(0) || profileData.username.charAt(0).toUpperCase()}
-                </span>
-              )}
+            <div className="absolute -top-10 left-4 h-[80px] w-[80px] overflow-visible">
+              <div className="relative h-full w-full rounded-full border-[6px] border-[#0b1020] bg-[#0f172a] shadow-lg overflow-hidden">
+                {profileData.avatarUrl ? (
+                  <img src={profileData.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center text-3xl font-bold text-white">
+                    {profileData.displayName?.charAt(0) || profileData.username.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={async (e) => {
@@ -149,7 +151,7 @@ export default function ProfilePopout({ userId, position, onClose }: ProfilePopo
                   e.preventDefault();
                   await cycleStatus();
                 }}
-                className="absolute -bottom-0.5 -right-0.5 z-20 flex h-5 w-5 items-center justify-center"
+                className="absolute -bottom-0.5 -right-0.5 z-20 flex h-5 w-5 items-center justify-center rounded-full"
                 aria-label="Alterar status"
                 title="Alterar status"
               >
