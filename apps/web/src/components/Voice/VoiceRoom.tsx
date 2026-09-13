@@ -309,9 +309,9 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
             <div className="w-16 h-16 rounded-full bg-[#DA373C]/20 text-[#DA373C] flex items-center justify-center mb-4">
               <AlertTriangle size={32} />
             </div>
-            <h3 className="text-white font-bold text-lg mb-2">Desconectado do servidor LiveKit</h3>
+            <h3 className="text-white font-bold text-lg mb-2">Limite do LiveKit Excedido (Erro 429)</h3>
             <p className="text-[#949BA4] text-sm max-w-md mb-6">
-              O servidor LiveKit bloqueou a conexão (Erro HTTP 429 - Limite de requisições excedido no plano gratuito). Aguarde 1 minuto para reconectar.
+              Sua conta no LiveKit Cloud atingiu o limite mensal de minutos gratuitos (<code className="text-red-400">connection minutes limit exceeded</code>). Crie um novo projeto no <strong className="text-white">cloud.livekit.io</strong> e atualize as chaves no servidor.
             </p>
             <button
               onClick={() => {
