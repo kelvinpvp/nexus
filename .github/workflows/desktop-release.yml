@@ -14,7 +14,7 @@ jobs:
       TAURI_ENV: "true"
       NEXT_PUBLIC_API_URL: "https://nexus-1-j0hy.onrender.com"
       NEXT_PUBLIC_SOCKET_URL: "https://nexus-1-j0hy.onrender.com"
-      NEXT_PUBLIC_LIVEKIT_URL: "wss://nexus-2xur1gve.livekit.cloud"
+      NEXT_PUBLIC_LIVEKIT_URL: "wss://nexus2-7mrb0ejb.livekit.cloud"
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
