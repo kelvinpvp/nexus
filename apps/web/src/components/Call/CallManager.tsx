@@ -215,7 +215,7 @@ function DiscordCallWrapper({ isModalOpen, setModalOpen, leaveCall, endCallForEv
 
           {/* Main Area */}
           <div className="flex-1 bg-[#111214] relative overflow-hidden">
-            {connectionState !== ConnectionState.Connected && connectionState !== 'connected' && (
+            {connectionState !== ConnectionState.Connected && (
               <div className="absolute inset-0 z-50 bg-[#111214]/90 flex flex-col items-center justify-center text-white">
                 <div className="w-12 h-12 border-4 border-[#5865F2] border-t-transparent rounded-full animate-spin mb-4" />
                 <p className="text-lg font-medium text-[#949BA4]">Conectando à chamada...</p>
@@ -247,7 +247,7 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
   const [hasAutoActivatedDevices, setHasAutoActivatedDevices] = useState(false);
 
   useEffect(() => {
-    if ((connectionState === ConnectionState.Connected || connectionState === 'connected') && localParticipant && !hasAutoActivatedDevices) {
+    if (connectionState === ConnectionState.Connected && localParticipant && !hasAutoActivatedDevices) {
       setHasAutoActivatedDevices(true);
       if (!preferences?.joinMuted && !localParticipant.isMicrophoneEnabled) {
         const deviceId = preferences?.audioInputDeviceId && preferences.audioInputDeviceId !== 'default'
