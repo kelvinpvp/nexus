@@ -143,6 +143,7 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
 
   // Initial Microphone State (based on joinMuted preference)
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
     if (connectionState === ConnectionState.Connected && localParticipant && preferences) {
       if (!preferences.joinMuted && !isMicrophoneEnabled && !hasAttemptedInitialMic) {
         setHasAttemptedInitialMic(true);
@@ -150,17 +151,34 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
         const deviceId = preferences.audioInputDeviceId && preferences.audioInputDeviceId !== 'default'
           ? preferences.audioInputDeviceId
           : undefined;
-        localParticipant.setMicrophoneEnabled(true, deviceId ? { deviceId } : undefined).catch(err => {
-          console.error('[VOICE DEBUG] Failed initial mic auto-enable:', err);
-          const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-          alert('Não foi possível ativar o microfone automaticamente:\n' + errMsg);
-        }).finally(() => {
-          setIsInitialMicActivating(false);
-        });
+
+        const enableMic = async (isRetry = false) => {
+          try {
+            await localParticipant.setMicrophoneEnabled(true, deviceId ? { deviceId } : undefined);
+          } catch (err: any) {
+            console.warn('[VOICE] Initial mic enable attempt failed:', err);
+            const errMsg = (err?.message || String(err)).toLowerCase();
+            const isTimeout = errMsg.includes('not connected') || errMsg.includes('timeout') || err?.name === 'PublishTrackError';
+            
+            if (isTimeout && !isRetry) {
+              // Engine connection might be finishing; retry after 800ms
+              timeoutId = setTimeout(() => enableMic(true), 800);
+            } else if (err?.name === 'NotAllowedError') {
+              alert('Permissão do microfone negada pelo navegador. Permita o acesso ao microfone nas configurações do navegador.');
+            }
+          } finally {
+            setIsInitialMicActivating(false);
+          }
+        };
+
+        void enableMic();
       } else if (preferences.joinMuted && !hasAttemptedInitialMic) {
         setHasAttemptedInitialMic(true);
       }
     }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [connectionState, localParticipant, preferences, isMicrophoneEnabled, hasAttemptedInitialMic]);
 
   // Sync Global Voice State
@@ -398,10 +416,13 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
                   : undefined;
                 await localParticipant.setMicrophoneEnabled(nextEnabled, deviceId ? { deviceId } : undefined);
                 if (nextEnabled && isDeafened) setIsDeafened(false);
-              } catch (err) {
-                console.error('[VOICE] Erro ao alterar o microfone:', err);
-                const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-                alert('Erro ao acessar o microfone:\n' + errMsg + '\nVerifique as permissões e o dispositivo selecionado.');
+              } catch (err: any) {
+                console.warn('[VOICE] Erro ao alterar o microfone:', err);
+                if (err?.name === 'NotAllowedError') {
+                  alert('Permissão de microfone negada. Verifique as permissões do seu navegador.');
+                } else if (err?.name === 'NotFoundError') {
+                  alert('Nenhum dispositivo de microfone foi encontrado no sistema.');
+                }
               } finally {
                 micToggleLock.current = false;
                 setIsMicToggling(false);
