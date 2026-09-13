@@ -49,8 +49,10 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
   participantAudioPreferences: {},
 
   connectToVoice: async (channelId: string, serverId: string) => {
+    const state = get();
     // If already connecting or connected to the same channel, do nothing
-    if (get().connectedVoiceChannelId === channelId && get().token) return;
+    if (state.isConnecting) return;
+    if (state.connectedVoiceChannelId === channelId && state.token) return;
 
     set({ isConnecting: true, error: null });
 
@@ -72,9 +74,13 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
       });
     } catch (err: any) {
       console.error('Error connecting to voice:', err);
+      const errMsg = err?.message || String(err);
+      const isRateLimit = errMsg.includes('429') || errMsg.includes('Too Many Requests');
       set({
         isConnecting: false,
-        error: err.message || 'Falha ao gerar token de voz.',
+        error: isRateLimit
+          ? 'Limite de requisições excedido no LiveKit (Erro 429). Aguarde alguns instantes e tente novamente.'
+          : (err.message || 'Falha ao gerar token de voz.'),
       });
     }
   },

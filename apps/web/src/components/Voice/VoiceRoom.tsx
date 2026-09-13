@@ -281,9 +281,17 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
         <div className="flex items-center space-x-2">
           <Radio size={20} className="text-[#23A559] animate-pulse" />
           <h2 className="font-bold text-[15px] text-white">{channelName}</h2>
-          <span className="text-xs bg-[#23A559]/20 text-[#23A559] px-2 py-0.5 rounded-full font-medium">
+          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+            connectionState === ConnectionState.Connected
+              ? 'bg-[#23A559]/20 text-[#23A559]'
+              : connectionState === ConnectionState.Disconnected
+              ? 'bg-[#DA373C]/20 text-[#DA373C]'
+              : 'bg-yellow-500/20 text-yellow-400'
+          }`}>
             {connectionState === ConnectionState.Connected 
               ? (isInitialMicActivating ? 'ATIVANDO MICROFONE...' : 'VOZ CONECTADA') 
+              : connectionState === ConnectionState.Disconnected
+              ? 'ERRO DE CONEXÃO (429)'
               : 'CONECTANDO...'}
           </span>
         </div>
@@ -296,6 +304,25 @@ function VoiceRoomInner({ channelName }: VoiceRoomProps) {
 
       {/* Main Grid / Stage */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col justify-center items-center relative">
+        {connectionState === ConnectionState.Disconnected && (
+          <div className="absolute inset-0 z-50 bg-[#111214]/95 flex flex-col items-center justify-center p-6 text-center text-white">
+            <div className="w-16 h-16 rounded-full bg-[#DA373C]/20 text-[#DA373C] flex items-center justify-center mb-4">
+              <AlertTriangle size={32} />
+            </div>
+            <h3 className="text-white font-bold text-lg mb-2">Desconectado do servidor LiveKit</h3>
+            <p className="text-[#949BA4] text-sm max-w-md mb-6">
+              O servidor LiveKit bloqueou a conexão (Erro HTTP 429 - Limite de requisições excedido no plano gratuito). Aguarde 1 minuto para reconectar.
+            </p>
+            <button
+              onClick={() => {
+                disconnectFromVoice();
+              }}
+              className="bg-[#DA373C] hover:bg-[#A12828] text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
+            >
+              Sair da Sala
+            </button>
+          </div>
+        )}
         {focusedTrack ? (
           /* Focused Stream View (Screen Share or Pinned Cam) */
           <div 
