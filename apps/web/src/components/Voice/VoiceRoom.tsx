@@ -44,7 +44,7 @@ interface VoiceRoomProps {
 }
 
 export default function VoiceRoom({ channelName }: VoiceRoomProps) {
-  const { token, wsUrl } = useVoiceStore();
+  const { token, wsUrl, error, clearError, connectedVoiceChannelId, connectedServerId, connectToVoice } = useVoiceStore();
   const { preferences, isLoading, fetchPreferences } = useSettingsStore();
 
   useEffect(() => {
@@ -52,6 +52,29 @@ export default function VoiceRoom({ channelName }: VoiceRoomProps) {
       fetchPreferences();
     }
   }, [preferences, isLoading, fetchPreferences]);
+
+  if (error) {
+    return (
+      <div className="flex-1 bg-[#111214] flex flex-col items-center justify-center p-6 text-center select-none">
+        <div className="w-16 h-16 rounded-full bg-[#DA373C]/20 text-[#DA373C] flex items-center justify-center mb-4">
+          <AlertTriangle size={32} />
+        </div>
+        <h3 className="text-white font-bold text-lg mb-2">Falha ao conectar à voz</h3>
+        <p className="text-[#949BA4] text-sm max-w-md mb-6">{error}</p>
+        <button
+          onClick={() => {
+            clearError();
+            if (connectedVoiceChannelId && connectedServerId) {
+              connectToVoice(connectedVoiceChannelId, connectedServerId);
+            }
+          }}
+          className="bg-[#5865F2] hover:bg-[#4752C4] text-white px-6 py-2.5 rounded-lg font-medium transition-colors"
+        >
+          Tentar Novamente
+        </button>
+      </div>
+    );
+  }
 
   if (!token || !wsUrl || !preferences) {
     return (

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { apiFetch } from '@/lib/api';
+import { resolveLiveKitWsUrl } from './voiceStore';
 
 export type CallStatus = 'RINGING' | 'ACTIVE' | 'DECLINED' | 'MISSED' | 'ENDED';
 export type CallType = 'VOICE' | 'VIDEO';
@@ -215,7 +216,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
       const data = await apiFetch(`/api/calls/${callId}/token`, {
         method: 'POST',
       });
-      const wsUrl = data.wsUrl || process.env.NEXT_PUBLIC_LIVEKIT_URL || 'ws://localhost:7880';
+      const wsUrl = resolveLiveKitWsUrl(data.wsUrl);
       set({ liveKitToken: data.token, roomName: data.roomName, wsUrl });
     } catch (error: any) {
       console.error('Failed to fetch call token:', error);

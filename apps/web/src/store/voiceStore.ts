@@ -27,6 +27,17 @@ interface VoiceState {
   clearError: () => void;
 }
 
+export function resolveLiveKitWsUrl(serverWsUrl?: string): string {
+  const envUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL;
+  if (serverWsUrl && !serverWsUrl.includes('localhost')) {
+    return serverWsUrl;
+  }
+  if (envUrl && !envUrl.includes('localhost')) {
+    return envUrl;
+  }
+  return serverWsUrl || envUrl || 'ws://localhost:7880';
+}
+
 export const useVoiceStore = create<VoiceState>((set, get) => ({
   connectedVoiceChannelId: null,
   connectedServerId: null,
@@ -49,7 +60,7 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
         body: JSON.stringify({ channelId }),
       });
 
-      const wsUrl = data.wsUrl || process.env.NEXT_PUBLIC_LIVEKIT_URL || 'ws://localhost:7880';
+      const wsUrl = resolveLiveKitWsUrl(data.wsUrl);
 
       set({
         token: data.token,
