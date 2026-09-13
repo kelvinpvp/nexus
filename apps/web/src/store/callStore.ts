@@ -34,6 +34,7 @@ interface CallStore {
   isCallModalOpen: boolean;
   liveKitToken: string | null;
   roomName: string | null;
+  wsUrl: string | null;
   
   // Realtime Active Group Calls map (conversationId -> { call, participantCount })
   activeGroupCalls: Record<string, { call: CallSession; participantCount: number }>;
@@ -62,6 +63,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
   isCallModalOpen: false,
   liveKitToken: null,
   roomName: null,
+  wsUrl: null,
   activeGroupCalls: {},
 
   setIncomingCall: (call) => set({ incomingCall: call }),
@@ -74,6 +76,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
     isCallModalOpen: false,
     liveKitToken: null,
     roomName: null,
+    wsUrl: null,
   }),
 
   checkActiveCall: async (conversationId: string) => {
@@ -212,7 +215,8 @@ export const useCallStore = create<CallStore>((set, get) => ({
       const data = await apiFetch(`/api/calls/${callId}/token`, {
         method: 'POST',
       });
-      set({ liveKitToken: data.token, roomName: data.roomName });
+      const wsUrl = data.wsUrl || process.env.NEXT_PUBLIC_LIVEKIT_URL || 'ws://localhost:7880';
+      set({ liveKitToken: data.token, roomName: data.roomName, wsUrl });
     } catch (error: any) {
       console.error('Failed to fetch call token:', error);
       throw error;

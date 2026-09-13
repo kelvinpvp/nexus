@@ -28,6 +28,7 @@ export default function CallManager() {
     isCallModalOpen, 
     liveKitToken, 
     roomName,
+    wsUrl,
     acceptCall, 
     declineCall, 
     leaveCall,
@@ -123,7 +124,8 @@ export default function CallManager() {
             ? { deviceId: preferences.audioInputDeviceId }
             : true}
           token={liveKitToken}
-          serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
+          serverUrl={wsUrl || process.env.NEXT_PUBLIC_LIVEKIT_URL}
+          connect={true}
           options={{
             adaptiveStream: true,
             dynacast: true,

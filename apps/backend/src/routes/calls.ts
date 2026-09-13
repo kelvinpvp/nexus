@@ -379,7 +379,8 @@ export default async function callRoutes(fastify: FastifyInstance, prisma: Prism
     
     at.addGrant({ roomJoin: true, room: roomName, canPublish: true, canSubscribe: true });
     
-    return reply.send({ token: await at.toJwt(), roomName });
+    const wsUrl = process.env.LIVEKIT_URL || 'ws://localhost:7880';
+    return reply.send({ token: await at.toJwt(), roomName, wsUrl });
   });
 
 }

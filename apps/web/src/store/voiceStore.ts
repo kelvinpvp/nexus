@@ -49,7 +49,7 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
         body: JSON.stringify({ channelId }),
       });
 
-      const wsUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || data.wsUrl || 'ws://localhost:7880';
+      const wsUrl = data.wsUrl || process.env.NEXT_PUBLIC_LIVEKIT_URL || 'ws://localhost:7880';
 
       set({
         token: data.token,
