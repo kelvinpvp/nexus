@@ -13,7 +13,7 @@ import {
   useParticipants,
   useTrackToggle
 } from '@livekit/components-react';
-import { Track } from 'livekit-client';
+import { Track, ConnectionState } from 'livekit-client';
 import { useState, useEffect, useRef } from 'react';
 import { playSound } from '@/utils/sounds';
 import '@livekit/components-styles';
@@ -119,10 +119,8 @@ export default function CallManager() {
       {/* Active Call Room (LiveKit) - Keep mounted to avoid disconnection */}
       {isActive && (
         <LiveKitRoom
-          video={activeCall.type === 'VIDEO'}
-          audio={preferences?.audioInputDeviceId && preferences.audioInputDeviceId !== 'default'
-            ? { deviceId: preferences.audioInputDeviceId }
-            : true}
+          video={false}
+          audio={false}
           token={liveKitToken}
           serverUrl={wsUrl || process.env.NEXT_PUBLIC_LIVEKIT_URL}
           connect={true}
@@ -217,7 +215,7 @@ function DiscordCallWrapper({ isModalOpen, setModalOpen, leaveCall, endCallForEv
 
           {/* Main Area */}
           <div className="flex-1 bg-[#111214] relative overflow-hidden">
-            {connectionState !== 'connected' && (
+            {connectionState !== ConnectionState.Connected && connectionState !== 'connected' && (
               <div className="absolute inset-0 z-50 bg-[#111214]/90 flex flex-col items-center justify-center text-white">
                 <div className="w-12 h-12 border-4 border-[#5865F2] border-t-transparent rounded-full animate-spin mb-4" />
                 <p className="text-lg font-medium text-[#949BA4]">Conectando à chamada...</p>
@@ -245,6 +243,24 @@ function DiscordCallLayout({ leaveCall, endCallForEveryone, isVideoCall }: Disco
   const { user } = useAuth();
   const { preferences } = useSettingsStore();
   const { localParticipant } = useLocalParticipant();
+  const connectionState = useConnectionState();
+  const [hasAutoActivatedDevices, setHasAutoActivatedDevices] = useState(false);
+
+  useEffect(() => {
+    if ((connectionState === ConnectionState.Connected || connectionState === 'connected') && localParticipant && !hasAutoActivatedDevices) {
+      setHasAutoActivatedDevices(true);
+      if (!preferences?.joinMuted && !localParticipant.isMicrophoneEnabled) {
+        const deviceId = preferences?.audioInputDeviceId && preferences.audioInputDeviceId !== 'default'
+          ? preferences.audioInputDeviceId
+          : undefined;
+        localParticipant.setMicrophoneEnabled(true, deviceId ? { deviceId } : undefined).catch(() => {});
+      }
+      if (isVideoCall && !localParticipant.isCameraEnabled) {
+        localParticipant.setCameraEnabled(true).catch(() => {});
+      }
+    }
+  }, [connectionState, localParticipant, isVideoCall, preferences, hasAutoActivatedDevices]);
+
   const isMicEnabled = localParticipant?.isMicrophoneEnabled ?? false;
 
   // Krisp AI noise suppression
